@@ -1,0 +1,83 @@
+body {
+    margin: 0;
+    font-family: 'Nunito', Courier, monospace;
+}
+
+section {
+    height: 100vh;
+    width: 100%;
+    background-color: rgb(236, 238, 254);
+    display: flex;
+    flex-direction: column;
+
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.logo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+
+    >.logo-img {
+        width: 70px;
+        height: 70px;
+    }
+
+    >.logo-name {
+        height: 16px;
+    }
+}
+
+.right-header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+
+    >a {
+        text-decoration: none;
+        color: blue;
+    }
+}
+
+mat-card {
+    width: 400px;
+    height: 500px;
+    margin: auto;
+    margin-top: 50px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+mat-card-title {
+    display: flex;
+    justify-content: center;
+    color: rgba(68, 77, 242, 1);
+    font-family: 'Nunito', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+mat-card-subtitle {
+    display: flex;
+    text-align: center;
+    font-family: 'Nunito', sans-serif;
+    padding-top: 30px !important;
+    font-weight: 400;
+    font-size: 20px;
+}
