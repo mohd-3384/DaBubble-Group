@@ -50,10 +50,9 @@ header {
 }
 
 mat-card {
-    width: 400px;
-    height: 500px;
+    width: 600px;
     margin: auto;
-    margin-top: 50px;
+    margin-top: 16px;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 30px;
@@ -80,4 +79,13 @@ mat-card-subtitle {
     padding-top: 30px !important;
     font-weight: 400;
     font-size: 20px;
+}
+
+mat-form-field {
+    width: 80%;
+    margin-top: 40px;
+}
+
+.input-login {
+  cursor: pointer !important;
 }

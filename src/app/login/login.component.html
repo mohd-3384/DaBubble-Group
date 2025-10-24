@@ -15,8 +15,20 @@
         <mat-card appearance="outlined">
             <mat-card-header>
                 <mat-card-title>Anmeldung</mat-card-title>
-                <mat-card-subtitle>Wir empfehlen dir, die E-mail-Adresse zu nutzen, die du bei der Arbeit verwendest.</mat-card-subtitle>
+                <mat-card-subtitle>Wir empfehlen dir, die E-mail-Adresse zu nutzen, die du bei der Arbeit
+                    verwendest.</mat-card-subtitle>
             </mat-card-header>
+
+            <mat-form-field class="input-login">
+                <mat-label>E-Mail</mat-label>
+                <input matInput type="text">
+            </mat-form-field>
+
+            <mat-form-field class="input-login">
+                <mat-label>Passwort</mat-label>
+                <input matInput type="password">
+            </mat-form-field>
+
             <mat-card-actions>
                 <button matButton="elevated">Anmelden</button>
                 <button matButton="elevated">Gäste-Login</button>
