@@ -29,10 +29,17 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
+              "src/dabubble-logo.ico",
+              "src/assets",
               {
                 "glob": "**/*",
                 "input": "public",
                 "output": "/public/"
+              },
+              {
+                "glob": "**/*",
+                "input": "public/fonts",
+                "output": "/fonts/"
               }
             ],
             "styles": [
@@ -95,9 +102,17 @@
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
+              "src/dabubble-logo.ico",
+              "src/assets",
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public",
+                "output": "/public/"
+              },
+              {
+                "glob": "**/*",
+                "input": "public/fonts",
+                "output": "/fonts/"
               }
             ],
             "styles": [
