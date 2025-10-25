@@ -1,0 +1,48 @@
+section {
+    display: flex;  
+    flex-direction: column;
+
+    >.header {
+        height: 60px;
+        display: flex;
+        flex-direction: row;
+        max-width: 100%;
+        align-items: center;
+        margin: 8px;
+        >.workspace-logo {
+            margin: 10px;
+            max-width: 100%;
+            width: 200px;
+        }
+    }
+    >.channels-header, .messages-header {
+        display: flex;
+        align-items: center;
+    }
+    >.channels-list, .messages-list {
+        display: flex;
+        flex-direction: column;
+        >img {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+        }
+        >.channel-row, >.messages-row {
+            display: flex;
+            height: fit-content;
+            align-items: center;
+            padding: 3px;
+            width: fit-content;
+            border-radius: 30px;
+            h3, h4 {
+                margin: 3px 5px;
+            }
+        }
+        >.active {
+            background-color: #eceefe;
+            color: blue;
+        }
+
+    }
+}
+
