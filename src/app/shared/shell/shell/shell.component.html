@@ -10,6 +10,8 @@
   </main>
 
   <aside class="shell__right">
-    <router-outlet name="thread"></router-outlet>
+    <!-- Thread wird nur angezeigt, wenn State.open = true -->
+    <app-thread *ngIf="vm().open" [header]="vm().header ?? { title: 'Thread' }" [rootMessage]="vm().root!"
+      [replies]="vm().replies" (send)="onSend($event)" (close)="onClose()" />
   </aside>
 </div>
