@@ -1,0 +1,15 @@
+<app-header></app-header>
+
+<div class="shell">
+  <aside class="shell__left">
+    <app-channels></app-channels>
+  </aside>
+
+  <main class="shell__center">
+    <router-outlet></router-outlet>
+  </main>
+
+  <aside class="shell__right">
+    <router-outlet name="thread"></router-outlet>
+  </aside>
+</div>

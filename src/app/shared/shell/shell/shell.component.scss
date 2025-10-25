@@ -1,0 +1,29 @@
+.shell {
+  display: grid;
+  grid-template-columns: 280px 1fr 360px;
+  gap: 16px;
+  height: 100dvh;
+  padding: 16px;
+  background: #f5f6ff;
+}
+
+.shell__left,
+.shell__center,
+.shell__right {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, .06);
+  overflow: auto;
+}
+
+.shell__left {
+  padding: 8px;
+}
+
+.shell__center {
+  padding: 12px;
+}
+
+.shell__right {
+  padding: 0;
+}

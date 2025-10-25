@@ -1,13 +1,10 @@
 import { Component } from '@angular/core';
-import { HeaderComponent } from './shared/header/header.component';
-import { ChannelsComponent } from './channels/channels.component';
-import { ChatComponent } from './chat/chat.component';
-import { ThreadComponent } from './thread/thread.component';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+
 
 @Component({
   selector: 'app-root',
-  imports: [HeaderComponent, RouterLink, ChannelsComponent, ChatComponent, ThreadComponent, RouterOutlet],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
