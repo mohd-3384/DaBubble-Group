@@ -4,14 +4,12 @@
     <img class="workspace-logo" src="/public/images/devspace.svg" alt="Devspace" />
   </div>
 
-  <button class="icon-swap edit" type="button" aria-label="Workspace bearbeiten" title="Workspace bearbeiten"> <!--
-      TODO: (click)=""
-    -->
+  <button class="icon-swap edit" type="button" aria-label="Workspace bearbeiten" title="Workspace bearbeiten">
+    <!-- optional (click) -->
   </button>
 </div>
 
-
-<!-- Channels -->
+<!-- CHANNELS -->
 <div class="section-header">
   <button mat-icon-button (click)="toggleChannels()" [attr.aria-expanded]="!collapsedChannels()">
     <mat-icon>{{ collapsedChannels() ? 'chevron_right' : 'expand_more' }}</mat-icon>
@@ -23,8 +21,16 @@
   </button>
 </div>
 
+<mat-nav-list *ngIf="!collapsedChannels()">
+  <a mat-list-item *ngFor="let c of (channels$ | async); trackBy: trackByCid" [routerLink]="['/channel', c.id]"
+    routerLinkActive="active">
+    <div matLine># {{ c.name }}</div>
 
-<!-- Direktnachrichten -->
+    <span class="spacer"></span>
+  </a>
+</mat-nav-list>
+
+<!-- DIREKTNACHRICHTEN -->
 <div class="section-header">
   <button mat-icon-button (click)="toggleDMs()" [attr.aria-expanded]="!collapsedDMs()">
     <mat-icon>{{ collapsedDMs() ? 'chevron_right' : 'expand_more' }}</mat-icon>
@@ -34,13 +40,20 @@
 </div>
 
 <mat-nav-list *ngIf="!collapsedDMs()">
-  <a mat-list-item *ngFor="let u of dms()" [routerLink]="['/dm', u.id]" routerLinkActive="active">
-    <img matListItemAvatar [src]="u.avatar" [alt]="u.name" />
-    <div matLine>{{ u.name }}</div>
+  <a mat-list-item *ngFor="let u of (users$ | async); trackBy: trackByUid" [routerLink]="['/dm', u.id]"
+    routerLinkActive="active">
+
+    <img matListItemAvatar [src]="u.avatarUrl || '/public/images/avatars/avatar1.svg'" [alt]="u.name" />
+
+    <div matLine>
+      {{ u.name }}
+      <span class="muted" *ngIf="u.id === meId"> (Du)</span>
+    </div>
 
     <span class="spacer"></span>
 
-    <!-- Online-Dot bleibt, aber KEINE Zahlen/Badges mehr -->
-    <span class="dot" [class.dot--online]="u.online" matTooltip="{{ u.online ? 'Online' : 'Offline' }}"></span>
+    <!-- Online-Dot -->
+    <span class="dot" [class.dot--online]="u.online" matTooltip="{{ u.online ? 'Online' : 'Abwesend' }}">
+    </span>
   </a>
 </mat-nav-list>

@@ -1,47 +1,59 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
-// Angular Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
-type Channel = { id: string; name: string; unread?: number; members?: number };
-type DM = { id: string; name: string; avatar?: string; online?: boolean; unread?: number };
+import { UserService, UserDoc } from '../services/user.service';
+import { ChannelService } from '../services/channel.service';
+import { ChannelDoc } from '../interfaces/channel.interface';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-channels',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, RouterLinkActive,
+    CommonModule,
+    RouterLink, RouterLinkActive,
     MatButtonModule, MatIconModule, MatListModule,
-    MatDividerModule, MatBadgeModule, MatTooltipModule
+    MatTooltipModule,
+    ScrollingModule,        // <-- wichtig für Tooltips (CdkScrollable)
   ],
   templateUrl: './channels.component.html',
   styleUrl: './channels.component.scss',
 })
 export class ChannelsComponent {
-  channels = signal<Channel[]>([
-    { id: 'willkommen', name: 'Willkommen', unread: 0, members: 9 },
-    { id: 'entwicklerteam', name: 'Entwicklerteam', unread: 2, members: 12 },
-    { id: 'random', name: 'Random', unread: 0, members: 5 },
-  ]);
+  private usersSvc = inject(UserService);
+  private chanSvc = inject(ChannelService);
 
-  dms = signal<DM[]>([
-    { id: 'me', name: 'Guest (Du)', avatar: '/public/images/avatars/avatar1.svg', online: true },
-    { id: 'marcus', name: 'Marcus Hartmann', avatar: '/public/images/avatars/avatar1.svg', online: true, unread: 1 },
-    { id: 'sofia', name: 'Sofia Müller', avatar: '/public/images/avatars/avatar1.svg', online: false },
-    { id: 'noah', name: 'Noah Braun', avatar: '/public/images/avatars/avatar1.svg', online: false },
-  ]);
+  users$: Observable<UserDoc[]> = this.usersSvc.users$();
+  channels$: Observable<ChannelDoc[]> = this.chanSvc.channels$();
 
   collapsedChannels = signal(false);
   collapsedDMs = signal(false);
 
+  meId: string | null = null;
+
+  trackByUid = (_: number, u: UserDoc) => u.id;
+  trackByCid = (_: number, c: ChannelDoc) => c.id;
+
   toggleChannels() { this.collapsedChannels.update(v => !v); }
   toggleDMs() { this.collapsedDMs.update(v => !v); }
-  addChannel() { /* TODO: Dialog / Route */ }
+
+  async addChannel() {
+    const raw = prompt('Neuer Channel-Name (ohne #, z. B. "entwicklerteam")');
+    if (!raw) return;
+    const id = raw.trim().toLowerCase().replace(/\s+/g, '-');
+
+    // TODO: aus Auth holen
+    const me = { id: 'uid_marcus', name: 'Marcus Hartmann', avatar: '/public/images/avatars/avatar1.svg' };
+
+    await this.chanSvc.createChannel(id, me.id);
+    await this.chanSvc.addMember(id, me.id, 'owner');
+    await this.chanSvc.postWelcome(id, me);
+  }
 }
