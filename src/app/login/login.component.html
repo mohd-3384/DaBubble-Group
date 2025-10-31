@@ -19,20 +19,38 @@
                     verwendest.</mat-card-subtitle>
             </mat-card-header>
 
-            <mat-form-field class="input-login">
-                <mat-label>E-Mail</mat-label>
-                <input matInput type="text">
-            </mat-form-field>
+            <form action="">
 
-            <mat-form-field class="input-login">
-                <mat-label>Passwort</mat-label>
-                <input matInput type="password">
-            </mat-form-field>
+            <div class="input-container">
+                <div class="mail-input">
+                    <img src="./public/images/mail-icon.svg" alt="email icon">
+                    <input type="email" placeholder="beispielname@email.com" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+                </div>
+                <div class="password-input">
+                    <img src="./public/images/password-icon.svg" alt="password icon">
+                    <input type="password" placeholder="Passwort" required minlength="6">
+                </div>
+            </div>
+
+            <div class="forgot-password">Passwort vergessen?</div>
+
+            <div class="oder-container">
+                <div class="line"></div>
+                <div class="oder-text">ODER</div>
+                <div class="line"></div>
+            </div>
+
+            <div class="google-login">
+                <img src="./public/images/google-icon.svg" alt="google-icon">
+                <span>Anmelden mit Google</span>
+            </div>
 
             <mat-card-actions>
                 <button matButton="elevated">Anmelden</button>
                 <button matButton="elevated">Gäste-Login</button>
             </mat-card-actions>
+            </form>
         </mat-card>
+        
     </main>
 </section>
