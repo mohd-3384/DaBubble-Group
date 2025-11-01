@@ -10,11 +10,12 @@
 </div>
 
 <!-- CHANNELS -->
-<div class="section-header">
-  <button mat-icon-button (click)="toggleChannels()" [attr.aria-expanded]="!collapsedChannels()">
-    <mat-icon>{{ collapsedChannels() ? 'chevron_right' : 'expand_more' }}</mat-icon>
-  </button>
-  <h3>Channels</h3>
+<div class="section-header channels-header">
+  <div class="left" (click)="toggleChannels()" [attr.aria-expanded]="!collapsedChannels()">
+    <img class="arrow" [class.rotated]="collapsedChannels()" src="/public/images/arrow-drop-down.svg" alt="Toggle" />
+    <img class="workspace-icon" src="/public/images/workspaces.svg" alt="Workspaces" />
+    <span class="title">Channels</span>
+  </div>
 
   <button class="icon-swap add" type="button" aria-label="Channel hinzufügen" title="Channel hinzufügen"
     (click)="addChannel()">
@@ -25,24 +26,24 @@
   <a mat-list-item *ngFor="let c of (channels$ | async); trackBy: trackByCid" [routerLink]="['/channel', c.id]"
     routerLinkActive="active">
     <div matLine># {{ c.name }}</div>
-
     <span class="spacer"></span>
   </a>
 </mat-nav-list>
 
 <!-- DIREKTNACHRICHTEN -->
-<div class="section-header">
-  <button mat-icon-button (click)="toggleDMs()" [attr.aria-expanded]="!collapsedDMs()">
-    <mat-icon>{{ collapsedDMs() ? 'chevron_right' : 'expand_more' }}</mat-icon>
-  </button>
-  <h3>Direktnachrichten</h3>
+<div class="section-header dms-header">
+  <div class="left" (click)="toggleDMs()" [attr.aria-expanded]="!collapsedDMs()">
+    <img class="arrow" [class.rotated]="collapsedDMs()" src="/public/images/arrow-drop-down.svg" alt="Toggle" />
+    <img class="dm-icon" src="/public/images/account-circle.svg" alt="Direktnachrichten" />
+    <span class="title">Direktnachrichten</span>
+  </div>
+
   <span class="section-spacer"></span>
 </div>
 
 <mat-nav-list *ngIf="!collapsedDMs()">
   <a mat-list-item *ngFor="let u of (users$ | async); trackBy: trackByUid" [routerLink]="['/dm', u.id]"
     routerLinkActive="active">
-
     <img matListItemAvatar [src]="u.avatarUrl || '/public/images/avatars/avatar1.svg'" [alt]="u.name" />
 
     <div matLine>
@@ -53,7 +54,6 @@
     <span class="spacer"></span>
 
     <!-- Online-Dot -->
-    <span class="dot" [class.dot--online]="u.online" matTooltip="{{ u.online ? 'Online' : 'Abwesend' }}">
-    </span>
+    <span class="dot" [class.dot--online]="u.online" matTooltip="{{ u.online ? 'Online' : 'Offline' }}"></span>
   </a>
 </mat-nav-list>
