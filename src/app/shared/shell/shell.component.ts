@@ -1,11 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-
-import { ChannelsComponent } from '../../../channels/channels.component';
-import { ThreadComponent } from '../../../thread/thread.component';
-import { ThreadState } from '../../../services/thread.state';
-import { HeaderComponent } from '../../header/header.component';
+import { HeaderComponent } from '../header/header.component';
+import { ChannelsComponent } from '../../channels/channels.component';
+import { ThreadComponent } from '../../thread/thread.component';
+import { ThreadState } from '../../services/thread.state';
 
 @Component({
   selector: 'app-shell',

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
-import { ShellComponent } from './shared/shell/shell/shell.component';
 import { ChatComponent } from './chat/chat.component';
+import { ShellComponent } from './shared/shell/shell.component';
 
 
 export const routes: Routes = [
