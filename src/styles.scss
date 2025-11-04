@@ -1,10 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
-
+:root {
+  --primary-color: #4f46e5; // nicht zugewiesen
+  --secondary-color: #6366f1; // nicht zugewiesen
+  --accent-color: #a5b4fc; // nicht zugewiesen
+  --text-color: #1e293b; // nicht zugewiesen
+  --background-color: rgb(236, 238, 254); // Fixed background color
+}
 
 html,
 body {
   height: 100vh;
-  background-color: rgb(236, 238, 254);
+  background-color: var(--background-color);
   display: flex;
   flex-direction: column;
   margin: 0;
