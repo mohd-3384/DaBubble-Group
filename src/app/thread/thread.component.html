@@ -1,1 +1,41 @@
-<p>thread works!</p>
+<header class="thread-header">
+  <div>
+    <h3 class="title">{{ header.title }}</h3>
+    <small *ngIf="header.channel" class="muted">{{ header.channel }}</small>
+  </div>
+
+  <button mat-icon-button aria-label="Thread schließen" (click)="close.emit()">
+    <mat-icon>close</mat-icon>
+  </button>
+</header>
+
+<mat-divider></mat-divider>
+
+<section class="thread-root">
+  <div class="author">{{ rootMessage.author.name }}</div>
+  <div class="text">{{ rootMessage.text }}</div>
+</section>
+
+<mat-divider></mat-divider>
+
+<section class="thread-replies" *ngIf="replies?.length; else noReplies">
+  <div class="reply" *ngFor="let r of replies">
+    <div class="author">{{ r.author.name }}</div>
+    <div class="text">{{ r.text }}</div>
+  </div>
+</section>
+
+<ng-template #noReplies>
+  <div class="empty muted">Noch keine Antworten – schreib die erste!</div>
+</ng-template>
+
+<footer class="thread-input">
+  <mat-form-field appearance="outline" class="input-field">
+    <input matInput placeholder="Antworten…" [(ngModel)]="draft" (keyup.enter)="onSendClick()"
+      aria-label="Antwort schreiben" />
+  </mat-form-field>
+
+  <button mat-flat-button color="primary" (click)="onSendClick()">
+    Senden
+  </button>
+</footer>

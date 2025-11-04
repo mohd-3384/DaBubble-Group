@@ -1,48 +1,165 @@
-section {
-    display: flex;  
-    flex-direction: column;
-
-    >.header {
-        height: 60px;
-        display: flex;
-        flex-direction: row;
-        max-width: 100%;
-        align-items: center;
-        margin: 8px;
-        >.workspace-logo {
-            margin: 10px;
-            max-width: 100%;
-            width: 200px;
-        }
-    }
-    >.channels-header, .messages-header {
-        display: flex;
-        align-items: center;
-    }
-    >.channels-list, .messages-list {
-        display: flex;
-        flex-direction: column;
-        >img {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-        }
-        >.channel-row, >.messages-row {
-            display: flex;
-            height: fit-content;
-            align-items: center;
-            padding: 3px;
-            width: fit-content;
-            border-radius: 30px;
-            h3, h4 {
-                margin: 3px 5px;
-            }
-        }
-        >.active {
-            background-color: #eceefe;
-            color: blue;
-        }
-
-    }
+:host {
+  display: block;
+  height: 100%;
 }
 
+/* ===========================
+   Header (Devspace + Icons)
+   =========================== */
+.ws-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+}
+
+.ws-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-logo {
+  height: 28px;
+}
+
+/* Basis-Stil for SVG-Icon-Buttons */
+.icon-swap {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+/* Fokus visible (Tastatur-Navigation) */
+.icon-swap:focus-visible {
+  outline: 2px solid #535af1;
+  outline-offset: 2px;
+}
+
+/* --- Edit (Devspace) --- */
+.icon-swap.edit {
+  background-image: url('/public/images/edit_square.svg');
+}
+
+.icon-swap.edit:hover {
+  background-image: url('/public/images/edit_square_hover.svg');
+}
+
+.icon-swap.edit:active {
+  background-image: url('/public/images/edit_square_click.svg');
+}
+
+/* --- Add (Channels) --- */
+.icon-swap.add {
+  background-image: url('/public/images/add.svg');
+}
+
+.icon-swap.add:hover,
+.icon-swap.add:active {
+  background-image: url('/public/images/add-hover.svg');
+}
+
+/* ===========================
+   Sections (Channels / DMs)
+   =========================== */
+.section-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  padding: 8px 4px;
+}
+
+h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.3px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.section-spacer {
+  justify-self: end;
+}
+
+/* ===========================
+   Listen / Hover-Design
+   =========================== */
+
+/* Standard state */
+.mat-mdc-list-item {
+  border-radius: 24px;
+  margin: 2px 4px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Hover effect */
+.mat-mdc-list-item:hover {
+  background-color: #eceefe !important;
+  color: #535af1 !important;
+}
+
+/* Text within a list item */
+.mat-mdc-list-item:hover .mdc-list-item__primary-text,
+.mat-mdc-list-item:hover div[matLine],
+.mat-mdc-list-item:hover span {
+  color: #535af1 !important;
+}
+
+/* Aktiv clicked*/
+a.mat-mdc-list-item.active {
+  background-color: #eceefe !important;
+  color: #1e1b4b !important;
+  border-radius: 24px;
+}
+
+/* Avatar */
+.mat-mdc-list-item:hover img[matListItemAvatar] {
+  filter: none !important;
+}
+
+/* ===========================
+   Online/Offline-Dot (über Avatar)
+   =========================== */
+.avatar {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+.dot {
+  position: absolute;
+  bottom: 0;
+  left: 42px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9ca3af;
+  border: 2px solid #fff;
+}
+
+.dot--online {
+  background: #10b981;
+}

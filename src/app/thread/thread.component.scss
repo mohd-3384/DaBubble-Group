@@ -1,0 +1,76 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+}
+
+/* Header */
+.thread-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+/* Root message */
+.thread-root {
+  padding: 12px;
+}
+
+.author {
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.text {
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Replies list */
+.thread-replies {
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.reply {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+/* Composer */
+.thread-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.input-field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Empty state */
+.empty {
+  padding: 12px;
+}
