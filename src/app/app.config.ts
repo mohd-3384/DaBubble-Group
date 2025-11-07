@@ -4,12 +4,13 @@ import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
-// 🔥 AngularFire
+
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideAuth, getAuth } from '@angular/fire/auth';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyAgcOUhrDkDQiQWuSgsuY6t-7V8oZ5ZvAc',
+  apiKey: 'AIzaSyAgc0UhrDkD0iQWuSgsuY6t-7V8oZ5zVAc',
   authDomain: 'dabubble-group.firebaseapp.com',
   projectId: 'dabubble-group',
   storageBucket: 'dabubble-group.firebasestorage.app',
@@ -24,8 +25,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }),
 
-    // ✅ Direkt hier eintragen – kein importProvidersFrom nötig
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
+    provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
   ],
 };
