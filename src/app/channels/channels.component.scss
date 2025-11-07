@@ -20,10 +20,10 @@
 }
 
 .workspace-logo {
-  height: 28px;
+  height: 52px;
 }
 
-/* Basis-Stil for SVG-Icon-Buttons */
+/* Basis-Stil für SVG-Icon-Buttons */
 .icon-swap {
   width: 28px;
   height: 28px;
@@ -46,16 +46,37 @@
 
 /* --- Edit (Devspace) --- */
 .icon-swap.edit {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  background-size: 38px 38px;
+  background-repeat: no-repeat;
+  background-position: center;
   background-image: url('/public/images/edit_square.svg');
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
+/* Hover-Effekt */
 .icon-swap.edit:hover {
   background-image: url('/public/images/edit_square_hover.svg');
+  background-color: rgba(83, 90, 241, 0.12);
+  transform: scale(1.05);
+  box-shadow: 0 0 6px rgba(83, 90, 241, 0.2);
 }
 
+/* Klick-Effekt */
 .icon-swap.edit:active {
   background-image: url('/public/images/edit_square_click.svg');
+  background-color: rgba(83, 90, 241, 0.25);
+  transform: scale(0.95);
 }
+
 
 /* --- Add (Channels) --- */
 .icon-swap.add {
@@ -70,12 +91,118 @@
 /* ===========================
    Sections (Channels / DMs)
    =========================== */
+/* ===========================
+   Sections (Channels / DMs)
+   =========================== */
 .section-header {
   display: grid;
-  grid-template-columns: 40px 1fr 40px;
+  grid-template-columns: 1fr 40px;
   align-items: center;
   padding: 8px 4px;
+
+  /* === CHANNELS HEADER === */
+  &.channels-header {
+    grid-template-columns: 1fr 40px;
+
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s ease;
+    }
+
+    .arrow {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.15s ease;
+    }
+
+    .arrow.rotated {
+      transform: rotate(-90deg);
+    }
+
+    .workspace-icon {
+      width: 20px;
+      height: 20px;
+      transition: filter 0.15s ease;
+    }
+
+    .title {
+      font-weight: 800;
+      font-size: 20px;
+      color: #000;
+      letter-spacing: 0.2px;
+      transition: color 0.15s ease;
+    }
+
+    /* Hover-Effekt */
+    .left:hover .arrow {
+      content: url('/public/images/arrow-drop-down-hover.svg');
+    }
+
+    .left:hover .workspace-icon {
+      content: url('/public/images/workspaces-hover.svg');
+    }
+
+    .left:hover .title {
+      color: #535af1;
+    }
+  }
+
+  /* === DIREKTNACHRICHTEN HEADER === */
+  &.dms-header {
+    grid-template-columns: 1fr 40px;
+
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s ease;
+    }
+
+    .arrow {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.15s ease;
+    }
+
+    .arrow.rotated {
+      transform: rotate(-90deg);
+    }
+
+    .dm-icon {
+      width: 20px;
+      height: 20px;
+      transition: filter 0.15s ease;
+    }
+
+    .title {
+      font-weight: 800;
+      font-size: 20px;
+      color: #000;
+      letter-spacing: 0.2px;
+      transition: color 0.15s ease;
+    }
+
+    /* Hover-Effekt */
+    .left:hover .arrow {
+      content: url('/public/images/arrow-drop-down-hover.svg');
+    }
+
+    .left:hover .dm-icon {
+      content: url('/public/images/account-circle-hover.svg');
+    }
+
+    .left:hover .title {
+      color: #535af1;
+    }
+  }
 }
+
 
 h3 {
   margin: 0;
@@ -117,7 +244,7 @@ h3 {
   color: #535af1 !important;
 }
 
-/* Aktiv clicked*/
+/* Aktiv */
 a.mat-mdc-list-item.active {
   background-color: #eceefe !important;
   color: #1e1b4b !important;
