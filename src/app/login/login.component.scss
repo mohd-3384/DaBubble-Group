@@ -49,134 +49,23 @@ header {
     }
 }
 
-mat-card {
-    width: 600px;
-    margin: auto;
-    margin-top: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 30px;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 
-}
-
-mat-card-title {
+footer {
+    margin-top: 40px;
+    padding: 10px;
     display: flex;
     justify-content: center;
-    color: rgba(68, 77, 242, 1);
-    font-family: 'Nunito', sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-}
+    gap: 20px;
 
-mat-card-subtitle {
-    display: flex;
-    text-align: center;
-    font-family: 'Nunito', sans-serif;
-    padding-top: 30px !important;
-    font-weight: 400;
-    font-size: 20px;
-}
-
-mat-form-field {
-    width: 80%;
-    margin-top: 40px;
-}
-
-form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.input-container {
-    display: flex;
-    flex-direction: column;
-    width: 80%;
-    gap: 40px;
-    margin-top: 40px;
-}
-
-.mail-input,
-.password-input {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid transparent;
-    border-radius: 30px;
-    padding: 10px;
-    transition: border-color 0.4s ease-in-out;
-
-    &:hover {
-        border-color: black;
-        cursor: pointer;
-    }
-
-    &:focus-within {
-        border: 1px solid rgb(68, 77, 242);
-    }
-}
-
-input {
-    border: none;
-    outline: none;
-    font-size: 22px;
-    flex: 1;
-    font-family: 'Nunito', sans-serif;
-    cursor: pointer;
-
-    &:focus::placeholder {
-        color: transparent;
-    }
-}
-
-.forgot-password {
-    margin-top: 64px;
-    color: rgba(121, 126, 243, 1);
-    cursor: pointer;
-    font-family: 'Nunito', sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-}
-
-.oder-container {
-    display: flex;
-    align-items: baseline;
-    width: 90%;
-    margin-top: 40px;
-    gap: 10px;
-
-    .line {
-        flex: 1;
-        height: 1px;
-        background-color: rgba(173, 176, 217, 1);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-    }
-
-    .oder-text {
+    >a {
+        text-decoration: none;
+        color: rgba(121, 126, 243, 1);
         font-family: 'Nunito', sans-serif;
         font-size: 18px;
-        color: black;
-        font-weight: 400;
-    }
-}
+        transition: transform 0.3s ease-in-out;
 
-.google-login{
-        margin-top: 40px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-
-        >span {
-            font-family: 'Nunito', sans-serif;
-            font-size: 18px;
-            color: rgba(68, 77, 242, 1);
-            font-weight: 400;
+        &:hover {
+            transform: scale(1.1);
         }
     }
+}

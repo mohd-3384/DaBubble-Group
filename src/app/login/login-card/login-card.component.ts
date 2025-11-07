@@ -6,12 +6,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { LoginCardComponent } from './login-card/login-card.component';
-import { RegisterCardComponent } from './register-card/register-card.component';
-
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-login-card',
   imports: [
     MatButtonModule,
     MatCardModule,
@@ -19,13 +16,11 @@ import { RegisterCardComponent } from './register-card/register-card.component';
     MatDividerModule,
     FormsModule,
     MatInputModule,
-    MatFormFieldModule,
-    LoginCardComponent,
-    RegisterCardComponent],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
+    MatFormFieldModule],
+  templateUrl: './login-card.component.html',
+  styleUrls: ['./login-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginComponent {
+export class LoginCardComponent {
 
 }

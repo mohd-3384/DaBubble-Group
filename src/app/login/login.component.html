@@ -12,45 +12,12 @@
     </header>
 
     <main>
-        <mat-card appearance="outlined">
-            <mat-card-header>
-                <mat-card-title>Anmeldung</mat-card-title>
-                <mat-card-subtitle>Wir empfehlen dir, die E-mail-Adresse zu nutzen, die du bei der Arbeit
-                    verwendest.</mat-card-subtitle>
-            </mat-card-header>
-
-            <form action="">
-
-            <div class="input-container">
-                <div class="mail-input">
-                    <img src="./public/images/mail-icon.svg" alt="email icon">
-                    <input type="email" placeholder="beispielname@email.com" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
-                </div>
-                <div class="password-input">
-                    <img src="./public/images/password-icon.svg" alt="password icon">
-                    <input type="password" placeholder="Passwort" required minlength="6">
-                </div>
-            </div>
-
-            <div class="forgot-password">Passwort vergessen?</div>
-
-            <div class="oder-container">
-                <div class="line"></div>
-                <div class="oder-text">ODER</div>
-                <div class="line"></div>
-            </div>
-
-            <div class="google-login">
-                <img src="./public/images/google-icon.svg" alt="google-icon">
-                <span>Anmelden mit Google</span>
-            </div>
-
-            <mat-card-actions>
-                <button matButton="elevated">Anmelden</button>
-                <button matButton="elevated">Gäste-Login</button>
-            </mat-card-actions>
-            </form>
-        </mat-card>
-        
+        <app-login-card></app-login-card>
+        <app-register-card></app-register-card>
     </main>
+
+    <footer class="footer-container">
+        <a href="">Impressum</a>
+        <a href="">Datenschutz</a>
+    </footer>
 </section>
