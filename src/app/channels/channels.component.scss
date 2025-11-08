@@ -40,7 +40,7 @@
 
 /* Fokus visible (Tastatur-Navigation) */
 .icon-swap:focus-visible {
-  outline: 2px solid #535af1;
+  outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
 
@@ -65,18 +65,17 @@
 /* Hover-Effekt */
 .icon-swap.edit:hover {
   background-image: url('/public/images/edit_square_hover.svg');
-  background-color: rgba(83, 90, 241, 0.12);
+  background-color: #535af11f;
   transform: scale(1.05);
-  box-shadow: 0 0 6px rgba(83, 90, 241, 0.2);
+  box-shadow: 0 0 6px #535af133;
 }
 
 /* Klick-Effekt */
 .icon-swap.edit:active {
   background-image: url('/public/images/edit_square_click.svg');
-  background-color: rgba(83, 90, 241, 0.25);
+  background-color: #535af140;
   transform: scale(0.95);
 }
-
 
 /* --- Add (Channels) --- */
 .icon-swap.add {
@@ -147,7 +146,7 @@
     }
 
     .left:hover .title {
-      color: #535af1;
+      color: var(--primary-color);
     }
   }
 
@@ -198,18 +197,9 @@
     }
 
     .left:hover .title {
-      color: #535af1;
+      color: var(--primary-color);
     }
   }
-}
-
-
-h3 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: #6b7280;
-  letter-spacing: 0.3px;
 }
 
 .spacer {
@@ -224,37 +214,34 @@ h3 {
    Listen / Hover-Design
    =========================== */
 
-/* Standard state */
-.mat-mdc-list-item {
-  border-radius: 24px;
-  margin: 2px 4px;
-  transition: background-color 0.15s ease, color 0.15s ease;
+/* Hover */
+a.mat-mdc-list-item:not(.active):hover {
+  background-color: var(--background-color-item) !important;
+  color: var(--primary-color) !important;
 }
 
-/* Hover effect */
-.mat-mdc-list-item:hover {
-  background-color: #eceefe !important;
-  color: #535af1 !important;
-}
-
-/* Text within a list item */
-.mat-mdc-list-item:hover .mdc-list-item__primary-text,
-.mat-mdc-list-item:hover div[matLine],
-.mat-mdc-list-item:hover span {
-  color: #535af1 !important;
+a.mat-mdc-list-item:not(.active):hover .mdc-list-item__primary-text,
+a.mat-mdc-list-item:not(.active):hover div[matLine],
+a.mat-mdc-list-item:not(.active):hover span {
+  color: var(--primary-color) !important;
 }
 
 /* Aktiv */
-a.mat-mdc-list-item.active {
-  background-color: #eceefe !important;
-  color: #1e1b4b !important;
+a.mat-mdc-list-item.active,
+a.mat-mdc-list-item.active:hover,
+a.mat-mdc-list-item.active:focus {
+  background-color: var(--background-color-item) !important;
+  color: var(--primary-color) !important;
   border-radius: 24px;
 }
 
-/* Avatar */
-.mat-mdc-list-item:hover img[matListItemAvatar] {
-  filter: none !important;
+a.mat-mdc-list-item.active .mdc-list-item__primary-text,
+a.mat-mdc-list-item.active div[matLine],
+a.mat-mdc-list-item.active span {
+  color: var(--primary-color) !important;
+  font-weight: 500;
 }
+
 
 /* ===========================
    Online/Offline-Dot (über Avatar)
