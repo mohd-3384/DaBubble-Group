@@ -6,14 +6,14 @@
         </div>
         <div class="right-header-container">
             <span>Neu bei DABubble?</span>
-            <a href="">Konto erstellen</a>
+            <a (click)="openRegisterCard()">Konto erstellen</a>
         </div>
 
     </header>
 
     <main>
-        <app-login-card></app-login-card>
-        <app-register-card></app-register-card>
+        <app-login-card *ngIf="showLoginCardComponent"></app-login-card>
+        <app-register-card *ngIf="showRegisterCardComponent"></app-register-card>
     </main>
 
     <footer class="footer-container">

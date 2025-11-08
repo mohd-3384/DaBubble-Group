@@ -46,6 +46,7 @@ header {
     >a {
         text-decoration: none;
         color: blue;
+        cursor: pointer;
     }
 }
 
@@ -68,4 +69,27 @@ footer {
             transform: scale(1.1);
         }
     }
+}
+
+main {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  app-login-card,
+  app-register-card {
+    animation: fadeIn 0.35s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
