@@ -7,5 +7,5 @@ export interface ChannelDoc {
   lastReplyAt?: any;
   createdBy: string;
   topic?: string;
-
 }
+

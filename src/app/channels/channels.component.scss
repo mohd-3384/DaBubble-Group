@@ -213,6 +213,9 @@
 /* ===========================
    Listen / Hover-Design
    =========================== */
+a.mat-mdc-list-item {
+  margin: 8px 0;
+}
 
 /* Hover */
 a.mat-mdc-list-item:not(.active):hover {

@@ -1,0 +1,46 @@
+<!-- Chat-Header -->
+<header class="chat-header">
+  <div class="title">
+    <h2># Entwicklerteam</h2>
+    <img class="arrow" src="/public/images/arrow-down.svg" alt="Menü öffnen" />
+  </div>
+
+  <div class="members-group">
+    <div class="avatars">
+      <img src="/public/images/avatars/avatar1.svg" alt="Member 1" class="avatar">
+      <img src="/public/images/avatars/avatar2.svg" alt="Member 2" class="avatar">
+      <img src="/public/images/avatars/avatar3.svg" alt="Member 3" class="avatar">
+      <span class="count">3</span>
+    </div>
+
+    <button class="icon-swap add-member" type="button" aria-label="Mitglieder hinzufügen" title="Mitglieder hinzufügen">
+    </button>
+  </div>
+</header>
+
+
+
+
+
+<!-- Chat-Body -->
+<!-- <section class="messages" *ngIf="vm$ | async as vm2">
+  <article class="message" *ngFor="let m of vm2.messages; trackBy: trackByMsg">
+    <div class="avatar">
+      <img [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName || m.authorId" />
+    </div>
+
+    <div class="bubble">
+      <div class="meta">
+        <span class="author">{{ m.authorName || m.authorId }}</span>
+        <span class="dot">•</span>
+        <time class="time">{{ m.createdAt?.toDate ? (m.createdAt.toDate() | date:'HH:mm') : (m.createdAt | date:'HH:mm')
+          }}</time>
+      </div>
+
+      <div class="text">{{ m.text }}</div>
+    </div>
+  </article>
+
+
+  <div class="empty" *ngIf="!vm2.messages?.length">Noch keine Nachrichten.</div>
+</section> -->
