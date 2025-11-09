@@ -8,36 +8,50 @@ import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
-import { UserService, UserDoc } from '../services/user.service';
+import { Observable } from 'rxjs';
+import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
 import { ChannelDoc } from '../interfaces/channel.interface';
-import { Observable } from 'rxjs';
+import { UserDoc } from '../interfaces/user.interface';
 
 @Component({
   selector: 'app-channels',
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink, RouterLinkActive,
-    MatButtonModule, MatIconModule, MatListModule,
+    RouterLink,
+    RouterLinkActive,
+    MatButtonModule,
+    MatIconModule,
+    MatListModule,
     MatTooltipModule,
-    ScrollingModule,        // <-- wichtig für Tooltips (CdkScrollable)
+    ScrollingModule,
   ],
   templateUrl: './channels.component.html',
   styleUrl: './channels.component.scss',
+  // Wenn du den Service NUR hier scopen willst, ent-kommentieren:
+  // providers: [ChannelService]
 })
 export class ChannelsComponent {
   private usersSvc = inject(UserService);
   private chanSvc = inject(ChannelService);
 
-  users$: Observable<UserDoc[]> = this.usersSvc.users$();
-  channels$: Observable<ChannelDoc[]> = this.chanSvc.channels$();
+  users$!: Observable<UserDoc[]>;
+  channels$!: Observable<ChannelDoc[]>;
 
+  /** UI State */
   collapsedChannels = signal(false);
   collapsedDMs = signal(false);
+  meId: string | null = null; // später aus AuthService
 
-  meId: string | null = null;
+  constructor() {
+    // Wichtig: Erst hier (im DI-Kontext) Firebase-APIs aufrufen,
+    // sonst kommt die Warnung „outside of an Injection context“.
+    this.users$ = this.usersSvc.users$();
+    this.channels$ = this.chanSvc.channels$();
+  }
 
+  /** trackBy-Helper für Performance */
   trackByUid = (_: number, u: UserDoc) => u.id;
   trackByCid = (_: number, c: ChannelDoc) => c.id;
 
@@ -47,8 +61,8 @@ export class ChannelsComponent {
   async addChannel() {
     const raw = prompt('Neuer Channel-Name (ohne #, z. B. "entwicklerteam")');
     if (!raw) return;
-    const id = raw.trim().toLowerCase().replace(/\s+/g, '-');
 
+    const id = raw.trim().toLowerCase().replace(/\s+/g, '-');
     // TODO: aus Auth holen
     const me = { id: 'uid_marcus', name: 'Marcus Hartmann', avatar: '/public/images/avatars/avatar1.svg' };
 

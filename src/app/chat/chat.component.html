@@ -1,8 +1,18 @@
 <!-- Chat-Header -->
-<header class="chat-header">
-  <div class="title">
-    <h2># Entwicklerteam</h2>
-    <img class="arrow" src="/public/images/arrow-down.svg" alt="Menü öffnen" />
+<section class="chat-header" *ngIf="vm$ | async as vm">
+  <!-- CHANNEL (# Titel + Pfeil) -->
+  <div class="header-pill" *ngIf="vm.kind === 'channel'">
+    <h2 class="title">{{ vm.title }}</h2>
+    <span class="arrow" aria-hidden="true"></span>
+  </div>
+
+  <!-- DIRECT MESSAGE (Avatar + Online-Dot + Name) -->
+  <div class="header-pill dm" *ngIf="vm.kind === 'dm'">
+    <div class="avatar-wrap">
+      <img class="avatar" [src]="vm.avatarUrl || '/public/images/avatars/avatar1.svg'" alt="User" />
+      <span class="dot" [class.online]="vm.online"></span>
+    </div>
+    <h2 class="title">{{ vm.title }}</h2>
   </div>
 
   <div class="members-group">
@@ -16,7 +26,9 @@
     <button class="icon-swap add-member" type="button" aria-label="Mitglieder hinzufügen" title="Mitglieder hinzufügen">
     </button>
   </div>
-</header>
+</section>
+
+
 
 
 

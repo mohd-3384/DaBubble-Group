@@ -1,130 +1,47 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Firestore, doc, docData } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { switchMap, map } from 'rxjs/operators';
+import { Vm } from '../interfaces/chat.interface';
 
-import {
-  Firestore,
-  doc, docData,
-  collection, query, orderBy,
-  collectionData
-} from '@angular/fire/firestore';
-
-import { map, switchMap } from 'rxjs/operators';
-import { combineLatest, Observable, of } from 'rxjs';
-
-type Kind = 'channel' | 'dm';
-type HeaderIcon = 'tag' | 'person';
-
-export type Msg = {
-  id: string;
-  text: string;
-  authorId: string;
-  authorName?: string;
-  authorAvatar?: string;
-  createdAt?: any;
-};
-
-type Vm = {
-  kind: Kind;
-  headerIcon: 'tag' | 'person';
-  title: string;         // "# frontend" oder Benutzername
-  messages: Msg[];
-  memberAvatars?: string[];
-  memberCount?: number;
-};
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatDividerModule, MatTooltipModule],
+  imports: [CommonModule],
   templateUrl: './chat.component.html',
-  styleUrl: './chat.component.scss',
+  styleUrls: ['./chat.component.scss'],
 })
 export class ChatComponent {
   private route = inject(ActivatedRoute);
-  private fs = inject(Firestore);
+  private router = inject(Router);
+  private firestore = inject(Firestore);
 
-  /** TODO: später aus deinem AuthService holen */
-  private meId = 'uid_guest';
+  vm$: Observable<Vm>;
 
-  /** erkennt anhand der Route, ob channel/:id oder dm/:id aktiv ist */
-  private routeInfo$ = combineLatest([
-    this.route.paramMap,
-    this.route.url
-  ]).pipe(
-    map(([pm]) => {
-      const id = pm.get('id') ?? '';
-      // Pfad-Muster aus dem aktuellen Route-Config lesen
-      const pattern = this.route.routeConfig?.path ?? '';
-      const kind: Kind = pattern.startsWith('dm') ? 'dm' : 'channel';
-      return { id, kind };
-    })
-  );
+  constructor() {
+    this.vm$ = this.route.paramMap.pipe(
+      switchMap(params => {
+        const id = params.get('id')!;
+        // robust statt window.location:
+        const isDM = this.router.url.includes('/dm/');
+        const path = isDM ? `users/${id}` : `channels/${id}`;
+        const ref = doc(this.firestore, path);
 
-  /** Titel/Name als Observable (für Header) */
-  private title$ = this.routeInfo$.pipe(
-    switchMap(({ id, kind }) => {
-      if (!id) return of({ kind, title: '', headerIcon: kind === 'channel' ? 'tag' : 'person' as const });
-
-      if (kind === 'channel') {
-        // Kanal-Name lesen
-        return docData(doc(this.fs, `channels/${id}`)).pipe(
-          map((d: any) => ({
-            kind,
-            title: d?.name ? `# ${d.name}` : `# ${id}`,
-            headerIcon: 'tag' as const
+        return docData(ref).pipe(
+          map((data: any): Vm => ({
+            kind: isDM ? 'dm' as const : 'channel' as const,
+            title: isDM
+              ? String(data?.name ?? 'Direct Message')
+              : `# ${String(data?.name ?? 'Channel')}`,
+            avatarUrl: isDM ? (data?.avatarUrl as string | undefined) : undefined,
+            online: isDM ? (data?.online as boolean | undefined) : undefined,
           }))
         );
-      } else {
-        // DM: Ziel-User anzeigen
-        return docData(doc(this.fs, `users/${id}`)).pipe(
-          map((d: any) => ({
-            kind,
-            title: d?.name ?? 'Direktnachricht',
-            headerIcon: 'person' as const
-          }))
-        );
-      }
-    })
-  );
-
-  /** Nachrichtenstrom je nach Kontext */
-  private messages$ = this.routeInfo$.pipe(
-    switchMap(({ id, kind }) => {
-      if (!id) return of([] as Msg[]);
-
-      if (kind === 'channel') {
-        const q = query(
-          collection(this.fs, `channels/${id}/messages`),
-          orderBy('createdAt', 'asc')
-        );
-        return collectionData(q, { idField: 'id' }) as Observable<Msg[]>;
-      } else {
-        // DM: Konversations-ID deterministisch aus eigener UID + Ziel-UID
-        const convId = [this.meId, id].sort().join('_');
-        const q = query(
-          collection(this.fs, `conversations/${convId}/messages`),
-          orderBy('createdAt', 'asc')
-        );
-        return collectionData(q, { idField: 'id' }) as Observable<Msg[]>;
-      }
-    })
-  );
-
-  /** ViewModel für Template */
-  vm$: Observable<Vm> = combineLatest([this.title$, this.messages$]).pipe(
-    map(([meta, messages]): Vm => ({
-      kind: meta.kind as Kind,
-      headerIcon: (meta.kind === 'channel' ? 'tag' : 'person') as HeaderIcon,
-      title: meta.title,
-      messages
-    }))
-  );
-
-
-  /** trackBy für *ngFor */
-  trackByMsg = (_: number, m: Msg) => m.id;
+      })
+    );
+  }
 }
+
