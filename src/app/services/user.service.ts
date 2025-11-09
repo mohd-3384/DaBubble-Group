@@ -1,17 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, collectionData, addDoc, doc, updateDoc, serverTimestamp } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-
-export interface UserDoc {
-  id?: string;
-  name: string;
-  email: string;
-  status: 'active' | 'away';
-  avatarUrl: string;
-  online?: boolean;
-  lastSeen?: any;  // Firestore Timestamp
-  role?: 'member' | 'guest';
-}
+import { UserDoc } from '../interfaces/user.interface';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
