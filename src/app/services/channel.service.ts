@@ -1,22 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import {
   Firestore, doc, setDoc, serverTimestamp, runTransaction,
-  increment, collection, addDoc,
-  query,
-  orderBy,
-  collectionData
+  increment, collection, addDoc, collectionData
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ChannelDoc } from '../interfaces/channel.interface';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
   private fs = inject(Firestore);
 
-  /** id = slug ohne #, z. B. "entwicklerteam" */
   async createChannel(id: string, createdBy: string) {
     await setDoc(doc(this.fs, `channels/${id}`), {
-      name: id,
       createdBy,
       createdAt: serverTimestamp(),
       memberCount: 0,
@@ -52,10 +47,16 @@ export class ChannelService {
     });
   }
 
-  /** Alle Channels alphabetisch – zeigt u.a. auch 'frontend' an */
+  /**
+   * Alle Channels – wir lesen die Sammlung und benutzen die Dokument-ID als 'id'.
+   */
   channels$(): Observable<ChannelDoc[]> {
     const ref = collection(this.fs, 'channels');
-    const q = query(ref, orderBy('name'));
-    return collectionData(q, { idField: 'id' }) as Observable<ChannelDoc[]>;
+
+    return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(
+      map(list => [...list].sort((a: any, b: any) =>
+        String(a.id).localeCompare(String(b.id), 'de', { sensitivity: 'base' })
+      ))
+    );
   }
 }

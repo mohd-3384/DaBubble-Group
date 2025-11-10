@@ -25,7 +25,7 @@
 <mat-nav-list *ngIf="!collapsedChannels()">
   <a mat-list-item *ngFor="let c of (channels$ | async); trackBy: trackByCid" [routerLink]="['/channel', c.id]"
     routerLinkActive="active">
-    <div matLine># {{ c.name }}</div>
+    <div matLine># {{ c.id }}</div>
     <span class="spacer"></span>
   </a>
 </mat-nav-list>

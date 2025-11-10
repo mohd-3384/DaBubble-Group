@@ -1,16 +1,18 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  // min-height: 0;
 }
 
 .chat-header {
+  position: sticky;
   min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
   box-shadow: 0 2px 10px #00000014;
-  border-radius: 20px;
 }
 
 
@@ -245,64 +247,286 @@
 
 
 
+/* Grundfarben/Variablen */
+$bg: white;
+$muted: #6c7280;
 
+.chat-body {
+  position: relative;
+  padding: 16px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border-radius: 20px;
+  min-height: 0;
+  overflow: auto;
 
-
-.messages {
-  padding: 8px 12px 24px;
+  .top-gap {
+    height: clamp(24px, 12vh, 120px);
+  }
 }
 
-.message {
-  display: grid;
-  grid-template-columns: 40px 1fr;
-  gap: 10px;
-  padding: 8px 0;
-}
-
-.avatar img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: block;
-}
-
-.bubble {
-  background: #fff;
-  border: 1px solid #eef0f5;
-  border-radius: 12px;
-  padding: 8px 12px;
-}
-
-.meta {
+.day-separator {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
-  font-size: 12px;
-  color: #6b7280;
+  color: $muted;
 
-  .author {
-    font-weight: 600;
-    color: #111827;
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--accent-color);
   }
 
-  .dot {
-    opacity: .6;
-  }
-
-  .time {
-    color: #9ca3af;
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--accent-color);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 14px;
   }
 }
 
-.text {
-  white-space: pre-wrap;
-  line-height: 1.35;
+.divider {
+  border: none;
+  height: 1px;
+  background: var(--accent-color);
+  margin: 6px 0 8px;
 }
 
-.empty {
-  color: #9aa3b2;
-  font-size: 13px;
-  padding: 12px;
-  text-align: center;
+/* Eine Nachricht (Avatar links, Text rechts) */
+.message-row {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 14px;
+  align-items: flex-start;
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+  }
+
+  .message-col {
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+
+      .name {
+        font-weight: 700;
+      }
+
+      .time {
+        font-size: 13px;
+        color: $muted;
+      }
+
+      .dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent-color);
+      }
+    }
+
+    .bubble {
+      display: inline-block;
+      max-width: min(720px, 92%);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 15px;
+      line-height: 1.5;
+
+      &.bubble-light {
+        background: var(--background-color);
+        border: 1px solid #e6eaff;
+      }
+    }
+
+    .thread-teaser {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 14px;
+
+      .replies {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      .last-reply {
+        color: $muted;
+      }
+    }
+  }
+}
+
+/* Editor-Row (helle Fläche + Card + Avatar rechts) */
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  gap: 16px;
+  align-items: center;
+  background: var(--background-color);
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid var(--background-color);
+
+  .edit-card {
+    background: #fff;
+    border: 1px solid var(--background-color);
+    border-radius: 16px;
+    padding: 18px;
+
+    .edit-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 15px;
+      line-height: 1.5;
+      background: transparent;
+
+      &::placeholder {
+        color: #9197ab;
+      }
+    }
+
+    .edit-actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+
+      .btn {
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+
+        &.ghost {
+          background: #fff;
+          border-color: var(--primary-color);
+          color: var(--primary-color);
+
+          &:hover {
+            color: var(--btn-hover-violett);
+            ;
+          }
+        }
+
+        &.primary {
+          background: var(--primary-color);
+          color: #fff;
+
+          &:hover {
+            background-color: var(--btn-hover-violett);
+          }
+        }
+      }
+    }
+  }
+
+  .avatar-right {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+  }
+}
+
+/* Reactions (kleine Chips) */
+.reactions-row {
+  display: flex;
+  gap: 8px;
+  padding-left: 78px;
+
+  .reaction {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #fff;
+    border: 1px solid #e7e9f5;
+    border-radius: 999px;
+    font-size: 14px;
+
+    span {
+      color: $muted;
+    }
+  }
+}
+
+/* Composer unten */
+.composer {
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid #dfe3f3;
+  border-radius: 16px;
+  padding: 10px 12px;
+
+  .composer-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    min-height: 56px;
+    font-size: 15px;
+
+    &::placeholder {
+      color: #8e94a7;
+    }
+  }
+
+  .composer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .icon-btn {
+      height: 36px;
+      width: 36px;
+      border-radius: 999px;
+      border: 1px solid #e6e9f7;
+      background: #fff;
+      cursor: pointer;
+
+      &:hover {
+        background: #f7f8ff;
+      }
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .send-btn {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background-repeat: no-repeat;
+      background-image: url('/public/images/send.svg');
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-image: url('/public/images/send-hover.svg');
+        transform: scale(1.05);
+      }
+    }
+  }
 }

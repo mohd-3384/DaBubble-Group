@@ -1,11 +1,11 @@
 export interface ChannelDoc {
   id: string;
-  name: string;
-  memberCount: number;
-  messageCount: number;
+  createdBy?: string;
+  createdAt?: any;
+  memberCount?: number;
+  messageCount?: number;
   lastMessageAt?: any;
+  lastMessageBy?: string | null;
   lastReplyAt?: any;
-  createdBy: string;
   topic?: string;
 }
-

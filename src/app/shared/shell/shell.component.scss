@@ -21,8 +21,58 @@
 
 .shell__center {
   padding: 0;
+  // overflow: hidden;
 }
 
 .shell__right {
   padding: 0;
+}
+
+
+/* ==== Scrollbar OHNE Pfeile ==== */
+.shell__left::-webkit-scrollbar-button,
+.shell__center::-webkit-scrollbar-button,
+.shell__right::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none !important;
+  background: none !important;
+  content: none !important;
+}
+
+/* Einheitliche, zarte Scrollbars – Firefox */
+.shell__left,
+.shell__center,
+.shell__right {
+  scrollbar-width: none;
+  scrollbar-color: var(--accent-color) #fff;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Chrome/Edge/Safari (WebKit/Blink) */
+.shell__left::-webkit-scrollbar,
+.shell__center::-webkit-scrollbar,
+.shell__right::-webkit-scrollbar {
+  width: 4px;
+}
+
+.shell__left::-webkit-scrollbar-track,
+.shell__center::-webkit-scrollbar-track,
+.shell__right::-webkit-scrollbar-track {
+  background: var(--background-color);
+  border-radius: 999px;
+}
+
+.shell__left::-webkit-scrollbar-thumb,
+.shell__center::-webkit-scrollbar-thumb,
+.shell__right::-webkit-scrollbar-thumb {
+  background: var(--background-color);
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.shell__left::-webkit-scrollbar-thumb:hover,
+.shell__center::-webkit-scrollbar-thumb:hover,
+.shell__right::-webkit-scrollbar-thumb:hover {
+  background: var(--background-color);
 }
