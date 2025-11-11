@@ -18,23 +18,35 @@ import {
   orderBy,
   addDoc,
   serverTimestamp,
+  limit,
 } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { Observable, of, combineLatest } from 'rxjs';
 import { map, switchMap, startWith } from 'rxjs/operators';
-import { Vm } from '../interfaces/chat.interface';
+import { ChannelDoc, DayGroup, MessageVm, Vm } from '../interfaces/chat.interface';
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
 
-type MessageVm = {
-  id: string;
-  text: string;
-  authorName: string;
-  authorAvatar?: string;
-  createdAt?: Date | null;
-};
+function toDateMaybe(ts: any): Date | null {
+  return typeof ts?.toDate === 'function' ? ts.toDate() : (ts instanceof Date ? ts : null);
+}
+
+function sameYMD(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+// "Dienstag, 14. Januar" -> Punkte entfernen, Format anpassen
+function dayLabel(d: Date): string {
+  const fmt = new Intl.DateTimeFormat('de-DE', {
+    weekday: 'long', day: '2-digit', month: 'long'
+  });
+  return fmt.format(d).replace(/\./g, '').replace(/\s+/g, ' ');
+}
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PickerModule],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
 })
@@ -47,6 +59,10 @@ export class ChatComponent {
 
   vm$!: Observable<Vm>;
   messages$!: Observable<MessageVm[]>;
+  groups$!: Observable<DayGroup[]>;
+
+  /** leer/aktiv für Channel */
+  isEmpty$!: Observable<boolean>;
 
   /** Für den Composer */
   draft = '';
@@ -71,15 +87,10 @@ export class ChatComponent {
 
         if (!isDM) {
           // Channel: Titel aus der ID
-          return of<Vm>({
-            kind: 'channel',
-            title: `# ${id}`,
-            avatarUrl: undefined,
-            online: undefined,
-          });
+          return of<Vm>({ kind: 'channel', title: `# ${id}` });
         }
 
-        // DM: hole Userdaten aus users/{id}
+        // DM: user/{id}
         const uref = doc(this.fs, `users/${id}`);
         return runInInjectionContext(this.env, () => docData(uref)).pipe(
           map((u: any): Vm => ({
@@ -93,64 +104,124 @@ export class ChatComponent {
       })
     );
 
-    /** ---------- CHAT BODY ---------- */
     /** ---------- CHAT BODY: Nachrichten ---------- */
     this.messages$ = this.route.paramMap.pipe(
       switchMap(params => {
         const channelId = params.get('id')!;
         const isDM = this.router.url.includes('/dm/');
+        if (!isPlatformBrowser(this.platformId)) return of([] as MessageVm[]);
+        if (isDM) return of([] as MessageVm[]);
 
-        // SSR: keine Firestore-Calls
-        if (!isPlatformBrowser(this.platformId)) {
-          return of([] as MessageVm[]);
-        }
-
-        if (isDM) {
-          // TODO: DM-Schema noch definieren
-          return of([] as MessageVm[]);
-        }
-
-        // CHANNEL: channels/{channelId}/messages (channelId = Doc-ID = Channelname)
         const collPath = `channels/${channelId}/messages`;
         const collRef = collection(this.fs, collPath);
         const qRef = query(collRef, orderBy('createdAt', 'asc'));
 
-        // Observable IM Injection-Kontext erzeugen (stabil für Angular + Zonen)
         const source$ = runInInjectionContext(this.env, () =>
           collectionData(qRef, { idField: 'id' }) as Observable<any[]>
         );
 
-        // kleines Debug-Logging, damit du im Browser sofort siehst, was geladen wird
-        console.log('[messages$] subscribe:', collPath);
-
         return source$.pipe(
-          map(rows =>
-            rows.map(m => ({
-              id: m.id,
-              text: m.text ?? '',
-              authorName: m.authorName ?? 'Unbekannt',
-              authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
-              // Firestore Timestamp -> Date (failsafe)
-              createdAt:
-                (typeof m.createdAt?.toDate === 'function' ? m.createdAt.toDate() : null) as Date | null,
-            }))
-          ),
+          map(rows => rows.map(m => ({
+            id: m.id,
+            text: m.text ?? '',
+            authorName: m.authorName ?? 'Unbekannt',
+            authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
+            createdAt: toDateMaybe(m.createdAt),
+            replyCount: (m.replyCount ?? 0) as number,
+            lastReplyAt: toDateMaybe(m.lastReplyAt)
+          } as MessageVm))),
           startWith([] as MessageVm[])
         );
       })
     );
 
+    // ---------- Gruppierung nach Kalendertag (für Datums-Chips) ----------
+    this.groups$ = this.messages$.pipe(
+      map(msgs => {
+        const today = new Date();
+        const buckets = new Map<string, MessageVm[]>();
+
+        for (const m of msgs) {
+          const d = m.createdAt ?? today;
+          const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+          if (!buckets.has(key)) buckets.set(key, []);
+          buckets.get(key)!.push(m);
+        }
+
+        // in Anzeige-Reihenfolge (aufsteigend nach Datum)
+        const groups: DayGroup[] = [...buckets.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([key, items]) => {
+            const [y, mo, da] = key.split('-').map(Number);
+            const date = new Date(y, mo - 1, da);
+            const isToday = sameYMD(date, today);
+            return {
+              label: isToday ? 'Heute' : dayLabel(date),
+              isToday,
+              items
+            } as DayGroup;
+          });
+
+        return groups;
+      })
+    );
+
+    /** ---------- CHAT BODY: leer/aktiv für Channel ---------- */
+    const channelId$ = this.route.paramMap.pipe(map((p) => p.get('id')!));
+
+    // Channel-Dokument
+    const channelDoc$ = channelId$.pipe(
+      switchMap((id) =>
+        isPlatformBrowser(this.platformId)
+          ? (docData(doc(this.fs, `channels/${id}`)) as Observable<ChannelDoc>)
+          : of(<ChannelDoc>{})
+      ),
+      startWith(<ChannelDoc>{})
+    );
+
+    // erste Nachricht (limit(1)) – falls Zähler mal nicht stimmt
+    const firstMessage$ = channelId$.pipe(
+      switchMap((id) =>
+        isPlatformBrowser(this.platformId)
+          ? (collectionData(
+            query(collection(this.fs, `channels/${id}/messages`), orderBy('createdAt', 'asc'), limit(1)),
+            { idField: 'id' }
+          ) as Observable<any[]>)
+          : of<any[]>([])
+      ),
+      startWith<any[]>([])
+    );
+
+    this.isEmpty$ = combineLatest([channelDoc$, firstMessage$]).pipe(
+      map(([ch, first]) => (ch?.messageCount ?? 0) === 0 || (first?.length ?? 0) === 0)
+    );
   }
 
-  /** ---------- Composer-Logik ---------- */
+  /** ---------- Composer ---------- */
 
-  toggleEmoji() {
+  toggleEmoji(evt?: Event) {
+    evt?.stopPropagation();
     this.showEmoji = !this.showEmoji;
   }
 
-  onEmojiSelect(event: any) {
-    const emoji = event?.emoji?.native || event?.emoji?.char || '';
-    this.draft += emoji;
+  composePlaceholder(vm: Vm): string {
+    const who = vm.title || '';
+    return `Nachricht an ${who}`;
+  }
+
+  closeEmoji() {
+    this.showEmoji = false;
+  }
+
+  onEmojiSelect(e: any) {
+    const native =
+      e?.emoji?.native ??
+      e?.emoji?.char ??
+      e?.native ??
+      e?.colons ??
+      '';
+    this.draft += native;
+    this.showEmoji = false;
   }
 
   onEmojiClick(event: any) {
@@ -166,7 +237,6 @@ export class ChatComponent {
     const isDM = vm.kind === 'dm';
 
     if (isDM) {
-      // Hier später DM-Logik einfügen
       console.warn('DM-Nachrichten-Senden noch nicht implementiert');
       this.draft = '';
       this.showEmoji = false;
@@ -177,7 +247,7 @@ export class ChatComponent {
       const coll = collection(this.fs, `channels/${id}/messages`);
       await addDoc(coll, {
         text: msg,
-        authorName: 'Max Mustermann', // später: currentUser
+        authorName: 'Max Mustermann', // TODO: currentUser
         authorAvatar: '/public/images/avatars/avatar1.svg',
         createdAt: serverTimestamp(),
       });

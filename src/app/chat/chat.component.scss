@@ -247,22 +247,51 @@
 
 
 
+
+
 /* Grundfarben/Variablen */
-$bg: white;
 $muted: #6c7280;
+
+:host {
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+}
 
 .chat-body {
   position: relative;
   padding: 16px 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  justify-content: flex-end;
+  gap: 10px;
   border-radius: 20px;
-  min-height: 0;
+  min-height: 460px;
   overflow: auto;
 
   .top-gap {
     height: clamp(24px, 12vh, 120px);
+  }
+}
+
+/* ---------- leerer Channel ---------- */
+.channel-empty {
+  margin-top: clamp(8vh, 12vh, 18vh);
+
+  .empty-title {
+    font-weight: 800;
+    font-size: 20px;
+    margin: 0 0 8px;
+  }
+
+  .empty-hint {
+    color: $muted;
+    margin: 0 0 24px;
+
+    .mention {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
   }
 }
 
@@ -425,7 +454,6 @@ $muted: #6c7280;
 
           &:hover {
             color: var(--btn-hover-violett);
-            ;
           }
         }
 
@@ -493,32 +521,74 @@ $muted: #6c7280;
   }
 
   .composer-actions {
+    position: relative;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
 
-    .icon-btn {
-      height: 36px;
+    .actions-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .emoji-anchor,
+    .emoji-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-span {
+      display: inline-block;
       width: 36px;
-      border-radius: 999px;
-      border: 1px solid #e6e9f7;
-      background: #fff;
+      height: 36px;
+      border-radius: 50%;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 22px;
       cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:focus-visible {
+        outline: 2px solid var(--secondary-color);
+        outline-offset: 2px;
+      }
 
       &:hover {
-        background: #f7f8ff;
+        background-color: #535af11f;
+        transform: scale(1.05);
       }
     }
 
-    .spacer {
-      flex: 1;
+    /* Emoji (+) – wie Add-Member animiert */
+    .emoji-icon {
+      background-image: url('/public/images/add-reaction.svg');
+
+      &:hover {
+        background-image: url('/public/images/add-reaction-hover.svg');
+      }
     }
 
+    /* @-Icon */
+    .at-icon {
+      background-image: url('/public/images/at-icon.svg');
+
+      &:hover {
+        background-image: url('/public/images/at-icon-hover.svg');
+      }
+    }
+
+    /* Senden-Button (Span mit Icon) */
     .send-btn {
       display: inline-block;
       width: 40px;
       height: 40px;
       background-repeat: no-repeat;
+      background-position: center;
+      background-size: 24px;
       background-image: url('/public/images/send.svg');
       cursor: pointer;
       transition: all 0.2s ease;
@@ -528,5 +598,40 @@ $muted: #6c7280;
         transform: scale(1.05);
       }
     }
+
+    .emoji-popover {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      background: #fff;
+      border: 1px solid var(--background-color);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(10, 18, 54, 0.18);
+      overflow: hidden;
+    }
+
+    /* Das Popover selbst */
+    .emoji-popover {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 0;
+      transform: translateX(-16px);
+      z-index: 2000;
+      background: #fff;
+      border: 1px solid var(--background-color);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(10, 18, 54, 0.18);
+      overflow: hidden;
+    }
   }
+}
+
+/* Vollflächiger Backdrop zum Schließen per Klick außerhalb */
+.emoji-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: transparent;
 }

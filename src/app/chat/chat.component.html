@@ -34,81 +34,87 @@
 
 
 
+<!--  -->
+<!--  -->
+<!--  -->
 
 
-<section class="chat-body">
 
-  <div class="top-gap"></div>
+<!-- Nur der Body-Teil der ChatComponent -->
+<!-- Nur der Body der ChatComponent -->
+<ng-container *ngIf="vm$ | async as vm">
+  <section class="chat-body">
 
-  <!-- Datum: Dienstag, 14 Januar -->
-  <div class="day-separator">
-    <span class="chip">Dienstag, 14 Januar</span>
-  </div>
-
-  <!-- Nachricht aus dem vergangenen Tag -->
-  <div class="message-row">
-    <img class="avatar" src="/public/images/avatars/avatar3.svg" alt="Noah Braun" />
-    <div class="message-col">
-      <div class="header">
-        <span class="name">Noah Braun</span>
-        <span class="dot"></span>
-        <span class="time">14:25 Uhr</span>
+    <!-- CHANNEL leer -->
+    <ng-container *ngIf="vm.kind === 'channel' && (isEmpty$ | async); else hasMessages">
+      <div class="channel-empty">
+        <h3 class="empty-title">{{ vm.title }}</h3>
+        <p class="empty-hint">
+          Dieser Channel wurde neu erstellt. Das ist der Anfang des Channels
+          <a class="mention">{{ vm.title }}</a>.
+        </p>
       </div>
+    </ng-container>
 
-      <div class="bubble bubble-light">
-        Welche Version ist aktuell von Angular?
-      </div>
+    <!-- CHANNEL/DM mit Nachrichten -->
+    <ng-template #hasMessages>
+      <div class="top-gap"></div>
 
-      <div class="thread-teaser">
-        <a class="replies" href="javascript:void(0)">2 Antworten</a>
-        <span class="last-reply">Letzte Antwort 14:56</span>
+      <!-- gruppiert nach Tagen -->
+      <ng-container *ngFor="let g of (groups$ | async)">
+        <div class="day-separator">
+          <span class="chip">{{ g.label }}</span>
+        </div>
+
+        <div class="message-row" *ngFor="let m of g.items; trackBy: trackMsg">
+          <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName" />
+          <div class="message-col">
+            <div class="header">
+              <span class="name">{{ m.authorName }}</span>
+              <span class="dot"></span>
+              <span class="time" *ngIf="m.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
+            </div>
+
+            <div class="bubble bubble-light">{{ m.text }}</div>
+
+            <div class="thread-teaser" *ngIf="m.replyCount || m.lastReplyAt">
+              <a class="replies" href="javascript:void(0)">{{ m.replyCount || 0 }} Antworten</a>
+              <span class="last-reply" *ngIf="m.lastReplyAt as lr">Letzte Antwort {{ lr | date:'HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </ng-template>
+
+    <!-- === Composer steht EINMAL für beide Arten (Channel/DM) === -->
+    <div class="composer">
+      <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"></textarea>
+
+      <div class="composer-actions">
+        <div class="actions-left">
+          <!-- Emoji-Icon + Popover -->
+          <span class="emoji-wrapper">
+            <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
+              (click)="toggleEmoji($event)">
+            </span>
+
+            <!-- Popover direkt über dem Icon -->
+            <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
+              <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+                (emojiSelect)="onEmojiSelect($event)">
+              </emoji-mart>
+            </div>
+          </span>
+
+          <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"></span>
+        </div>
+
+        <span class="send-btn" role="button" aria-label="Senden" (click)="send(vm)"></span>
       </div>
     </div>
-  </div>
 
-  <hr class="divider" />
+    <!-- Backdrop zum Schließen des Pickers -->
+    <div class="emoji-backdrop" *ngIf="showEmoji" (click)="closeEmoji()"></div>
 
-  <!-- Heute -->
-  <div class="day-separator">
-    <span class="chip">Heute</span>
-  </div>
-
-  <!-- Inline-Editor-Card -->
-  <div class="edit-row">
-    <div class="edit-card">
-      <textarea class="edit-input" rows="3"
-        placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque blandit odio efficitur lectus vestibulum, quis accumsan ante vulputate. Quisque tristique iaculis erat, eu faucibus lacus iaculis ac">
-      </textarea>
-
-      <div class="edit-actions">
-        <button type="button" class="btn ghost">Abbrechen</button>
-        <button type="button" class="btn primary">Speichern</button>
-      </div>
-    </div>
-
-    <img class="avatar avatar-right" src="/public/images/avatars/avatar1.svg" alt="Frederik Beck" />
-  </div>
-
-  <!-- Reactions-Zeile -->
-  <div class="reactions-row">
-    <span class="reaction">🎉 <span>1</span></span>
-    <span class="reaction">✅ <span>1</span></span>
-    <span class="reaction">😅</span>
-  </div>
-
-  <!-- Composer unten -->
-  <div class="composer">
-    <textarea class="composer-input" rows="3" placeholder="Nachricht an #Entwicklerteam"></textarea>
-
-    <div class="composer-actions">
-      <button class="icon-btn" type="button" aria-label="Emoji auswählen">😊</button>
-      <button class="icon-btn" type="button" aria-label="Jemanden erwähnen">&#64;</button>
-
-      <span class="spacer"></span>
-
-      <span class="send-btn" role="button" tabindex="0" aria-label="Senden">
-      </span>
-    </div>
-  </div>
-
-</section>
+  </section>
+</ng-container>
