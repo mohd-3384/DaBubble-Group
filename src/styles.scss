@@ -13,6 +13,16 @@
   --transition20: 0.2s ease;
 }
 
+::selection {
+  background-color: var(--primary-color) !important;
+  color: var(--background-color) !important;
+}
+
+::-moz-selection {
+  background-color: var(--primary-color) !important;
+  color: var(--background-color) !important;
+}
+
 html,
 body {
   height: 100vh;

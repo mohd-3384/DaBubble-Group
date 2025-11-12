@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
@@ -44,7 +44,9 @@ export class ChannelsComponent {
   collapsedDMs = signal(false);
   meId: string | null = null; // später aus AuthService
 
-  constructor() {
+  constructor(
+    private router: Router) {
+
     // Wichtig: Erst hier (im DI-Kontext) Firebase-APIs aufrufen,
     // sonst kommt die Warnung „outside of an Injection context“.
     this.users$ = this.usersSvc.users$();
@@ -57,6 +59,10 @@ export class ChannelsComponent {
 
   toggleChannels() { this.collapsedChannels.update(v => !v); }
   toggleDMs() { this.collapsedDMs.update(v => !v); }
+
+  startNewMessage() {
+    this.router.navigate(['/new']);
+  }
 
   async addChannel() {
     const raw = prompt('Neuer Channel-Name (ohne #, z. B. "entwicklerteam")');

@@ -1,124 +1,169 @@
-<!-- Chat-Header -->
-<section class="chat-header" *ngIf="vm$ | async as vm">
-  <!-- CHANNEL -->
-  <div class="header-pill" *ngIf="vm.kind === 'channel'">
-    <h2 class="title">{{ vm.title }}</h2>
-    <span class="arrow" aria-hidden="true"></span>
-  </div>
+<!-- COMPOSE-HEADER -->
+<section class="chat-header" *ngIf="(composeMode$ | async) as compose; else normalHeader">
+  <div class="compose-header" *ngIf="compose">
+    <h2 class="title">Neue Nachricht</h2>
 
-  <!-- DIRECT MESSAGE -->
-  <div class="header-pill dm" *ngIf="vm.kind === 'dm'">
-    <div class="avatar-wrap">
-      <img class="avatar" [src]="vm.avatarUrl || '/public/images/avatars/avatar1.svg'" alt="User" />
-      <span class="dot" [class.online]="vm.online"></span>
-    </div>
-    <h2 class="title">{{ vm.title }}</h2>
-  </div>
+    <!-- suggestions$ EINMAL auflösen und als 'sugg' verwenden -->
+    <ng-container *ngIf="suggestions$ | async as sugg">
+      <div class="to-wrap" (click)="$event.stopPropagation()">
+        <input class="to-input" type="text" [value]="to" (input)="onToInput(($any($event.target)).value)"
+          (focus)="suggestOpen = true" (keydown)="onToKeydown($event, sugg)"
+          placeholder="An: #channel, oder @jemand oder E-Mail Adresse" />
 
-  <!-- Nur bei CHANNEL sichtbar -->
-  <div *ngIf="vm.kind === 'channel'" class="members-group">
-    <div class="avatars" *ngIf="members$ | async as members">
-      <ng-container *ngFor="let m of (members | slice:0:3); trackBy: trackMember">
-        <img class="avatar" [src]="m.avatarUrl" [alt]="m.name" />
-      </ng-container>
+        <!-- Dropdown -->
+        <ul class="to-suggest" *ngIf="suggestOpen">
+          <li *ngFor="let s of sugg; let i = index" [class.active]="i === suggestIndex" (mouseenter)="suggestIndex = i"
+            (click)="pickSuggestion(s)">
+            <ng-container [ngSwitch]="s.kind">
+              <img *ngSwitchCase="'user'" [src]="s.avatarUrl || '/public/images/avatars/avatar1.svg'" class="avatar" />
+            </ng-container>
+            <span class="label">{{ s.label }}</span>
+          </li>
 
-      <span class="count" *ngIf="members.length > 3">+{{ members.length - 3 }}</span>
-      <span class="count" *ngIf="members.length <= 3">{{ members.length }}</span>
-    </div>
-
-    <span class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
-      title="Mitglieder hinzufügen">
-    </span>
+          <li *ngIf="sugg.length === 0" class="empty">Keine Vorschläge</li>
+        </ul>
+      </div>
+    </ng-container>
   </div>
 </section>
 
+<!-- NORMALER HEADER -->
+<ng-template #normalHeader>
+  <section class="chat-header" *ngIf="vm$ | async as vm">
+    <!-- CHANNEL -->
+    <div class="header-pill" *ngIf="vm.kind === 'channel'">
+      <h2 class="title">{{ vm.title }}</h2>
+      <span class="arrow" aria-hidden="true"></span>
+    </div>
 
-
-
-
-
-
-<!--  -->
-<!--  -->
-<!--  -->
-
-
-
-<!-- Nur der Body-Teil der ChatComponent -->
-<!-- Nur der Body der ChatComponent -->
-<ng-container *ngIf="vm$ | async as vm">
-  <section class="chat-body">
-
-    <!-- CHANNEL leer -->
-    <ng-container *ngIf="vm.kind === 'channel' && (isEmpty$ | async); else hasMessages">
-      <div class="channel-empty">
-        <h3 class="empty-title">{{ vm.title }}</h3>
-        <p class="empty-hint">
-          Dieser Channel wurde neu erstellt. Das ist der Anfang des Channels
-          <a class="mention">{{ vm.title }}</a>.
-        </p>
+    <!-- DIRECT MESSAGE -->
+    <div class="header-pill dm" *ngIf="vm.kind === 'dm'">
+      <div class="avatar-wrap">
+        <img class="avatar" [src]="vm.avatarUrl || '/public/images/avatars/avatar1.svg'" alt="User" />
+        <span class="dot" [class.online]="vm.online"></span>
       </div>
-    </ng-container>
+      <h2 class="title">{{ vm.title }}</h2>
+    </div>
 
-    <!-- CHANNEL/DM mit Nachrichten -->
-    <ng-template #hasMessages>
-      <div class="top-gap"></div>
+    <!-- Nur bei CHANNEL sichtbar -->
+    <div *ngIf="vm.kind === 'channel'" class="members-group">
+      <div class="avatars" *ngIf="members$ | async as members">
+        <ng-container *ngFor="let m of (members | slice:0:3); trackBy: trackMember">
+          <img class="avatar" [src]="m.avatarUrl" [alt]="m.name" />
+        </ng-container>
 
-      <!-- gruppiert nach Tagen -->
-      <ng-container *ngFor="let g of (groups$ | async)">
-        <div class="day-separator">
-          <span class="chip">{{ g.label }}</span>
-        </div>
+        <span class="count" *ngIf="members.length > 3">+{{ members.length - 3 }}</span>
+        <span class="count" *ngIf="members.length <= 3">{{ members.length }}</span>
+      </div>
 
-        <div class="message-row" *ngFor="let m of g.items; trackBy: trackMsg">
-          <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName" />
-          <div class="message-col">
-            <div class="header">
-              <span class="name">{{ m.authorName }}</span>
-              <span class="dot"></span>
-              <span class="time" *ngIf="m.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
-            </div>
+      <span class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
+        title="Mitglieder hinzufügen"></span>
+    </div>
+  </section>
+</ng-template>
 
-            <div class="bubble bubble-light">{{ m.text }}</div>
 
-            <div class="thread-teaser" *ngIf="m.replyCount || m.lastReplyAt">
-              <a class="replies" href="javascript:void(0)">{{ m.replyCount || 0 }} Antworten</a>
-              <span class="last-reply" *ngIf="m.lastReplyAt as lr">Letzte Antwort {{ lr | date:'HH:mm' }}</span>
-            </div>
-          </div>
-        </div>
-      </ng-container>
-    </ng-template>
+<!-- BODY -->
+<section class="chat-body" *ngIf="(composeMode$ | async) as compose; else normalBody">
 
-    <!-- === Composer steht EINMAL für beide Arten (Channel/DM) === -->
+  <!-- COMPOSE-BODY (leer + Composer) -->
+  <div *ngIf="compose">
+    <div class="compose-spacer"></div>
+
     <div class="composer">
-      <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"></textarea>
+      <textarea class="composer-input" rows="3" placeholder="Starte eine neue Nachricht" [(ngModel)]="draft"></textarea>
 
       <div class="composer-actions">
         <div class="actions-left">
-          <!-- Emoji-Icon + Popover -->
+          <!-- Emoji -->
           <span class="emoji-wrapper">
             <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
-              (click)="toggleEmoji($event)">
-            </span>
-
-            <!-- Popover direkt über dem Icon -->
+              (click)="toggleEmoji($event)"></span>
             <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
               <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
-                (emojiSelect)="onEmojiSelect($event)">
-              </emoji-mart>
+                (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
             </div>
           </span>
 
+          <!-- @ -->
           <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"></span>
         </div>
 
-        <span class="send-btn" role="button" aria-label="Senden" (click)="send(vm)"></span>
+        <span class="send-btn" role="button" aria-label="Senden" (click)="send({kind:'channel', title:''})"></span>
       </div>
     </div>
 
-    <!-- Backdrop zum Schließen des Pickers -->
     <div class="emoji-backdrop" *ngIf="showEmoji" (click)="closeEmoji()"></div>
+  </div>
+</section>
 
-  </section>
-</ng-container>
+<!-- NORMALER BODY -->
+<ng-template #normalBody>
+  <ng-container *ngIf="vm$ | async as vm">
+    <section class="chat-body">
+
+      <!-- CHANNEL leer -->
+      <ng-container *ngIf="vm.kind === 'channel' && (isEmpty$ | async); else hasMessages">
+        <div class="channel-empty">
+          <h3 class="empty-title">{{ vm.title }}</h3>
+          <p class="empty-hint">
+            Dieser Channel wurde neu erstellt. Das ist der Anfang des Channels
+            <a class="mention">{{ vm.title }}</a>.
+          </p>
+        </div>
+      </ng-container>
+
+      <!-- CHANNEL/DM mit Nachrichten -->
+      <ng-template #hasMessages>
+        <div class="top-gap"></div>
+
+        <ng-container *ngFor="let g of (groups$ | async)">
+          <div class="day-separator"><span class="chip">{{ g.label }}</span></div>
+
+          <div class="message-row" *ngFor="let m of g.items; trackBy: trackMsg">
+            <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName" />
+            <div class="message-col">
+              <div class="header">
+                <span class="name">{{ m.authorName }}</span>
+                <span class="dot"></span>
+                <span class="time" *ngIf="m.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
+              </div>
+
+              <div class="bubble bubble-light">{{ m.text }}</div>
+
+              <div class="thread-teaser" *ngIf="m.replyCount || m.lastReplyAt">
+                <a class="replies" href="javascript:void(0)">{{ m.replyCount || 0 }} Antworten</a>
+                <span class="last-reply" *ngIf="m.lastReplyAt as lr">Letzte Antwort {{ lr | date:'HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </ng-template>
+
+      <!-- Composer -->
+      <div class="composer">
+        <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"></textarea>
+
+        <div class="composer-actions">
+          <div class="actions-left">
+            <span class="emoji-wrapper">
+              <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
+                (click)="toggleEmoji($event)"></span>
+              <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
+                <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+                  (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+              </div>
+            </span>
+
+            <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"></span>
+          </div>
+
+          <span class="send-btn" role="button" aria-label="Senden" (click)="send(vm)"></span>
+        </div>
+      </div>
+
+      <div class="emoji-backdrop" *ngIf="showEmoji" (click)="closeEmoji()"></div>
+
+    </section>
+  </ng-container>
+</ng-template>

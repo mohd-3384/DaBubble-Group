@@ -1,6 +1,7 @@
 import {
   Component,
   EnvironmentInjector,
+  HostListener,
   PLATFORM_ID,
   inject,
   runInInjectionContext,
@@ -20,25 +21,38 @@ import {
   serverTimestamp,
   limit,
 } from '@angular/fire/firestore';
-import { Observable, of, combineLatest } from 'rxjs';
+import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
 import { map, switchMap, startWith } from 'rxjs/operators';
-import { ChannelDoc, DayGroup, MemberDenorm, MemberVM, MessageVm, Vm } from '../interfaces/chat.interface';
+import {
+  ChannelDoc,
+  DayGroup,
+  MemberDenorm,
+  MemberVM,
+  MessageVm,
+  SuggestItem,
+  Vm,
+} from '../interfaces/chat.interface';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 
 function toDateMaybe(ts: any): Date | null {
-  return typeof ts?.toDate === 'function' ? ts.toDate() : (ts instanceof Date ? ts : null);
+  return typeof ts?.toDate === 'function'
+    ? ts.toDate()
+    : ts instanceof Date
+      ? ts
+      : null;
 }
-
 function sameYMD(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() &&
+  return (
+    a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+    a.getDate() === b.getDate()
+  );
 }
-
-// "Dienstag, 14. Januar" -> Punkte entfernen, Format anpassen
 function dayLabel(d: Date): string {
   const fmt = new Intl.DateTimeFormat('de-DE', {
-    weekday: 'long', day: '2-digit', month: 'long'
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
   });
   return fmt.format(d).replace(/\./g, '').replace(/\s+/g, ' ');
 }
@@ -57,31 +71,91 @@ export class ChatComponent {
   private env = inject(EnvironmentInjector);
   private platformId = inject(PLATFORM_ID);
 
+  // UI-VMs
   vm$!: Observable<Vm>;
   messages$!: Observable<MessageVm[]>;
   groups$!: Observable<DayGroup[]>;
-
-  /** leer/aktiv für Channel */
   isEmpty$!: Observable<boolean>;
 
-  /** Für den Composer */
+  // Composer
+  to = '';
+  private toInput$ = new BehaviorSubject<string>('');
+  suggestOpen = false;
+  suggestIndex = -1;
   draft = '';
   showEmoji = false;
 
+  // Header-Mitglieder (Channel)
   members$!: Observable<MemberVM[]>;
-
   trackMsg = (_: number, m: MessageVm) => m.id;
   trackMember = (_: number, m: MemberVM) => m.uid;
 
-  /** Optionale Korrektur, falls Avatar-URLs ohne führenden Slash in Firestore liegen */
+  channelsAll$!: Observable<{ id: string }[]>;
+  usersAll$!: Observable<{ id: string; name: string; avatarUrl?: string }[]>;
+  suggestions$!: Observable<SuggestItem[]>;
+
+  // Compose-Modus (= /new)
+  composeMode$ = this.route.url.pipe(
+    map((segs) => segs.some((s) => s.path === 'new')),
+    startWith(this.router.url.startsWith('/new'))
+  );
+
   private fixAvatar(url?: string) {
     if (!url) return '/public/images/avatars/avatar-default.svg';
     return url.startsWith('/') ? url : '/' + url;
   }
 
+  // call this from (input) in HTML
+  onToInput(v: string) {
+    this.to = v;
+    this.toInput$.next(v);
+    this.suggestOpen = true;
+  }
+
+  // Keyboard im "An:"-Feld
+  onToKeydown(ev: KeyboardEvent, list: SuggestItem[] | null | undefined) {
+    if (!this.suggestOpen || !list || list.length === 0) return;
+    const max = list.length - 1;
+
+    if (ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      this.suggestIndex = Math.min(max, this.suggestIndex + 1);
+    } else if (ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      this.suggestIndex = Math.max(0, this.suggestIndex - 1);
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      if (this.suggestIndex >= 0 && this.suggestIndex <= max) {
+        this.pickSuggestion(list[this.suggestIndex]);
+      }
+    } else if (ev.key === 'Escape') {
+      this.suggestOpen = false;
+    }
+  }
+
+  /** Klick irgendwo außerhalb -> Vorschlagsliste schließen */
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.suggestOpen = false;
+    this.suggestIndex = -1;
+  }
+
+  // Auswahl per Klick/Enter
+  pickSuggestion(s: SuggestItem) {
+    this.to = s.value;
+    this.toInput$.next(this.to);
+    this.suggestOpen = false;
+    this.suggestIndex = -1;
+  }
+
+  // Hilfsfilter
+  private normalize(s: string) {
+    return (s || '').toLowerCase().trim();
+  }
+
   constructor() {
     /** ---------- HEADER ---------- */
-    this.vm$ = this.route.paramMap.pipe(
+    const baseVm$ = this.route.paramMap.pipe(
       switchMap((params) => {
         const id = params.get('id')!;
         const isDM = this.router.url.includes('/dm/');
@@ -95,91 +169,97 @@ export class ChatComponent {
         }
 
         if (!isDM) {
-          // Channel: Titel aus der ID
           return of<Vm>({ kind: 'channel', title: `# ${id}` });
         }
 
-        // DM: user/{id}
         const uref = doc(this.fs, `users/${id}`);
         return runInInjectionContext(this.env, () => docData(uref)).pipe(
-          map((u: any): Vm => ({
-            kind: 'dm',
-            title: String(u?.name ?? ''),
-            avatarUrl: u?.avatarUrl as string | undefined,
-            online: u?.online as boolean | undefined,
-          })),
+          map(
+            (u: any): Vm => ({
+              kind: 'dm',
+              title: String(u?.name ?? ''),
+              avatarUrl: u?.avatarUrl as string | undefined,
+              online: u?.online as boolean | undefined,
+            })
+          ),
           startWith({ kind: 'dm', title: '', avatarUrl: undefined, online: undefined } as Vm)
         );
       })
     );
 
+    // Wenn composeMode aktiv ist, Header überschreiben
+    this.vm$ = this.composeMode$.pipe(
+      switchMap((isCompose) =>
+        isCompose ? of<Vm>({ kind: 'channel', title: 'Neue Nachricht' }) : baseVm$
+      )
+    );
+
+    /** ---------- MEMBERS im Header (nur Channel) ---------- */
     this.members$ = this.route.paramMap.pipe(
-      map(params => params.get('id')!),
-      switchMap(id => {
-        // 1) Debug: ID checken
-        console.log('[members$] channelId =', id);
-
-        // 2) SSR/Browser-Guard
-        if (!isPlatformBrowser(this.platformId)) {
-          return of([] as MemberVM[]);
-        }
-
+      map((params) => params.get('id')!),
+      switchMap((id) => {
+        if (!isPlatformBrowser(this.platformId)) return of([] as MemberVM[]);
         const ref = collection(this.fs, `channels/${id}/members`);
-
-        // 3) Im Injection-Kontext subscriben (stabil in Angular)
         const source$ = runInInjectionContext(this.env, () =>
           collectionData(ref, { idField: 'uid' }) as Observable<any[]>
         );
-
         return source$.pipe(
-          map(rows => {
-            console.log('[members$] rows =', rows);
-            return (rows as MemberDenorm[]).map(r => ({
-              uid: r.uid,
-              name: r.displayName ?? 'Member',
-              avatarUrl: this.fixAvatar(r.avatarUrl),
-            } as MemberVM));
-          }),
+          map((rows) =>
+            (rows as MemberDenorm[]).map(
+              (r) =>
+              ({
+                uid: r.uid,
+                name: r.displayName ?? 'Member',
+                avatarUrl: this.fixAvatar(r.avatarUrl),
+              } as MemberVM)
+            )
+          ),
           startWith([] as MemberVM[])
         );
       })
     );
 
-
-    /** ---------- CHAT BODY: Nachrichten ---------- */
-    this.messages$ = this.route.paramMap.pipe(
-      switchMap(params => {
+    /** ---------- NACHRICHTEN ---------- */
+    const baseMessages$ = this.route.paramMap.pipe(
+      switchMap((params) => {
         const channelId = params.get('id')!;
         const isDM = this.router.url.includes('/dm/');
-        if (!isPlatformBrowser(this.platformId)) return of([] as MessageVm[]);
-        if (isDM) return of([] as MessageVm[]);
+        if (!isPlatformBrowser(this.platformId) || isDM) return of([] as MessageVm[]);
 
-        const collPath = `channels/${channelId}/messages`;
-        const collRef = collection(this.fs, collPath);
+        const collRef = collection(this.fs, `channels/${channelId}/messages`);
         const qRef = query(collRef, orderBy('createdAt', 'asc'));
-
         const source$ = runInInjectionContext(this.env, () =>
           collectionData(qRef, { idField: 'id' }) as Observable<any[]>
         );
 
         return source$.pipe(
-          map(rows => rows.map(m => ({
-            id: m.id,
-            text: m.text ?? '',
-            authorName: m.authorName ?? 'Unbekannt',
-            authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
-            createdAt: toDateMaybe(m.createdAt),
-            replyCount: (m.replyCount ?? 0) as number,
-            lastReplyAt: toDateMaybe(m.lastReplyAt)
-          } as MessageVm))),
+          map((rows) =>
+            rows.map(
+              (m) =>
+              ({
+                id: m.id,
+                text: m.text ?? '',
+                authorName: m.authorName ?? 'Unbekannt',
+                authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
+                createdAt: toDateMaybe(m.createdAt),
+                replyCount: (m.replyCount ?? 0) as number,
+                lastReplyAt: toDateMaybe(m.lastReplyAt),
+              } as MessageVm)
+            )
+          ),
           startWith([] as MessageVm[])
         );
       })
     );
 
-    // ---------- Gruppierung nach Kalendertag (für Datums-Chips) ----------
+    // Im Compose-Modus keine Nachrichten laden
+    this.messages$ = this.composeMode$.pipe(
+      switchMap((isCompose) => (isCompose ? of([] as MessageVm[]) : baseMessages$))
+    );
+
+    // Gruppierung (wie gehabt)
     this.groups$ = this.messages$.pipe(
-      map(msgs => {
+      map((msgs) => {
         const today = new Date();
         const buckets = new Map<string, MessageVm[]>();
 
@@ -190,28 +270,21 @@ export class ChatComponent {
           buckets.get(key)!.push(m);
         }
 
-        // in Anzeige-Reihenfolge (aufsteigend nach Datum)
         const groups: DayGroup[] = [...buckets.entries()]
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([key, items]) => {
             const [y, mo, da] = key.split('-').map(Number);
             const date = new Date(y, mo - 1, da);
             const isToday = sameYMD(date, today);
-            return {
-              label: isToday ? 'Heute' : dayLabel(date),
-              isToday,
-              items
-            } as DayGroup;
+            return { label: isToday ? 'Heute' : dayLabel(date), isToday, items } as DayGroup;
           });
 
         return groups;
       })
     );
 
-    /** ---------- CHAT BODY: leer/aktiv für Channel ---------- */
+    /** ---------- LEER/AKTIV ---------- */
     const channelId$ = this.route.paramMap.pipe(map((p) => p.get('id')!));
-
-    // Channel-Dokument
     const channelDoc$ = channelId$.pipe(
       switchMap((id) =>
         isPlatformBrowser(this.platformId)
@@ -220,8 +293,6 @@ export class ChatComponent {
       ),
       startWith(<ChannelDoc>{})
     );
-
-    // erste Nachricht (limit(1)) – falls Zähler mal nicht stimmt
     const firstMessage$ = channelId$.pipe(
       switchMap((id) =>
         isPlatformBrowser(this.platformId)
@@ -233,17 +304,126 @@ export class ChatComponent {
       ),
       startWith<any[]>([])
     );
-
-    this.isEmpty$ = combineLatest([channelDoc$, firstMessage$]).pipe(
+    const baseIsEmpty$ = combineLatest([channelDoc$, firstMessage$]).pipe(
       map(([ch, first]) => (ch?.messageCount ?? 0) === 0 || (first?.length ?? 0) === 0)
+    );
+    this.isEmpty$ = this.composeMode$.pipe(
+      switchMap((isCompose) => (isCompose ? of(true) : baseIsEmpty$))
+    );
+
+    // ---- Quellen für Channels / Users (nur Name/Id – leichtgewichtig) ----
+    this.channelsAll$ = runInInjectionContext(this.env, () =>
+      collectionData(collection(this.fs, 'channels'), { idField: 'id' }) // <-- idField !
+    ).pipe(
+      map((rows: any[]) =>
+        (rows || []).map((r: any) => ({ id: String(r?.id || '') })).filter(x => !!x.id)
+      ),
+      startWith([])
+    );
+
+    this.usersAll$ = runInInjectionContext(this.env, () =>
+      collectionData(collection(this.fs, 'users'), { idField: 'id' })
+    ).pipe(
+      map((rows: any[]) =>
+        (rows || []).map((u: any) => ({
+          id: u.id,
+          name: u?.name ?? u?.displayName ?? 'Unbekannt',
+          avatarUrl: this.fixAvatar(u?.avatarUrl),
+        }))
+      ),
+      startWith([])
+    );
+
+    // ---- Autocomplete zusammenbauen ----
+    this.suggestions$ = combineLatest([
+      this.toInput$.pipe(startWith('')),
+      this.channelsAll$,
+      this.usersAll$,
+    ]).pipe(
+      map(([raw, channels, users]) => {
+        const q = this.normalize(raw);
+        if (!q) return [] as SuggestItem[];
+
+        // #channel
+        if (q.startsWith('#')) {
+          const term = this.normalize(q.slice(1));
+          const matches = channels
+            .filter(c => this.normalize(c.id).includes(term))
+            .slice(0, 8)
+            .map<SuggestItem>(c => ({
+              kind: 'channel',
+              id: c.id,
+              label: `# ${c.id}`,  // <— sichtbar im Dropdown
+              value: `#${c.id}`,   // <— was in das Feld geschrieben wird
+            }));
+          return matches;
+        }
+
+        // @user
+        if (q.startsWith('@')) {
+          const term = this.normalize(q.slice(1));
+          const matches = users
+            .filter((u) => this.normalize(u.name).includes(term))
+            .slice(0, 8)
+            .map<SuggestItem>((u) => ({
+              kind: 'user',
+              id: u.id,
+              label: `@${u.name}`,
+              value: `@${u.name}`,
+              avatarUrl: u.avatarUrl,
+            }));
+          return matches;
+        }
+
+        // email fallback (ein einfacher Check)
+        const looksLikeMail = q.includes('@') && q.includes('.');
+        if (looksLikeMail) {
+          return [
+            {
+              kind: 'email',
+              label: `E-Mail an ${raw}`,
+              value: raw,
+            } as SuggestItem,
+          ];
+        }
+
+        // ansonsten beide Listen als Vorschlag (Top 8)
+        const both = [
+          ...channels.slice(0, 4).map<SuggestItem>((c) => ({
+            kind: 'channel',
+            id: c.id,
+            label: `# ${c.id}`,
+            value: `#${c.id}`,
+          })),
+          ...users.slice(0, 4).map<SuggestItem>((u) => ({
+            kind: 'user',
+            id: u.id,
+            label: `@${u.name}`,
+            value: `@${u.name}`,
+            avatarUrl: u.avatarUrl,
+          })),
+        ];
+        return both;
+      })
     );
   }
 
-  /** ---------- Composer ---------- */
-
+  /** ---------- Composer / Emoji ---------- */
   toggleEmoji(evt?: Event) {
     evt?.stopPropagation();
     this.showEmoji = !this.showEmoji;
+  }
+  closeEmoji() {
+    this.showEmoji = false;
+  }
+  onEmojiSelect(e: any) {
+    const native = e?.emoji?.native ?? e?.emoji?.char ?? e?.native ?? e?.colons ?? '';
+    this.draft += native;
+    this.showEmoji = false;
+  }
+  onEmojiClick(event: any) {
+    const emoji = event?.detail?.unicode || event?.detail?.emoji?.unicode || '';
+    this.draft += emoji;
   }
 
   composePlaceholder(vm: Vm): string {
@@ -251,33 +431,15 @@ export class ChatComponent {
     return `Nachricht an ${who}`;
   }
 
-  closeEmoji() {
-    this.showEmoji = false;
-  }
-
-  onEmojiSelect(e: any) {
-    const native =
-      e?.emoji?.native ??
-      e?.emoji?.char ??
-      e?.native ??
-      e?.colons ??
-      '';
-    this.draft += native;
-    this.showEmoji = false;
-  }
-
-  onEmojiClick(event: any) {
-    const emoji = event?.detail?.unicode || event?.detail?.emoji?.unicode || '';
-    this.draft += emoji;
-  }
-
   async send(vm: Vm) {
     const msg = this.draft.trim();
     if (!msg) return;
 
+    // Im Compose-Modus müsstest du anhand von "to" entscheiden,
+    // wohin gesendet wird (Channel / DM / E-Mail etc.).
+    // Hier senden wir nur in aktuellem Channel:
     const id = this.route.snapshot.paramMap.get('id')!;
     const isDM = vm.kind === 'dm';
-
     if (isDM) {
       console.warn('DM-Nachrichten-Senden noch nicht implementiert');
       this.draft = '';
@@ -289,15 +451,16 @@ export class ChatComponent {
       const coll = collection(this.fs, `channels/${id}/messages`);
       await addDoc(coll, {
         text: msg,
-        authorName: 'Max Mustermann', // TODO: currentUser
+        authorName: 'Max Mustermann',
         authorAvatar: '/public/images/avatars/avatar1.svg',
         createdAt: serverTimestamp(),
       });
-
       this.draft = '';
       this.showEmoji = false;
     } catch (err) {
       console.error('Fehler beim Senden:', err);
     }
   }
+
+
 }
