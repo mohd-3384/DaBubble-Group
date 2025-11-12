@@ -12,7 +12,7 @@ export const routes: Routes = [
     children: [
       { path: 'channel/:id', component: ChatComponent },
       { path: 'dm/:id', component: ChatComponent },
-      { path: '', pathMatch: 'full', redirectTo: 'channel/willkommen' },
+      { path: '', pathMatch: 'full', redirectTo: '' },
     ],
   },
   { path: '**', redirectTo: '' },

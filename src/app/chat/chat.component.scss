@@ -375,6 +375,7 @@ $muted: #6c7280;
       &.bubble-light {
         background: var(--background-color);
         border: 1px solid #e6eaff;
+        border-top-left-radius: 0;
       }
     }
 
