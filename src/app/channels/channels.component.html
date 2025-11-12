@@ -28,6 +28,12 @@
     <div matLine># {{ c.id }}</div>
     <span class="spacer"></span>
   </a>
+
+  <div mat-list-item class="add-inline" (click)="addChannel()" role="button" tabindex="0"
+    aria-label="Channel hinzufügen">
+    <span class="add-circle" aria-hidden="true"></span>
+    <span class="add-text">Channel hinzufügen</span>
+  </div>
 </mat-nav-list>
 
 <!-- DIREKTNACHRICHTEN -->

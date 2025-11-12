@@ -207,6 +207,45 @@
   justify-self: end;
 }
 
+/* Inline-Add-Zeile unter der Channel-Liste */
+.add-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: var(--border-radius9999);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    .add-text {
+      color: var(--primary-color);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 2px;
+  }
+
+  .add-circle {
+    width: 24px;
+    height: 24px;
+    background: no-repeat center / 24px 24px url('/public/images/add-circle.svg');
+    transition: transform .15s ease, filter .15s ease;
+  }
+
+  &:hover .add-circle {
+    background-image: url('/public/images/add-circle-hover.svg');
+    transform: scale(1.05);
+  }
+
+  .add-text {
+    font-weight: 600;
+  }
+}
+
+
 /* ===========================
    Listen / Hover-Design
    =========================== */
