@@ -26,3 +26,17 @@ export interface DayGroup {
   isToday: boolean;
   items: MessageVm[];
 };
+
+export interface MemberDenorm {
+  uid: string;
+  displayName?: string;
+  avatarUrl?: string;
+  joinedAt?: Date | null;
+  role?: 'member' | 'admin';
+};
+
+export interface MemberVM {
+  uid: string;
+  name: string;
+  avatarUrl?: string
+};

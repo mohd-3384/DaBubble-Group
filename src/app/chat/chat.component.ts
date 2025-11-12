@@ -22,7 +22,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable, of, combineLatest } from 'rxjs';
 import { map, switchMap, startWith } from 'rxjs/operators';
-import { ChannelDoc, DayGroup, MessageVm, Vm } from '../interfaces/chat.interface';
+import { ChannelDoc, DayGroup, MemberDenorm, MemberVM, MessageVm, Vm } from '../interfaces/chat.interface';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 
 function toDateMaybe(ts: any): Date | null {
@@ -68,7 +68,16 @@ export class ChatComponent {
   draft = '';
   showEmoji = false;
 
+  members$!: Observable<MemberVM[]>;
+
   trackMsg = (_: number, m: MessageVm) => m.id;
+  trackMember = (_: number, m: MemberVM) => m.uid;
+
+  /** Optionale Korrektur, falls Avatar-URLs ohne führenden Slash in Firestore liegen */
+  private fixAvatar(url?: string) {
+    if (!url) return '/public/images/avatars/avatar-default.svg';
+    return url.startsWith('/') ? url : '/' + url;
+  }
 
   constructor() {
     /** ---------- HEADER ---------- */
@@ -103,6 +112,39 @@ export class ChatComponent {
         );
       })
     );
+
+    this.members$ = this.route.paramMap.pipe(
+      map(params => params.get('id')!),
+      switchMap(id => {
+        // 1) Debug: ID checken
+        console.log('[members$] channelId =', id);
+
+        // 2) SSR/Browser-Guard
+        if (!isPlatformBrowser(this.platformId)) {
+          return of([] as MemberVM[]);
+        }
+
+        const ref = collection(this.fs, `channels/${id}/members`);
+
+        // 3) Im Injection-Kontext subscriben (stabil in Angular)
+        const source$ = runInInjectionContext(this.env, () =>
+          collectionData(ref, { idField: 'uid' }) as Observable<any[]>
+        );
+
+        return source$.pipe(
+          map(rows => {
+            console.log('[members$] rows =', rows);
+            return (rows as MemberDenorm[]).map(r => ({
+              uid: r.uid,
+              name: r.displayName ?? 'Member',
+              avatarUrl: this.fixAvatar(r.avatarUrl),
+            } as MemberVM));
+          }),
+          startWith([] as MemberVM[])
+        );
+      })
+    );
+
 
     /** ---------- CHAT BODY: Nachrichten ---------- */
     this.messages$ = this.route.paramMap.pipe(

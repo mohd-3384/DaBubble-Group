@@ -1,33 +1,37 @@
 <!-- Chat-Header -->
 <section class="chat-header" *ngIf="vm$ | async as vm">
-  <!-- CHANNEL (# Titel + Pfeil) -->
+  <!-- CHANNEL -->
   <div class="header-pill" *ngIf="vm.kind === 'channel'">
     <h2 class="title">{{ vm.title }}</h2>
     <span class="arrow" aria-hidden="true"></span>
   </div>
 
-  <!-- DIRECT MESSAGE (Avatar + Online-Dot + Name) -->
+  <!-- DIRECT MESSAGE -->
   <div class="header-pill dm" *ngIf="vm.kind === 'dm'">
     <div class="avatar-wrap">
-      <img class="avatar" [src]="vm.avatarUrl" alt="User" />
+      <img class="avatar" [src]="vm.avatarUrl || '/public/images/avatars/avatar1.svg'" alt="User" />
       <span class="dot" [class.online]="vm.online"></span>
     </div>
     <h2 class="title">{{ vm.title }}</h2>
   </div>
 
   <!-- Nur bei CHANNEL sichtbar -->
-  <div *ngIf="(vm$ | async)?.kind === 'channel'" class="members-group">
-    <div class="avatars">
-      <img src="/public/images/avatars/avatar1.svg" alt="Member 1" class="avatar" />
-      <img src="/public/images/avatars/avatar2.svg" alt="Member 2" class="avatar" />
-      <img src="/public/images/avatars/avatar3.svg" alt="Member 3" class="avatar" />
-      <span class="count">3</span>
+  <div *ngIf="vm.kind === 'channel'" class="members-group">
+    <div class="avatars" *ngIf="members$ | async as members">
+      <ng-container *ngFor="let m of (members | slice:0:3); trackBy: trackMember">
+        <img class="avatar" [src]="m.avatarUrl" [alt]="m.name" />
+      </ng-container>
+
+      <span class="count" *ngIf="members.length > 3">+{{ members.length - 3 }}</span>
+      <span class="count" *ngIf="members.length <= 3">{{ members.length }}</span>
     </div>
 
-    <button class="icon-swap add-member" type="button" aria-label="Mitglieder hinzufügen" title="Mitglieder hinzufügen">
-    </button>
+    <span class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
+      title="Mitglieder hinzufügen">
+    </span>
   </div>
 </section>
+
 
 
 
