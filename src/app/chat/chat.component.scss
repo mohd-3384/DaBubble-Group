@@ -54,7 +54,7 @@
     background-position: center;
     background-size: 32px 32px;
     display: inline-block;
-    transition: background-image 0.15s ease;
+    transition: background-image var(--transition15);
   }
 
   /* „#“ vor Channel-Titel */
@@ -118,7 +118,7 @@
   }
 
   .arrow {
-    transition: filter 0.2s ease;
+    transition: filter var(--transition20);
   }
 
   &:hover .arrow {
@@ -141,7 +141,7 @@
   padding: 4px 10px;
   border-radius: 30px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--transition15);
   background: transparent;
 
   &:hover {
@@ -185,7 +185,7 @@
   background-position: center;
   background-size: 22px 22px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition20);
 
   &:focus-visible {
     outline: 2px solid var(--secondary-color);
@@ -390,9 +390,10 @@ $muted: #6c7280;
         color: var(--primary-color);
         text-decoration: none;
         font-weight: 600;
+        transition: var(--transition15);
 
         &:hover {
-          text-decoration: underline;
+          font-weight: 700;
         }
       }
 
@@ -551,7 +552,7 @@ $muted: #6c7280;
       background-position: center;
       background-size: 22px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all var(--transition20);
 
       &:focus-visible {
         outline: 2px solid var(--secondary-color);
@@ -592,7 +593,7 @@ $muted: #6c7280;
       background-size: 24px;
       background-image: url('/public/images/send.svg');
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all var(--transition20);
 
       &:hover {
         background-image: url('/public/images/send-hover.svg');

@@ -9,6 +9,8 @@
   --background-offline: #9ca3af;
   --btn-hover-violett: #797ef3;
   --border-radius9999: 9999px;
+  --transition15: 0.15s ease;
+  --transition20: 0.2s ease;
 }
 
 html,
@@ -224,7 +226,7 @@ body {
 
 /* sanfter Hover-Effekt (ohne Cursor) */
 .emoji-mart .emoji-mart-emoji {
-  transition: transform 0.12s ease, filter 0.12s ease;
+  transition: transform var(--transition15), filter var(--transition15);
   will-change: transform;
 }
 
@@ -240,7 +242,7 @@ body {
   border: 1px solid var(--background-color);
   border-radius: 16px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease;
+  transition: all var(--transition20);
   z-index: 2000;
 
   /* Scrolling begrenzen */

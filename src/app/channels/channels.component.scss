@@ -35,7 +35,7 @@
   background-size: 20px 20px;
   background-color: transparent;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  transition: filter var(--transition15);
 }
 
 /* Fokus visible (Tastatur-Navigation) */
@@ -59,7 +59,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all var(--transition20);
 }
 
 /* Hover-Effekt */
@@ -106,13 +106,13 @@
       gap: 8px;
       cursor: pointer;
       user-select: none;
-      transition: color 0.15s ease;
+      transition: color var(--transition15);
     }
 
     .arrow {
       width: 16px;
       height: 16px;
-      transition: transform 0.15s ease;
+      transition: transform var(--transition15);
     }
 
     .arrow.rotated {
@@ -122,7 +122,7 @@
     .workspace-icon {
       width: 20px;
       height: 20px;
-      transition: filter 0.15s ease;
+      transition: filter var(--transition15);
     }
 
     .title {
@@ -130,7 +130,7 @@
       font-size: 20px;
       color: #000;
       letter-spacing: 0.2px;
-      transition: color 0.15s ease;
+      transition: color var(--transition15);
     }
 
     /* Hover-Effekt */
@@ -157,13 +157,13 @@
       gap: 8px;
       cursor: pointer;
       user-select: none;
-      transition: color 0.15s ease;
+      transition: color var(--transition15);
     }
 
     .arrow {
       width: 16px;
       height: 16px;
-      transition: transform 0.15s ease;
+      transition: transform var(--transition15);
     }
 
     .arrow.rotated {
@@ -173,7 +173,7 @@
     .dm-icon {
       width: 20px;
       height: 20px;
-      transition: filter 0.15s ease;
+      transition: filter var(--transition15);
     }
 
     .title {
@@ -181,7 +181,7 @@
       font-size: 20px;
       color: #000;
       letter-spacing: 0.2px;
-      transition: color 0.15s ease;
+      transition: color var(--transition15);
     }
 
     /* Hover-Effekt */
@@ -232,7 +232,7 @@
     width: 24px;
     height: 24px;
     background: no-repeat center / 24px 24px url('/public/images/add-circle.svg');
-    transition: transform .15s ease, filter .15s ease;
+    transition: transform var(--transition15), filter var(--transition15);
   }
 
   &:hover .add-circle {
