@@ -44,8 +44,8 @@ export interface MemberVM {
 export type TargetKind = 'channel' | 'user' | 'email';
 export interface SuggestItem {
   kind: TargetKind;
-  id?: string;        // channelId oder userId
-  label: string;      // was angezeigt wird
-  value: string;      // was in das "to"-Feld übernommen wird (z.B. #frontend, @alice)
-  avatarUrl?: string; // optional für user
+  id?: string;
+  label: string;
+  value: string;
+  avatarUrl?: string;
 }
