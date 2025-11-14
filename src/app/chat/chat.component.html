@@ -98,6 +98,7 @@
 </section>
 
 <!-- NORMALER BODY -->
+<!-- NORMALER BODY -->
 <ng-template #normalBody>
   <ng-container *ngIf="vm$ | async as vm">
     <section class="chat-body">
@@ -142,27 +143,56 @@
 
       <!-- Composer -->
       <div class="composer">
-        <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"></textarea>
+        <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft">
+        </textarea>
 
         <div class="composer-actions">
           <div class="actions-left">
+
+            <!-- Emoji -->
             <span class="emoji-wrapper">
               <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
-                (click)="toggleEmoji($event)"></span>
+                (click)="toggleEmoji($event)">
+              </span>
+
               <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
                 <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
-                  (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+                  (emojiSelect)="onEmojiSelect($event)">
+                </emoji-mart>
               </div>
             </span>
 
-            <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"></span>
-          </div>
+            <!-- @ Erwähnungen NUR im Channel -->
+            <span *ngIf="vm.kind === 'channel'" class="mention-wrapper">
 
+              <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"
+                (click)="toggleMembers($event)">
+              </span>
+
+              <!-- Mitglieder-Popup -->
+              <ng-container *ngIf="showMembers">
+                <div class="mention-popover" (click)="$event.stopPropagation()" *ngIf="members$ | async as members">
+
+                  <div class="mention-item" *ngFor="let m of members; trackBy: trackMember" (click)="insertMention(m)">
+                    <img class="mention-avatar" [src]="m.avatarUrl" />
+                    <span class="mention-name">{{ m.name }}</span>
+                  </div>
+
+                </div>
+              </ng-container>
+            </span>
+          </div>
           <span class="send-btn" role="button" aria-label="Senden" (click)="send(vm)"></span>
         </div>
       </div>
 
-      <div class="emoji-backdrop" *ngIf="showEmoji" (click)="closeEmoji()"></div>
+      <!-- Backdrop für Emoji + Mitglieder -->
+      <div class="emoji-backdrop" *ngIf="showEmoji || showMembers" (click)="closeEmoji(); closeMembers()">
+      </div>
+
+      <!-- Backdrop für Emoji + Mitglieder -->
+      <div class="emoji-backdrop" *ngIf="showEmoji || showMembers" (click)="closeEmoji(); closeMembers()">
+      </div>
 
     </section>
   </ng-container>

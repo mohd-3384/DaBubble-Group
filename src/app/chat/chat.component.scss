@@ -506,7 +506,8 @@ $muted: #6c7280;
     }
 
     .emoji-anchor,
-    .emoji-wrapper {
+    .emoji-wrapper,
+    .mention-wrapper {
       position: relative;
       display: inline-flex;
       align-items: center;
@@ -588,11 +589,54 @@ $muted: #6c7280;
 }
 
 /* Vollflächiger Backdrop zum Schließen per Klick außerhalb */
-.emoji-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  background: transparent;
+.mention-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  transform: translateX(-16px);
+  z-index: 2000;
+  background: #fff;
+  border: 1px solid var(--background-color);
+  border-radius: 24px;
+  box-shadow: 0 12px 30px var(--background-color);
+  padding: 6px 4px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  margin: 2px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition20), transform var(--transition20);
+
+  &:hover {
+    background: var(--background-color);
+    transform: translateX(2px);
+  }
+}
+
+.mention-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  display: block;
+}
+
+.mention-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground-color);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 /* ===== Compose Header (Neue Nachricht) ===== */

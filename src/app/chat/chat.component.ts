@@ -84,6 +84,7 @@ export class ChatComponent {
   suggestIndex = -1;
   draft = '';
   showEmoji = false;
+  showMembers = false;
 
   // Header-Mitglieder (Channel)
   members$!: Observable<MemberVM[]>;
@@ -138,6 +139,7 @@ export class ChatComponent {
   onDocumentClick() {
     this.suggestOpen = false;
     this.suggestIndex = -1;
+    this.showMembers = false;
   }
 
   // Auswahl per Klick/Enter
@@ -425,6 +427,27 @@ export class ChatComponent {
     const emoji = event?.detail?.unicode || event?.detail?.emoji?.unicode || '';
     this.draft += emoji;
   }
+
+  toggleMembers(evt?: Event) {
+    evt?.stopPropagation();
+    this.showMembers = !this.showMembers;
+  }
+
+  closeMembers() {
+    this.showMembers = false;
+  }
+
+  insertMention(m: MemberVM) {
+    const name = m.name ?? 'Member';
+    const mention = `@${name}`;
+
+    const base = this.draft || '';
+    const needsSpace = base.length > 0 && !/\s$/.test(base);
+
+    this.draft = base + (needsSpace ? ' ' : '') + mention + ' ';
+    this.showMembers = false;
+  }
+
 
   composePlaceholder(vm: Vm): string {
     const who = vm.title || '';
