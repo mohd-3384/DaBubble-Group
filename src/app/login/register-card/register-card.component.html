@@ -2,45 +2,81 @@
     <mat-card appearance="outlined">
         <mat-card-header>
             <mat-card-title>Konto erstellen</mat-card-title>
-            <mat-card-subtitle>Mit deinem Namen und deiner E-Mail-Adresse hast du dein neues DABubble-Konto.</mat-card-subtitle>
+            <mat-card-subtitle>Mit deinem Namen und deiner E-Mail-Adresse hast du dein neues
+                DABubble-Konto.</mat-card-subtitle>
         </mat-card-header>
 
-        <form onsubmit="login(event)">
+        <form [formGroup]="form" (ngSubmit)="onsubmit()">
 
             <div class="input-container">
                 <div class="span-input">
                     <div class="name-input">
                         <img src="./public/images/mail-icon.svg" alt="email icon">
-                        <input type="name" placeholder="Name und Nachname" required pattern="[a-zA-Z]">
+                        <input type="name" placeholder="Name und Nachname" formControlName="name">
                     </div>
-                    <span class="wrong-password">Bitte schreibe deinen Namen.</span>
+                    @if (form.get('name')?.touched && form.get('name')?.invalid) {
+                    <span class="wrong-password">
+                        @if (form.get('name')?.errors?.['required']) {
+                        Bitte schreibe deinen Namen.
+                        }
+                        @else if (form.get('name')?.errors?.['minlength']) {
+                        Mindestens 2 Zeichen.
+                        }
+                        @else if (form.get('name')?.errors?.['pattern']) {
+                        Nur Buchstaben erlaubt.
+                        }
+                    </span>}
                 </div>
                 <div class="span-input">
                     <div class="email-input">
                         <img src="./public/images/password-icon.svg" alt="password icon">
-                        <input type="email" placeholder="beispielname@email.com" required minlength="6"
-                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$">
+                        <input type="email" placeholder="beispielname@email.com" formControlName="email">
                     </div>
-                    <span class="wrong-password">*Deine E-Mail-Adresse ist ungültig.</span>
+                    @if (form.get('email')?.touched && form.get('email')?.invalid) {
+                    <span class="wrong-password">
+                        @if (form.get('email')?.errors?.['required']) {
+                        Bitte gib deine E-Mail-Adresse ein.
+                        }
+                        @else if (form.get('email')?.errors?.['email']) {
+                        Deine E-Mail-Adresse ist ungültig.
+                        }
+                    </span>}
                 </div>
                 <div class="span-input">
                     <div class="password-input">
                         <img src="./public/images/password-icon.svg" alt="password icon">
-                        <input type="password" placeholder="Passwort" required minlength="6">
+                        <input type="password" placeholder="Passwort" formControlName="password">
                     </div>
-                    <span class="wrong-password">Bitte geben Sie ein Passwort ein.</span>
+                    @if (form.get('password')?.touched && form.get('password')?.invalid) {
+                    <span class="wrong-password">
+                        @if (form.get('password')?.errors?.['required']) {
+                        Bitte geben Sie ein Passwort ein.
+                        }
+                        @else if (form.get('password')?.errors?.['minlength']) {
+                        Das Passwort muss mindestens 6 Zeichen lang sein.
+                        }
+                        @else if (form.get('password')?.errors?.['pattern']) {
+                        Das Passwort muss mindestens einen Großbuchstaben und ein Sonderzeichen enthalten.
+                        }
+                    </span>}
                 </div>
             </div>
 
-            <form class="privacy-policy">
+            <div class="privacy-policy">
                 <div class="checkbox-container">
-                    <input type="checkbox" id="terms" name="terms" required>
-                    <label for="terms">Ich stimme der <a href="#">Datenschutzerklärung</a> zu.</label>
+                    <input type="checkbox" id="terms" name="terms" formControlName="terms">
+                    <label for="terms">
+                        Ich stimme der <a href="#">Datenschutzerklärung</a> zu.
+                    </label>
                 </div>
-            </form>
+            </div>
+            @if (form.get('terms')?.touched && form.get('terms')?.invalid) {
+            <span class="wrong-password">Du musst der Datenschutzerklärung zustimmen.</span>
+            }
 
             <div class="button-container">
-                <button class="button_1">Weiter</button>
+                <button class="button_1" type="submit" [disabled]="form.invalid"
+                >Weiter</button>
             </div>
         </form>
     </mat-card>
