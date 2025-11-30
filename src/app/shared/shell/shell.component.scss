@@ -1,9 +1,19 @@
 .shell {
   display: grid;
-  grid-template-columns: 280px 1fr 360px;
+  grid-template-columns: 280px minmax(0, 1fr) 340px;
   gap: 16px;
   height: calc(100vh - 122px);
   padding: 16px;
+  transition: grid-template-columns .3s ease-in-out;
+}
+
+.shell.shell--workspace-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr) 340px;
+}
+
+.shell.shell--workspace-collapsed .shell__left {
+  padding: 0;
+  border: none;
 }
 
 .shell__left,
@@ -21,7 +31,6 @@
 
 .shell__center {
   padding: 0;
-  // overflow: hidden;
 }
 
 .shell__right {

@@ -23,8 +23,15 @@ export class ShellComponent {
   private thread = inject(ThreadState);
   vm = computed(() => this.thread.vm());
 
+  workspaceCollapsed = false;
+
+  onWorkspaceCollapsedChange(collapsed: boolean) {
+    this.workspaceCollapsed = collapsed;
+  }
+
   onSend(text: string) {
     this.thread.appendReply(text, { id: 'me', name: 'Ich' });
   }
+
   onClose() { this.thread.close(); }
 }

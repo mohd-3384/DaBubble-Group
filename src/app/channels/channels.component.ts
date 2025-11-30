@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -13,6 +13,8 @@ import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
 import { ChannelDoc } from '../interfaces/channel.interface';
 import { UserDoc } from '../interfaces/user.interface';
+
+
 
 @Component({
   selector: 'app-channels',
@@ -38,6 +40,17 @@ export class ChannelsComponent {
 
   users$!: Observable<UserDoc[]>;
   channels$!: Observable<ChannelDoc[]>;
+
+  workspaceCollapsed = signal(false);
+  @Output() workspaceCollapsedChange = new EventEmitter<boolean>();
+
+  toggleWorkspace() {
+    this.workspaceCollapsed.update((v) => {
+      const next = !v;
+      this.workspaceCollapsedChange.emit(next);   // <-- Shell informieren
+      return next;
+    });
+  }
 
   /** UI State */
   collapsedChannels = signal(false);

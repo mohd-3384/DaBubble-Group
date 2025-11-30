@@ -1,8 +1,8 @@
 <app-header></app-header>
 
-<div class="shell">
+<div class="shell" [class.shell--workspace-collapsed]="workspaceCollapsed">
   <aside class="shell__left">
-    <app-channels></app-channels>
+    <app-channels (workspaceCollapsedChange)="onWorkspaceCollapsedChange($event)"></app-channels>
   </aside>
 
   <main class="shell__center">
@@ -10,7 +10,6 @@
   </main>
 
   <aside class="shell__right">
-    <!-- Thread wird nur angezeigt, wenn State.open = true -->
     <app-thread *ngIf="vm().open" [header]="vm().header ?? { title: 'Thread' }" [rootMessage]="vm().root!"
       [replies]="vm().replies" (send)="onSend($event)" (close)="onClose()" />
   </aside>

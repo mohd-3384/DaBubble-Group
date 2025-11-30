@@ -4,26 +4,33 @@
 }
 
 /* ===========================
-   Header (Devspace + Icons)
+    Header (Devspace + Icons)
    =========================== */
 .ws-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 8px;
+  margin-left: -16px;
+}
+
+.ws-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
 }
 
 .ws-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  font-size: 24px;
+  font-weight: bold;
+  ;
 }
 
-.workspace-logo {
-  height: 52px;
+.ws-logo {
+  width: 46px;
 }
 
-/* Basis-Stil für SVG-Icon-Buttons */
 .icon-swap {
   width: 28px;
   height: 28px;
@@ -38,13 +45,11 @@
   transition: filter var(--transition15);
 }
 
-/* Fokus visible (Tastatur-Navigation) */
 .icon-swap:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
 
-/* --- Edit (Devspace) --- */
 .icon-swap.edit {
   width: 40px;
   height: 40px;
@@ -62,7 +67,6 @@
   transition: all var(--transition20);
 }
 
-/* Hover-Effekt */
 .icon-swap.edit:hover {
   background-image: url('/public/images/edit_square_hover.svg');
   background-color: #535af11f;
@@ -70,14 +74,12 @@
   box-shadow: 0 0 6px #535af133;
 }
 
-/* Klick-Effekt */
 .icon-swap.edit:active {
   background-image: url('/public/images/edit_square_click.svg');
   background-color: #535af140;
   transform: scale(0.95);
 }
 
-/* --- Add (Channels) --- */
 .icon-swap.add {
   background-image: url('/public/images/add.svg');
 }
@@ -88,7 +90,7 @@
 }
 
 /* ===========================
-   Sections (Channels / DMs)
+    ections (Channels / DMs)
    =========================== */
 .section-header {
   display: grid;
@@ -96,104 +98,65 @@
   align-items: center;
   padding: 8px 4px;
 
-  /* === CHANNELS HEADER === */
-  &.channels-header {
-    grid-template-columns: 1fr 40px;
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition15);
+  }
 
-    .left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      user-select: none;
-      transition: color var(--transition15);
-    }
+  .arrow {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition15);
+  }
 
+  .arrow.rotated {
+    transform: rotate(-90deg);
+  }
+
+  .section-icon {
+    width: 20px;
+    height: 20px;
+    transition: filter var(--transition15);
+  }
+
+  .title {
+    font-weight: 800;
+    font-size: 20px;
+    color: #000;
+    letter-spacing: 0.2px;
+    transition: color var(--transition15);
+  }
+
+  /* ===== CHANNELS HEADER ===== */
+  &.channels-header:hover {
     .arrow {
-      width: 16px;
-      height: 16px;
-      transition: transform var(--transition15);
-    }
-
-    .arrow.rotated {
-      transform: rotate(-90deg);
-    }
-
-    .workspace-icon {
-      width: 20px;
-      height: 20px;
-      transition: filter var(--transition15);
-    }
-
-    .title {
-      font-weight: 800;
-      font-size: 20px;
-      color: #000;
-      letter-spacing: 0.2px;
-      transition: color var(--transition15);
-    }
-
-    /* Hover-Effekt */
-    .left:hover .arrow {
       content: url('/public/images/arrow-drop-down-hover.svg');
     }
 
-    .left:hover .workspace-icon {
+    .section-icon {
       content: url('/public/images/workspaces-hover.svg');
     }
 
-    .left:hover .title {
+    .title {
       color: var(--primary-color);
     }
   }
 
-  /* === DIREKTNACHRICHTEN HEADER === */
-  &.dms-header {
-    grid-template-columns: 1fr 40px;
-
-    .left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      user-select: none;
-      transition: color var(--transition15);
-    }
-
+  /* ===== DIREKTNACHRICHTEN HEADER ===== */
+  &.dms-header:hover {
     .arrow {
-      width: 16px;
-      height: 16px;
-      transition: transform var(--transition15);
-    }
-
-    .arrow.rotated {
-      transform: rotate(-90deg);
-    }
-
-    .dm-icon {
-      width: 20px;
-      height: 20px;
-      transition: filter var(--transition15);
-    }
-
-    .title {
-      font-weight: 800;
-      font-size: 20px;
-      color: #000;
-      letter-spacing: 0.2px;
-      transition: color var(--transition15);
-    }
-
-    /* Hover-Effekt */
-    .left:hover .arrow {
       content: url('/public/images/arrow-drop-down-hover.svg');
     }
 
-    .left:hover .dm-icon {
+    .section-icon {
       content: url('/public/images/account-circle-hover.svg');
     }
 
-    .left:hover .title {
+    .title {
       color: var(--primary-color);
     }
   }
@@ -207,7 +170,6 @@
   justify-self: end;
 }
 
-/* Inline-Add-Zeile unter der Channel-Liste */
 .add-inline {
   display: flex;
   align-items: center;
@@ -245,15 +207,13 @@
   }
 }
 
-
 /* ===========================
-   Listen / Hover-Design
+    Listen / Hover-Design
    =========================== */
 a.mat-mdc-list-item {
   margin: 8px 0;
 }
 
-/* Hover */
 a.mat-mdc-list-item:not(.active):hover {
   background-color: var(--background-color) !important;
   color: var(--primary-color) !important;
@@ -265,7 +225,6 @@ a.mat-mdc-list-item:not(.active):hover span {
   color: var(--primary-color) !important;
 }
 
-/* Aktiv */
 a.mat-mdc-list-item.active,
 a.mat-mdc-list-item.active:hover,
 a.mat-mdc-list-item.active:focus {
@@ -281,9 +240,8 @@ a.mat-mdc-list-item.active span {
   font-weight: 500;
 }
 
-
 /* ===========================
-   Online/Offline-Dot (über Avatar)
+    Online/Offline-Dot (über Avatar)
    =========================== */
 .avatar {
   position: relative;
@@ -315,4 +273,120 @@ a.mat-mdc-list-item.active span {
 
 .dot--online {
   background: var(--background-online);
+}
+
+/* ===========================
+    Workspace Sidebar
+   =========================== */
+.workspace-wrapper {
+  position: relative;
+  height: 100%;
+}
+
+.workspace-panel {
+  height: 100%;
+  width: 260px;
+  transition: width 0.2s ease, padding 0.2s ease;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 24px 0 0 24px;
+  padding-left: 20px;
+  box-sizing: border-box;
+}
+
+.workspace-wrapper.is-collapsed .workspace-panel {
+  width: 0;
+  padding: 0;
+}
+
+.workspace-wrapper.is-collapsed .workspace-handle {
+  left: 0;
+}
+
+.handle-icon {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 24px 24px;
+  margin-bottom: 8px;
+}
+
+.workspace-wrapper:not(.is-collapsed) .handle-icon {
+  background-image: url('/public/images/workspace-hide.svg');
+}
+
+.workspace-wrapper:not(.is-collapsed) .workspace-handle:hover .handle-icon {
+  background-image: url('/public/images/workspace-hide-hover.svg');
+}
+
+.workspace-wrapper.is-collapsed .handle-icon {
+  background-image: url('/public/images/workspace-show.svg');
+}
+
+.workspace-wrapper.is-collapsed .workspace-handle:hover .handle-icon {
+  background-image: url('/public/images/workspace-show-hover.svg');
+}
+
+.handle-text {
+  letter-spacing: 0.02em;
+}
+
+.workspace-toggle {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border-radius: 24px 0 0 24px;
+  background: #fff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 20;
+  writing-mode: vertical-rl;
+  transform: translateY(-50%) rotate(180deg);
+  text-orientation: mixed;
+  white-space: nowrap;
+  font-size: 16px;
+  transition: all var(--transition15);
+  display: flex;
+  flex-direction: row;
+  height: 270px;
+  justify-content: center;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}
+
+.workspace-toggle-icon {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+}
+
+.workspace-wrapper:not(.is-collapsed) .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-hide.svg');
+}
+
+.workspace-wrapper:not(.is-collapsed) .workspace-toggle:hover .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-hide-hover.svg');
+}
+
+.workspace-wrapper.is-collapsed .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-show.svg');
+}
+
+.workspace-wrapper.is-collapsed .workspace-toggle:hover .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-show-hover.svg');
+}
+
+.workspace-toggle-label {
+  font-weight: 500;
 }
