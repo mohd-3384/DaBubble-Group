@@ -33,6 +33,8 @@ import {
   Vm,
 } from '../interfaces/chat.interface';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import { UserDoc } from '../interfaces/user.interface';
+import { Auth, authState } from '@angular/fire/auth';
 
 function toDateMaybe(ts: any): Date | null {
   return typeof ts?.toDate === 'function'
@@ -70,6 +72,19 @@ export class ChatComponent {
   private fs = inject(Firestore);
   private env = inject(EnvironmentInjector);
   private platformId = inject(PLATFORM_ID);
+  private guestUser: UserDoc & { id: string } = {
+    id: 'guest',
+    name: 'Guest',
+    email: '',
+    status: 'active',
+    avatarUrl: '/public/images/avatars/avatar-default.svg',
+    role: 'guest',
+  };
+
+  currentUser: (UserDoc & { id: string }) | null = null;
+
+
+  private auth = inject(Auth);
 
   // UI-VMs
   vm$!: Observable<Vm>;
@@ -105,6 +120,11 @@ export class ChatComponent {
     if (!url) return '/public/images/avatars/avatar-default.svg';
     return url.startsWith('/') ? url : '/' + url;
   }
+
+  private makeConvId(a: string, b: string): string {
+    return a < b ? `${a}_${b}` : `${b}_${a}`;
+  }
+
 
   // call this from (input) in HTML
   onToInput(v: string) {
@@ -224,15 +244,60 @@ export class ChatComponent {
     /** ---------- NACHRICHTEN ---------- */
     const baseMessages$ = this.route.paramMap.pipe(
       switchMap((params) => {
-        const channelId = params.get('id')!;
+        const id = params.get('id')!;               // bei Channel: channelId, bei DM: otherUserId
         const isDM = this.router.url.includes('/dm/');
-        if (!isPlatformBrowser(this.platformId) || isDM) return of([] as MessageVm[]);
 
-        const collRef = collection(this.fs, `channels/${channelId}/messages`);
+        // Server-Side-Rendering / kein Browser
+        if (!isPlatformBrowser(this.platformId)) {
+          return of([] as MessageVm[]);
+        }
+
+        // 🔹 CHANNEL: wie bisher
+        if (!isDM) {
+          const collRef = collection(this.fs, `channels/${id}/messages`);
+          const qRef = query(collRef, orderBy('createdAt', 'asc'));
+          const source$ = runInInjectionContext(this.env, () =>
+            collectionData(qRef, { idField: 'id' }) as Observable<any[]>
+          );
+
+          const guestEmail = 'guest@dabubble.de';
+
+          return source$.pipe(
+            map((rows) =>
+              rows.map(
+                (m) =>
+                ({
+                  id: m.id,
+                  text: m.text ?? '',
+                  authorName:
+                    m.authorName === guestEmail
+                      ? 'Guest'
+                      : (m.authorName ?? 'Unbekannt'),
+                  authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
+                  createdAt: toDateMaybe(m.createdAt),
+                  replyCount: (m.replyCount ?? 0) as number,
+                  lastReplyAt: toDateMaybe(m.lastReplyAt),
+                } as MessageVm)
+              )
+            ),
+            startWith([] as MessageVm[])
+          );
+        }
+
+        // 🔹 DM: Nachrichten aus conversations/{convId}/messages laden
+        const me = this.auth.currentUser;
+        if (!me) {
+          return of([] as MessageVm[]);
+        }
+
+        const convId = this.makeConvId(me.uid, id);
+        const collRef = collection(this.fs, `conversations/${convId}/messages`);
         const qRef = query(collRef, orderBy('createdAt', 'asc'));
         const source$ = runInInjectionContext(this.env, () =>
           collectionData(qRef, { idField: 'id' }) as Observable<any[]>
         );
+
+        const guestEmail = 'guest@dabubble.de';
 
         return source$.pipe(
           map((rows) =>
@@ -241,9 +306,13 @@ export class ChatComponent {
               ({
                 id: m.id,
                 text: m.text ?? '',
-                authorName: m.authorName ?? 'Unbekannt',
+                authorName:
+                  m.authorName === guestEmail
+                    ? 'Guest'
+                    : (m.authorName ?? 'Unbekannt'),
                 authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
                 createdAt: toDateMaybe(m.createdAt),
+                // DMs haben vielleicht keine Threads, aber Felder können bleiben
                 replyCount: (m.replyCount ?? 0) as number,
                 lastReplyAt: toDateMaybe(m.lastReplyAt),
               } as MessageVm)
@@ -253,6 +322,7 @@ export class ChatComponent {
         );
       })
     );
+
 
     // Im Compose-Modus keine Nachrichten laden
     this.messages$ = this.composeMode$.pipe(
@@ -307,7 +377,7 @@ export class ChatComponent {
       startWith<any[]>([])
     );
     const baseIsEmpty$ = combineLatest([channelDoc$, firstMessage$]).pipe(
-      map(([ch, first]) => (ch?.messageCount ?? 0) === 0 || (first?.length ?? 0) === 0)
+      map(([ch, first]) => (ch?.messageCount ?? 0) === 0 && (first?.length ?? 0) === 0)
     );
     this.isEmpty$ = this.composeMode$.pipe(
       switchMap((isCompose) => (isCompose ? of(true) : baseIsEmpty$))
@@ -408,6 +478,28 @@ export class ChatComponent {
         return both;
       })
     );
+
+    // Auth-Status beobachten und dazugehöriges users-Dokument laden
+    authState(this.auth).pipe(
+      switchMap(user => {
+        if (!user) return of(null);
+
+        const uref = doc(this.fs, `users/${user.uid}`);
+        return docData(uref).pipe(
+          map(raw => {
+            const data = (raw || {}) as any;
+            return {
+              id: user.uid,
+              name: data.name ?? data.displayName ?? user.displayName ?? user.email ?? 'Guest',
+              avatarUrl: data.avatarUrl ?? '/public/images/avatars/avatar1.svg',
+              ...data,
+            } as UserDoc & { id: string };
+          })
+        );
+      })
+    ).subscribe(u => {
+      this.currentUser = u;
+    });
   }
 
   /** ---------- Composer / Emoji ---------- */
@@ -448,7 +540,6 @@ export class ChatComponent {
     this.showMembers = false;
   }
 
-
   composePlaceholder(vm: Vm): string {
     const who = vm.title || '';
     return `Nachricht an ${who}`;
@@ -458,26 +549,60 @@ export class ChatComponent {
     const msg = this.draft.trim();
     if (!msg) return;
 
-    // Im Compose-Modus müsstest du anhand von "to" entscheiden,
-    // wohin gesendet wird (Channel / DM / E-Mail etc.).
-    // Hier senden wir nur in aktuellem Channel:
     const id = this.route.snapshot.paramMap.get('id')!;
     const isDM = vm.kind === 'dm';
-    if (isDM) {
-      console.warn('DM-Nachrichten-Senden noch nicht implementiert');
-      this.draft = '';
-      this.showEmoji = false;
+
+    const authUser = this.auth.currentUser;
+    if (!authUser) {
+      console.warn('Kein Auth-User vorhanden, Nachricht wird nicht gesendet.');
       return;
     }
 
+    const u = this.currentUser;
+
+    const guestEmail = 'guest@dabubble.de';
+    const isGuest =
+      u?.role === 'guest' ||
+      authUser.email === guestEmail;
+
+    const authorId = authUser.uid;
+    const authorName = isGuest
+      ? 'Guest'
+      : (u?.name ??
+        (u as any)?.displayName ??
+        authUser.displayName ??
+        authUser.email ??
+        'Unbekannt');
+
+    const authorAvatar =
+      u?.avatarUrl ?? '/public/images/avatars/avatar1.svg';
+
     try {
-      const coll = collection(this.fs, `channels/${id}/messages`);
-      await addDoc(coll, {
-        text: msg,
-        authorName: 'Max Mustermann',
-        authorAvatar: '/public/images/avatars/avatar1.svg',
-        createdAt: serverTimestamp(),
-      });
+      if (!isDM) {
+        const coll = collection(this.fs, `channels/${id}/messages`);
+        await addDoc(coll, {
+          text: msg,
+          authorId,
+          authorName,
+          authorAvatar,
+          createdAt: serverTimestamp(),
+          replyCount: 0,
+          reactions: {},
+        });
+      } else {
+        const otherUserId = id;
+        const convId = this.makeConvId(authorId, otherUserId);
+
+        const coll = collection(this.fs, `conversations/${convId}/messages`);
+        await addDoc(coll, {
+          text: msg,
+          authorId,
+          authorName,
+          authorAvatar,
+          createdAt: serverTimestamp(),
+        });
+      }
+
       this.draft = '';
       this.showEmoji = false;
     } catch (err) {

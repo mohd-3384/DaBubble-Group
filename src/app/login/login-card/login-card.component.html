@@ -1,50 +1,68 @@
 <main>
-    <mat-card appearance="outlined">
-        <mat-card-header>
-            <mat-card-title>Anmelden</mat-card-title>
-            <mat-card-subtitle>Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit verwendest.</mat-card-subtitle>
-        </mat-card-header>
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Anmelden</mat-card-title>
+      <mat-card-subtitle>
+        Wir empfehlen dir, die E-Mail-Adresse zu nutzen, die du bei der Arbeit verwendest.
+      </mat-card-subtitle>
+    </mat-card-header>
 
-        <form onsubmit="login(event)">
+    <!-- Angular-Form -->
+    <form #f="ngForm" (ngSubmit)="login()">
 
-            <div class="input-container">
-                <div class="span-input">
-                    <div class="mail-input">
-                        <img src="./public/images/mail-icon.svg" alt="email icon">
-                        <input type="email" placeholder="beispielname@email.com" required
-                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
-                    </div>
-                    <span class="wrong-password">*Diese E-Mail-Adresse ist leider ungültig.</span>
-                </div>
-                <div class="span-input">
-                    <div class="password-input">
-                        <img src="./public/images/password-icon.svg" alt="password icon">
-                        <input type="password" placeholder="Passwort" required minlength="6">
-                    </div>
-                    <span class="wrong-password">Das Passwort muss mindestens 6 Zeichen lang sein.</span>
-                    <span class="wrong-password">Das Passwort oder die E-Mail-Adresse ist leider ungültig. Bitte
-                        versuchen Sie es
-                        erneut.</span>
-                </div>
-            </div>
+      <div class="input-container">
+        <!-- E-Mail -->
+        <div class="span-input">
+          <div class="mail-input">
+            <img src="./public/images/mail-icon.svg" alt="email icon">
+            <input type="email" name="email" [(ngModel)]="email" placeholder="beispielname@email.com" required
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+          </div>
+          <span class="wrong-password" *ngIf="authErrorCode === 'auth/invalid-email'">
+            *Diese E-Mail-Adresse ist leider ungültig.
+          </span>
+        </div>
 
-            <div class="forgot-password">Passwort vergessen?</div>
+        <!-- Passwort -->
+        <div class="span-input">
+          <div class="password-input">
+            <img src="./public/images/password-icon.svg" alt="password icon">
+            <input type="password" name="password" [(ngModel)]="password" placeholder="Passwort" required minlength="6">
+          </div>
+          <span class="wrong-password" *ngIf="password.length > 0 && password.length < 6">
+            Das Passwort muss mindestens 6 Zeichen lang sein.
+          </span>
+          <span class="wrong-password" *ngIf="authErrorCode && authErrorCode !== 'auth/invalid-email'">
+            Das Passwort oder die E-Mail-Adresse ist leider ungültig. Bitte versuchen Sie es erneut.
+          </span>
+        </div>
+      </div>
 
-            <div class="oder-container">
-                <div class="line"></div>
-                <div class="oder-text">ODER</div>
-                <div class="line"></div>
-            </div>
+      <div class="forgot-password">Passwort vergessen?</div>
 
-            <button class="google-login">
-                <img src="./public/images/google-icon.svg" alt="google-icon">
-                <span>Anmelden mit Google</span>
-            </button>
+      <div class="oder-container">
+        <div class="line"></div>
+        <div class="oder-text">ODER</div>
+        <div class="line"></div>
+      </div>
 
-            <div class="button-container">
-                <button class="button_1">Anmelden</button>
-                <button class="button_2">Gäste-Login</button>
-            </div>
-        </form>
-    </mat-card>
+      <!-- Google-Login bleibt erstmal nur optisch -->
+      <button class="google-login" type="button">
+        <img src="./public/images/google-icon.svg" alt="google-icon">
+        <span>Anmelden mit Google</span>
+      </button>
+
+      <div class="button-container">
+        <!-- Normales Login -->
+        <button class="button_1" type="submit" [disabled]="f.invalid">
+          Anmelden
+        </button>
+
+        <!-- Gäste-Login -->
+        <button class="button_2" type="button" (click)="loginAsGuest()">
+          Gäste-Login
+        </button>
+      </div>
+    </form>
+  </mat-card>
 </main>
