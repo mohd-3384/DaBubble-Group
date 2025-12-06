@@ -505,16 +505,21 @@ export class ChatComponent {
   /** ---------- Composer / Emoji ---------- */
   toggleEmoji(evt?: Event) {
     evt?.stopPropagation();
-    this.showEmoji = !this.showEmoji;
+    const next = !this.showEmoji;
+    this.showEmoji = next;
+    if (next) this.showMembers = false;
   }
+
   closeEmoji() {
     this.showEmoji = false;
   }
+
   onEmojiSelect(e: any) {
     const native = e?.emoji?.native ?? e?.emoji?.char ?? e?.native ?? e?.colons ?? '';
     this.draft += native;
     this.showEmoji = false;
   }
+
   onEmojiClick(event: any) {
     const emoji = event?.detail?.unicode || event?.detail?.emoji?.unicode || '';
     this.draft += emoji;
@@ -522,12 +527,16 @@ export class ChatComponent {
 
   toggleMembers(evt?: Event) {
     evt?.stopPropagation();
-    this.showMembers = !this.showMembers;
+    const next = !this.showMembers;
+    this.showMembers = next;
+    if (next) this.showEmoji = false;
   }
 
   closeMembers() {
     this.showMembers = false;
   }
+
+  closeAllPopovers() { this.showEmoji = false; this.showMembers = false; }
 
   insertMention(m: MemberVM) {
     const name = m.name ?? 'Member';
