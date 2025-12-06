@@ -24,66 +24,68 @@
     </header>
 
     <!-- CHANNELS -->
-    <section class="ws-section">
-      <div class="section-header channels-header">
-        <div class="left" (click)="toggleChannels()" [attr.aria-expanded]="!collapsedChannels()">
-          <img class="arrow" [class.rotated]="collapsedChannels()" src="/public/images/arrow-drop-down.svg"
-            alt="Ein-/Ausklappen" />
-          <img class="section-icon" src="/public/images/workspaces.svg" alt="Channels" />
-          <span class="title">Channels</span>
-        </div>
-
-        <button class="icon-swap add" type="button" aria-label="Channel hinzufügen" title="Channel hinzufügen"
-          (click)="addChannel()">
-        </button>
-      </div>
-
-      <mat-nav-list *ngIf="!collapsedChannels()">
-        <a mat-list-item *ngFor="let c of (channels$ | async); trackBy: trackByCid" [routerLink]="['/channel', c.id]"
-          routerLinkActive="active">
-          <div matLine># {{ c.id }}</div>
-          <span class="spacer"></span>
-        </a>
-
-        <!-- Inline "Channel hinzufügen" -->
-        <div mat-list-item class="add-inline" (click)="addChannel()" role="button" tabindex="0"
-          aria-label="Channel hinzufügen">
-          <span class="add-circle" aria-hidden="true"></span>
-          <span class="add-text">Channel hinzufügen</span>
-        </div>
-      </mat-nav-list>
-    </section>
-
-    <!-- DIREKTNACHRICHTEN -->
-    <section class="ws-section">
-      <div class="section-header dms-header">
-        <div class="left" (click)="toggleDMs()" [attr.aria-expanded]="!collapsedDMs()">
-          <img class="arrow" [class.rotated]="collapsedDMs()" src="/public/images/arrow-drop-down.svg"
-            alt="Ein-/Ausklappen" />
-          <img class="section-icon" src="/public/images/account-circle.svg" alt="Direktnachrichten" />
-          <span class="title">Direktnachrichten</span>
-        </div>
-
-        <span class="section-spacer"></span>
-      </div>
-
-      <mat-nav-list *ngIf="!collapsedDMs()">
-        <a mat-list-item *ngFor="let u of (users$ | async); trackBy: trackByUid" [routerLink]="['/dm', u.id]"
-          routerLinkActive="active">
-          <img matListItemAvatar [src]="u.avatarUrl || '/public/images/avatars/avatar1.svg'" [alt]="u.name" />
-
-          <div matLine>
-            {{ u.name }}
-            <span class="muted" *ngIf="u.id === meId">(Du)</span>
+    <div class="ws-sections">
+      <section class="ws-section">
+        <div class="section-header channels-header">
+          <div class="left" (click)="toggleChannels()" [attr.aria-expanded]="!collapsedChannels()">
+            <img class="arrow" [class.rotated]="collapsedChannels()" src="/public/images/arrow-drop-down.svg"
+              alt="Ein-/Ausklappen" />
+            <img class="section-icon" src="/public/images/workspaces.svg" alt="Channels" />
+            <span class="title">Channels</span>
           </div>
 
-          <span class="spacer"></span>
+          <button class="icon-swap add" type="button" aria-label="Channel hinzufügen" title="Channel hinzufügen"
+            (click)="addChannel()">
+          </button>
+        </div>
 
-          <span class="dot" [class.dot--online]="u.online" matTooltip="{{ u.online ? 'Online' : 'Offline' }}">
-          </span>
-        </a>
-      </mat-nav-list>
-    </section>
+        <mat-nav-list *ngIf="!collapsedChannels()">
+          <a mat-list-item *ngFor="let c of (channels$ | async); trackBy: trackByCid" [routerLink]="['/channel', c.id]"
+            routerLinkActive="active">
+            <div matLine># {{ c.id }}</div>
+            <span class="spacer"></span>
+          </a>
+
+          <!-- Inline "Channel hinzufügen" -->
+          <div mat-list-item class="add-inline" (click)="addChannel()" role="button" tabindex="0"
+            aria-label="Channel hinzufügen">
+            <span class="add-circle" aria-hidden="true"></span>
+            <span class="add-text">Channel hinzufügen</span>
+          </div>
+        </mat-nav-list>
+      </section>
+
+      <!-- DIREKTNACHRICHTEN -->
+      <section class="ws-section">
+        <div class="section-header dms-header">
+          <div class="left" (click)="toggleDMs()" [attr.aria-expanded]="!collapsedDMs()">
+            <img class="arrow" [class.rotated]="collapsedDMs()" src="/public/images/arrow-drop-down.svg"
+              alt="Ein-/Ausklappen" />
+            <img class="section-icon" src="/public/images/account-circle.svg" alt="Direktnachrichten" />
+            <span class="title">Direktnachrichten</span>
+          </div>
+
+          <span class="section-spacer"></span>
+        </div>
+
+        <mat-nav-list *ngIf="!collapsedDMs()">
+          <a mat-list-item *ngFor="let u of (users$ | async); trackBy: trackByUid" [routerLink]="['/dm', u.id]"
+            routerLinkActive="active">
+            <img matListItemAvatar [src]="u.avatarUrl || '/public/images/avatars/avatar1.svg'" [alt]="u.name" />
+
+            <div matLine>
+              {{ u.name }}
+              <span class="muted" *ngIf="u.id === meId">(Du)</span>
+            </div>
+
+            <span class="spacer"></span>
+
+            <span class="dot" [class.dot--online]="u.online" matTooltip="{{ u.online ? 'Online' : 'Offline' }}">
+            </span>
+          </a>
+        </mat-nav-list>
+      </section>
+    </div>
 
   </div>
 </div>
