@@ -1,13 +1,25 @@
 .shell {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 340px;
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: 16px;
   height: calc(100vh - 122px);
   padding: 16px;
-  transition: grid-template-columns .3s ease-in-out;
+  transition: grid-template-columns var(--transition20) ease;
+  min-height: 0;
 }
 
+/* Thread offen: left + center + right */
+.shell.shell--thread-open {
+  grid-template-columns: 280px minmax(0, 1fr) 340px;
+}
+
+/* Workspace collapsed: left weg */
 .shell.shell--workspace-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+/* Workspace collapsed + thread offen */
+.shell.shell--workspace-collapsed.shell--thread-open {
   grid-template-columns: 0 minmax(0, 1fr) 340px;
 }
 
@@ -16,12 +28,40 @@
   border: none;
 }
 
+/* Cards */
 .shell__left,
 .shell__center,
 .shell__right {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, .06);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  min-height: 0;
+}
+
+.shell__right {
+  overflow: hidden;
+}
+
+app-thread.hidden {
+  display: none;
+}
+
+.shell__right {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 220ms ease, opacity 220ms ease;
+}
+
+.shell__right.is-open {
+  width: 340px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.shell__left,
+.shell__center,
+.shell__right {
   overflow: auto;
 }
 
@@ -36,7 +76,6 @@
 .shell__right {
   padding: 0;
 }
-
 
 /* ==== Scrollbar OHNE Pfeile ==== */
 .shell__left::-webkit-scrollbar-button,

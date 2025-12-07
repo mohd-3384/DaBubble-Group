@@ -1,41 +1,102 @@
-<header class="thread-header">
-  <div>
-    <h3 class="title">{{ header.title }}</h3>
-    <small *ngIf="header.channel" class="muted">{{ header.channel }}</small>
+<!-- HEADER wie Chat -->
+<section class="thread-header">
+  <div class="header-pill">
+    <h2 class="title">{{ header.title }}</h2>
+    <span class="thread-channel" *ngIf="header.channel">{{ header.channel }}</span>
   </div>
 
-  <button mat-icon-button aria-label="Thread schließen" (click)="close.emit()">
-    <mat-icon>close</mat-icon>
-  </button>
-</header>
-
-<mat-divider></mat-divider>
-
-<section class="thread-root">
-  <div class="author">{{ rootMessage.author.name }}</div>
-  <div class="text">{{ rootMessage.text }}</div>
+  <span class="icon-span close-btn" role="button" tabindex="0" aria-label="Thread schließen"
+    (click)="close.emit()"></span>
 </section>
 
-<mat-divider></mat-divider>
+<!-- BODY -->
+<section class="thread-body">
+  <!-- SCROLLBEREICH -->
+  <div class="messages-scroll">
+    <!-- Root (Nachricht, auf die geantwortet wird) -->
+    <div class="message-row root" *ngIf="rootMessage as rm">
+      <img class="avatar" [src]="rm.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
+        [alt]="rm.author.name" />
 
-<section class="thread-replies" *ngIf="replies?.length; else noReplies">
-  <div class="reply" *ngFor="let r of replies">
-    <div class="author">{{ r.author.name }}</div>
-    <div class="text">{{ r.text }}</div>
+      <div class="message-col">
+        <div class="header">
+          <span class="name">{{ rm.author.name }}</span>
+          <span class="dot"></span>
+          <span class="time" *ngIf="rm.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
+        </div>
+
+        <div class="bubble bubble-light">{{ rm.text }}</div>
+
+        <!-- Unter Root: Anzahl + Linie -->
+        <div class="thread-teaser">
+          <span class="replies-count">{{ replies.length }} Antworten</span>
+          <span class="teaser-line" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Replies -->
+    <ng-container *ngIf="replies.length > 0; else noReplies">
+      <div class="message-row" *ngFor="let r of replies; trackBy: trackReply">
+        <img class="avatar" [src]="r.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
+          [alt]="r.author.name" />
+
+        <div class="message-col">
+          <div class="header">
+            <span class="name">{{ r.author.name }}</span>
+            <span class="dot"></span>
+            <span class="time" *ngIf="r.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
+          </div>
+
+          <div class="bubble bubble-light">{{ r.text }}</div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #noReplies>
+      <div class="empty muted">Noch keine Antworten – schreib die erste!</div>
+    </ng-template>
   </div>
+
+  <!-- COMPOSER wie Chat -->
+  <div class="composer composer--sticky">
+    <textarea class="composer-input" rows="3" placeholder="Antworten…" [(ngModel)]="draft"></textarea>
+
+    <div class="composer-actions">
+      <div class="actions-left">
+
+        <!-- Emoji -->
+        <span class="emoji-wrapper">
+          <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
+            (click)="toggleEmoji($event)"></span>
+
+          <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
+            <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+              (emojiSelect)="onEmojiSelect($event)">
+            </emoji-mart>
+          </div>
+        </span>
+
+        <!-- @ (alle User wählbar) -->
+        <span class="mention-wrapper">
+          <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"
+            (click)="toggleUsers($event)"></span>
+
+          <ng-container *ngIf="showUsers">
+            <div class="mention-popover" (click)="$event.stopPropagation()">
+              <div class="mention-item" *ngFor="let u of users; trackBy: trackUser" (click)="insertMention(u)">
+                <img class="mention-avatar" [src]="u.avatarUrl || '/public/images/avatars/avatar-default.svg'" />
+                <span class="mention-name">{{ u.name }}</span>
+              </div>
+              <div class="mention-item muted" *ngIf="!users.length">Keine User</div>
+            </div>
+          </ng-container>
+        </span>
+      </div>
+
+      <span class="send-btn" role="button" aria-label="Senden" (click)="onSendClick($event)"></span>
+    </div>
+  </div>
+
+  <div class="emoji-backdrop" *ngIf="showEmoji || showUsers" (click)="closePopovers()"></div>
 </section>
-
-<ng-template #noReplies>
-  <div class="empty muted">Noch keine Antworten – schreib die erste!</div>
-</ng-template>
-
-<footer class="thread-input">
-  <mat-form-field appearance="outline" class="input-field">
-    <input matInput placeholder="Antworten…" [(ngModel)]="draft" (keyup.enter)="onSendClick()"
-      aria-label="Antwort schreiben" />
-  </mat-form-field>
-
-  <button mat-flat-button color="primary" (click)="onSendClick()">
-    Senden
-  </button>
-</footer>

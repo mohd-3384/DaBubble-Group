@@ -1,16 +1,18 @@
 <app-header></app-header>
 
-<div class="shell" [class.shell--workspace-collapsed]="workspaceCollapsed">
+<div class="shell" [class.shell--workspace-collapsed]="workspaceCollapsed" [class.shell--thread-open]="vm().open">
   <aside class="shell__left">
     <app-channels (workspaceCollapsedChange)="onWorkspaceCollapsedChange($event)"></app-channels>
   </aside>
 
-  <main class="shell__center">
+  <main class="shell__center" [class.shell__center--thread-open]="vm().open">
     <router-outlet></router-outlet>
   </main>
 
-  <aside class="shell__right">
-    <app-thread *ngIf="vm().open" [header]="vm().header ?? { title: 'Thread' }" [rootMessage]="vm().root!"
-      [replies]="vm().replies" (send)="onSend($event)" (close)="onClose()" />
+  <aside class="shell__right" [class.is-open]="vm().open" aria-label="Thread">
+    <ng-container *ngIf="vm().open">
+      <app-thread [header]="vm().header!" [rootMessage]="vm().root!" [replies]="vm().replies"
+        [users]="usersAllForMentions" (send)="onSend($event)" (close)="onClose()"></app-thread>
+    </ng-container>
   </aside>
 </div>

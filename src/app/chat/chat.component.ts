@@ -22,7 +22,7 @@ import {
   limit,
 } from '@angular/fire/firestore';
 import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
-import { map, switchMap, startWith } from 'rxjs/operators';
+import { map, switchMap, startWith, take } from 'rxjs/operators';
 import {
   ChannelDoc,
   DayGroup,
@@ -35,6 +35,7 @@ import {
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { UserDoc } from '../interfaces/user.interface';
 import { Auth, authState } from '@angular/fire/auth';
+import { ThreadState } from '../services/thread.state';
 
 function toDateMaybe(ts: any): Date | null {
   return typeof ts?.toDate === 'function'
@@ -85,6 +86,7 @@ export class ChatComponent {
 
 
   private auth = inject(Auth);
+  private thread = inject(ThreadState);
 
   // UI-VMs
   vm$!: Observable<Vm>;
@@ -552,6 +554,22 @@ export class ChatComponent {
   composePlaceholder(vm: Vm): string {
     const who = vm.title || '';
     return `Nachricht an ${who}`;
+  }
+
+  openThread(m: any, vm: any) {
+    const channelId = this.route.snapshot.paramMap.get('id');
+    if (!channelId) return;
+
+    this.thread.openThread({
+      channelId,
+      header: { title: 'Thread', channel: vm.title },
+      root: {
+        id: m.id,
+        author: { id: m.authorId ?? '', name: m.authorName, avatarUrl: m.authorAvatar },
+        text: m.text,
+        createdAt: m.createdAt ?? new Date(),
+      },
+    });
   }
 
   async send(vm: Vm) {
