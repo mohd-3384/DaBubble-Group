@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -27,6 +27,7 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterCardComponent {
+  @Output() nextstep = new EventEmitter<void>();
 
   form: FormGroup;
 
@@ -42,6 +43,7 @@ export class RegisterCardComponent {
   onsubmit() {
     if (this.form.valid) {
       console.log('Form Submitted!', this.form.value);
+      this.nextstep.emit();
     }
   }
 

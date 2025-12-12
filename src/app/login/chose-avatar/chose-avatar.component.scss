@@ -129,3 +129,28 @@ button {
         box-shadow: 0 2px 6px rgba(68, 77, 242, 0.2);
     }
 }
+
+mat-card-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row-reverse;
+}
+
+.back-arrow {
+    position: absolute;
+    left: -140px;
+    width: 24px;
+    height: 24px;
+    margin-right: auto;
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}

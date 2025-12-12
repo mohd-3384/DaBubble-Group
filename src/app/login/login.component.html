@@ -13,8 +13,9 @@
 
     <main>
         <app-login-card *ngIf="debugMode || showLoginCardComponent"></app-login-card>
-        <app-register-card *ngIf=" debugMode || showRegisterCardComponent"></app-register-card>
-        <app-chose-avatar *ngIf="debugMode"></app-chose-avatar>
+        <app-register-card *ngIf=" debugMode || showRegisterCardComponent"
+        (nextstep)="goToAvatarPicker()"></app-register-card>
+        <app-chose-avatar *ngIf="debugMode || showChoseAvatarComponent" (back)="backToRegister()"></app-chose-avatar>
     </main>
 
     <footer class="footer-container">

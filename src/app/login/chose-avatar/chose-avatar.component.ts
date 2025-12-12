@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -26,6 +26,9 @@ import { CommonModule } from '@angular/common';
   styleUrl: './chose-avatar.component.scss'
 })
 export class ChoseAvatarComponent {
+
+  @Output() back = new EventEmitter<void>();
+ 
 
   avatarlist = [
     'public/images/avatars/avatar1.svg',

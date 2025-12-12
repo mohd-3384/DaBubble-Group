@@ -31,13 +31,25 @@ import { NgIf } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  debugMode = true;
+  debugMode = false;
 
   showLoginCardComponent = true;
   showRegisterCardComponent = false;
+  showChoseAvatarComponent = false;
 
   openRegisterCard() {
     this.showLoginCardComponent = false;
+    this.showRegisterCardComponent = true;
+    this.showChoseAvatarComponent = false;
+  }
+
+  goToAvatarPicker() {
+    this.showRegisterCardComponent = false;
+    this.showChoseAvatarComponent = true;
+  }
+
+  backToRegister() {
+    this.showChoseAvatarComponent = false;
     this.showRegisterCardComponent = true;
   }
 }
