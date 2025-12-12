@@ -1,0 +1,131 @@
+mat-card {
+    width: 600px;
+    margin: auto;
+    margin-top: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+mat-card-title {
+    display: flex;
+    justify-content: center;
+    color: rgba(68, 77, 242, 1);
+    font-family: 'Nunito', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+mat-form-field {
+    width: 80%;
+    margin-top: 40px;
+}
+
+.avatar-container {
+    width: 80%;
+    padding-top: 56px;
+    display: flex;
+    flex-direction: column;
+
+}
+
+.chosen-avatar-container {
+    display: flex;
+    justify-content: center;
+}
+
+.chosen-avatar-container img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 6px solid transparent; 
+  transition: all 0.2s ease-out;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.chosen-avatar-container img:not([src*="avatar-default"]) {
+  border-color: rgba(68, 77, 242, 1);
+  box-shadow: 0 12px 32px rgba(68, 77, 242, 0.25);
+}
+
+.pick-avatar-container {
+    display: flex;
+    flex-direction: column;
+
+    >h2 {
+        font-family: 'Nunito', sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        padding: 14px;
+        padding-top: 32px;
+    }
+}
+
+.avatar-selection {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.avatar-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 4px solid transparent;
+    transition: all 0.14s ease-in-out;
+    transform: translateZ(0);
+
+    &:hover {
+        cursor: pointer;
+        border: 4px solid rgb(168, 167, 223);
+        transform: scale(1.12);
+    }
+}
+
+.button-container {
+    width: 80%;
+    padding-top: 40px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+button {
+    width: 150px;
+    height: 40px;
+    border: none;
+    border-radius: 20px;
+    background-color: rgba(68, 77, 242, 1);
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    cursor: pointer;
+    transition:
+        filter 0.3s ease-in-out,
+        transform 0.15s ease,
+        box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(68, 77, 242, 0.15);
+
+    &:hover {
+        filter: brightness(150%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(68, 77, 242, 0.25);
+    }
+
+    &:active {
+        transform: translateY(1px) scale(0.98);
+        filter: brightness(105%);
+        box-shadow: 0 2px 6px rgba(68, 77, 242, 0.2);
+    }
+}

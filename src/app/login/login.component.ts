@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { LoginCardComponent } from './login-card/login-card.component';
 import { RegisterCardComponent } from './register-card/register-card.component';
+import { ChoseAvatarComponent } from './chose-avatar/chose-avatar.component';
 import { NgIf } from '@angular/common';
 
 
@@ -22,12 +23,15 @@ import { NgIf } from '@angular/common';
     MatInputModule,
     MatFormFieldModule,
     LoginCardComponent,
-    RegisterCardComponent, NgIf],
+    RegisterCardComponent, NgIf,
+    ChoseAvatarComponent
+],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
+  debugMode = true;
 
   showLoginCardComponent = true;
   showRegisterCardComponent = false;

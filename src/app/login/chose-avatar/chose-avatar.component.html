@@ -1,0 +1,29 @@
+<main>
+    <mat-card appearance="outlined">
+        <mat-card-header>
+            <mat-card-title>Wähle deinen Avatar</mat-card-title>
+        </mat-card-header>
+
+        <div class="avatar-container">
+            <div class="chosen-avatar-container">
+                <img [src]="chosenAvatarSrc" alt="Gewählter Avatar">
+            </div>
+
+            <div class="pick-avatar-container">
+                <h2>Name</h2>
+                <span>Aus der Liste wählen</span>
+                <div class="avatar-selection">
+                    @for (avatar of avatarlist; track avatar; let i = $index) {
+                    <img [src]="avatar" alt="avatar-{{i}}" class="avatar-img"
+                        [class.selected]="chosenAvatarSrc === avatar" (click)="selectAvatar(avatar)">
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button>Weiter</button>
+        </div>
+    </mat-card>
+</main>
