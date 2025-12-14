@@ -38,12 +38,13 @@ import { Auth, authState } from '@angular/fire/auth';
 import { ThreadState } from '../services/thread.state';
 
 function toDateMaybe(ts: any): Date | null {
-  return typeof ts?.toDate === 'function'
-    ? ts.toDate()
-    : ts instanceof Date
-      ? ts
-      : null;
+  if (!ts) return null;
+  if (typeof ts?.toDate === 'function') return ts.toDate();
+  if (ts instanceof Date) return ts;
+  const d = new Date(ts);
+  return isNaN(d.getTime()) ? null : d;
 }
+
 function sameYMD(a: Date, b: Date) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -314,7 +315,6 @@ export class ChatComponent {
                     : (m.authorName ?? 'Unbekannt'),
                 authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
                 createdAt: toDateMaybe(m.createdAt),
-                // DMs haben vielleicht keine Threads, aber Felder können bleiben
                 replyCount: (m.replyCount ?? 0) as number,
                 lastReplyAt: toDateMaybe(m.lastReplyAt),
               } as MessageVm)
@@ -331,15 +331,19 @@ export class ChatComponent {
       switchMap((isCompose) => (isCompose ? of([] as MessageVm[]) : baseMessages$))
     );
 
-    // Gruppierung (wie gehabt)
+    // Gruppierung
     this.groups$ = this.messages$.pipe(
       map((msgs) => {
         const today = new Date();
         const buckets = new Map<string, MessageVm[]>();
 
         for (const m of msgs) {
-          const d = m.createdAt ?? today;
-          const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+          const d = m.createdAt;
+          if (!d) continue;
+
+          const key =
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
           if (!buckets.has(key)) buckets.set(key, []);
           buckets.get(key)!.push(m);
         }
@@ -347,15 +351,19 @@ export class ChatComponent {
         const groups: DayGroup[] = [...buckets.entries()]
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([key, items]) => {
+            items.sort((a, b) => (a.createdAt!.getTime() - b.createdAt!.getTime()));
+
             const [y, mo, da] = key.split('-').map(Number);
             const date = new Date(y, mo - 1, da);
             const isToday = sameYMD(date, today);
+
             return { label: isToday ? 'Heute' : dayLabel(date), isToday, items } as DayGroup;
           });
 
         return groups;
       })
     );
+
 
     /** ---------- LEER/AKTIV ---------- */
     const channelId$ = this.route.paramMap.pipe(map((p) => p.get('id')!));
