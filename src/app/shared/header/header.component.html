@@ -1,17 +1,55 @@
 <div class="header-wrapper">
-    <div class="img-wrapper">
-        <img src="../../../../public/images/dabubble-logo.svg" class="logo-bubble" alt="" srcset="">
-        <img src="../../../../public/images/Logo name.svg" class="logo-text" alt="" srcset="">
-    </div>
-    <div class="input-wrapper">
-        <input type="text" placeholder="Devspace durchsuchen">
-        <img src="../../../../public/images/search.svg" class="input-search-icon" alt="" srcset="">
-    </div>
-    <div class="profile-wrapper">
-        <div class="name-text">Frederick Beck</div>
-        <img src="../../../../public/images/frederik-beck-chat.svg" class="profile-img" alt="" srcset="">
-        <div class="online-status-dot"></div>
+  <!-- Logo -->
+  <div class="img-wrapper">
+    <img src="../../../../public/images/dabubble-logo.svg" class="logo-bubble" alt="DaBubble">
+    <img src="../../../../public/images/Logo name.svg" class="logo-text" alt="DaBubble">
+  </div>
 
-        <img src="../../../../public/images/channel-info-arrow-down.svg" class="arrow-down" alt="" srcset="">
+  <!-- Search -->
+  <div class="input-wrapper" (click)="$event.stopPropagation()">
+    <input #searchInput type="text" placeholder="Devspace durchsuchen" [value]="searchTerm"
+      (input)="setSearch($any($event.target).value)" (focus)="openSearch()" (keydown)="onSearchKeydown($event)" />
+    <img src="/public/images/search.svg" class="input-search-icon" alt="Search" />
+
+    <div class="search-results" *ngIf="searchOpen">
+      <ng-container *ngIf="results$ | async as results">
+        <ng-container *ngIf="results.length; else noResults">
+          <button type="button" class="search-item" *ngFor="let r of results; let i = index"
+            [class.active]="i === activeIndex" (click)="onSelectResult(r)">
+            <span class="kind" *ngIf="r.kind === 'channel'">#</span>
+            <span class="kind" *ngIf="r.kind === 'user'">&#64;</span>
+            <span class="kind" *ngIf="r.kind === 'message'">💬</span>
+
+            <span class="label" *ngIf="r.kind === 'channel'">{{ r.id }}</span>
+            <span class="label" *ngIf="r.kind === 'user'">{{ r.name }}</span>
+            <span class="label message" *ngIf="r.kind === 'message'">{{ r.text }}</span>
+          </button>
+        </ng-container>
+
+        <ng-template #noResults>
+          <div class="search-empty">Keine Treffer</div>
+        </ng-template>
+      </ng-container>
     </div>
+  </div>
+
+  <!-- Profile -->
+  <div class="profile-area" (click)="$event.stopPropagation()" [attr.aria-expanded]="profileOpen">
+    <button type="button" class="profile-trigger" (click)="toggleProfile()">
+      <ng-container *ngIf="user$ | async as user">
+        <span class="name-text">{{ user.name }}</span>
+
+        <span class="avatar-wrap">
+          <img [src]="user.avatarUrl" class="profile-img" alt="Avatar" />
+          <span class="online-status-dot"></span>
+        </span>
+        <img src="../../../../public/images/channel-info-arrow-down.svg" class="arrow-down" alt="">
+      </ng-container>
+    </button>
+
+    <div class="profile-menu" *ngIf="profileOpen">
+      <button type="button" class="menu-btn" (click)="goToProfile()">Profil</button>
+      <button type="button" class="menu-btn danger" (click)="logout()">Log out</button>
+    </div>
+  </div>
 </div>

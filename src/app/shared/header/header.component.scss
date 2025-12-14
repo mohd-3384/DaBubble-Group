@@ -1,71 +1,263 @@
 .header-wrapper {
-    display: flex;
-    position: relative;
-    justify-content: space-between;
-    align-items: center;
-    height: 90px;
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  align-items: center;
+  height: 90px;
+}
 
-    >.img-wrapper {
-        top: 25px;
-        display: flex;
-        height: 70px;
-        align-items: center;
-        padding-left: 45px;
-        gap: 16px;
+.img-wrapper {
+  top: 25px;
+  display: flex;
+  height: 70px;
+  align-items: center;
+  padding-left: 45px;
+  gap: 16px;
 
-        >.logo-bubble {
-            max-height: 100%;
-        }
+  .logo-bubble {
+    max-height: 100%;
+  }
 
-        >.logo-text {
-            max-height: 24px;
-        }
-    }
-    >.input-wrapper {
-        display: flex;
-        height: 70px;
-        width: 800px;
-        align-items: center;
-        input {
-            width: 100%;
-            height: 40px;
-            border-radius: 20px;
-            border: 1px solid #C4C4C4;
-            padding: 0 20px;
-            font-size: 16px;
-            font-family: Nunito, sans-serif;
-        }
-        >.input-search-icon {
-            position: relative;
-            height: 35px;
-            right: 60px;
-        }
-    }
-    >.profile-wrapper {
-        top: 25px;
-        margin-right: 20px;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        height: 70px;
-        right: 20px;
-        >.profile-img {
-            border-radius: 50%;
-            max-height: 100%;
-        }
+  .logo-text {
+    max-height: 24px;
+  }
+}
 
-        >.online-status-dot {
-            position: absolute;
-            right: 71px;
-            top: 62px;
-            width: 16.67px;
-            height: 16.67px;
-            border-radius: 50%;
-            background-color: #92C83E;
-        }
-        >.name-text {
-            font-weight: 700;
-            font-size: 32px;
-        }
-    }
+/* Search */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  height: 70px;
+  width: 800px;
+  align-items: center;
+
+  input {
+    width: 100%;
+    height: 94%;
+    border-radius: 9999px;
+    border: none;
+    padding: 0 56px 0 20px;
+    font-size: 16px;
+    font-family: Nunito, sans-serif;
+    outline: none;
+    background: #fff;
+  }
+
+  .input-search-icon {
+    position: absolute;
+    height: 30px;
+    right: 20px;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+}
+
+/* Search Dropdown */
+.search-results {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 2500;
+
+  background: #fff;
+  border: 1px solid var(--accent-color);
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
+  overflow: hidden;
+
+  padding: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-color) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--background-color);
+    border-radius: 999px;
+  }
+}
+
+.search-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 12px;
+  border-radius: 14px;
+  transition: background 150ms ease, transform 150ms ease;
+
+  &:hover {
+    background: var(--background-color);
+    transform: translateX(2px);
+  }
+
+  &.active {
+    background: var(--background-color);
+  }
+
+  .kind {
+    width: 22px;
+    display: inline-flex;
+    justify-content: center;
+    font-weight: 800;
+    color: var(--primary-color);
+  }
+
+  .label {
+    text-align: left;
+    font-size: 15px;
+    font-family: Nunito, sans-serif;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .label.message {
+    color: #4b5563;
+  }
+}
+
+.search-empty {
+  padding: 12px 14px;
+  color: #6b7280;
+  font-size: 14px;
+  font-family: Nunito, sans-serif;
+}
+
+/* Profile */
+.profile-area {
+  position: relative;
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 70px;
+  right: 20px;
+}
+
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 70px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 16px;
+  transition: background 150ms ease;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}
+
+.name-text {
+  font-weight: 700;
+  font-size: 32px;
+  font-family: Nunito, sans-serif;
+}
+
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.profile-img {
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+}
+
+.online-status-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 16.67px;
+  height: 16.67px;
+  border-radius: 50%;
+  background-color: var(--background-online);
+  border: 2px solid #fff;
+}
+
+.arrow-down {
+  width: 32px;
+  height: 32px;
+  content: url('../../../../public/images/channel-info-arrow-down.svg');
+  transition: transform 0.15s ease;
+}
+
+/* Hover / Focus -> Hover-Icon */
+.profile-trigger:hover .arrow-down,
+.profile-trigger:focus-visible .arrow-down {
+  content: url('../../../../public/images/channel-info-arrow-down-hover.svg');
+}
+
+/* Optional nice UX: drehen wenn Menü offen */
+.profile-area .profile-trigger .arrow-down {
+  transform: rotate(0deg);
+}
+
+.profile-area .profile-trigger[aria-expanded='true'] .arrow-down {
+  transform: rotate(180deg);
+}
+
+/* Profile Dropdown (wie Screenshot) */
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2600;
+  width: 140px;
+  background: #fff;
+  border-radius: 24px 0 24px 24px;
+  box-shadow: var(--boxShadow);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-btn {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff;
+
+  font-family: Nunito, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+
+  transition: background 150ms ease, transform 150ms ease;
+
+  &:hover {
+    background: var(--background-color);
+    transform: translateY(-1px);
+  }
+
+  &.danger {
+    color: #111;
+  }
 }
