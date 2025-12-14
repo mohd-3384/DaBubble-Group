@@ -26,11 +26,14 @@
 
 html,
 body {
-  height: 100vh;
-  background-color: var(--background-color);
-  display: flex;
-  flex-direction: column;
+  height: 100%;
   margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+  background-color: var(--background-color);
   font-family: 'Nunito', sans-serif;
 }
 
