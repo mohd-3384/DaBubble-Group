@@ -310,8 +310,7 @@ a.mat-mdc-list-item.active span {
 }
 
 .workspace-wrapper.is-collapsed .workspace-panel {
-  width: 0;
-  padding: 0;
+  display: none;
 }
 
 .workspace-wrapper.is-collapsed .workspace-handle {
@@ -347,66 +346,7 @@ a.mat-mdc-list-item.active span {
   letter-spacing: 0.02em;
 }
 
-.workspace-toggle {
-  position: fixed;
-  top: 50%;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 10px;
-  border-radius: 24px 0 0 24px;
-  background: #fff;
-  border: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  z-index: 20;
-  writing-mode: vertical-rl;
-  transform: translateY(-50%) rotate(180deg);
-  text-orientation: mixed;
-  white-space: nowrap;
-  font-size: 16px;
-  transition: all var(--transition15);
-  display: flex;
-  flex-direction: row;
-  height: 270px;
-  justify-content: center;
-
-  &:hover {
-    color: var(--primary-color);
-  }
-}
-
-.workspace-toggle-icon {
-  width: 20px;
-  height: 20px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 20px 20px;
-}
-
-.workspace-wrapper:not(.is-collapsed) .workspace-toggle-icon {
-  background-image: url('/public/images/workspace-hide.svg');
-}
-
-.workspace-wrapper:not(.is-collapsed) .workspace-toggle:hover .workspace-toggle-icon {
-  background-image: url('/public/images/workspace-hide-hover.svg');
-}
-
-.workspace-wrapper.is-collapsed .workspace-toggle-icon {
-  background-image: url('/public/images/workspace-show.svg');
-}
-
-.workspace-wrapper.is-collapsed .workspace-toggle:hover .workspace-toggle-icon {
-  background-image: url('/public/images/workspace-show-hover.svg');
-}
-
-.workspace-toggle-label {
-  font-weight: 500;
-}
-
-/* ===== Scrollbar wie im 2. Screenshot (ohne Pfeile) ===== */
+/* ===== Scrollbar ===== */
 /* Firefox */
 .ws-sections {
   scrollbar-width: thin;

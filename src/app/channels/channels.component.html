@@ -1,13 +1,4 @@
 <div class="workspace-wrapper" [class.is-collapsed]="workspaceCollapsed()">
-  <!-- Seitlicher Workspace-Handle -->
-  <button class="workspace-toggle" (click)="toggleWorkspace()">
-    <span class="workspace-toggle-icon"></span>
-
-    <span class="workspace-toggle-label">
-      {{ workspaceCollapsed() ? 'Workspace-Menü öffnen' : 'Workspace-Menü schließen' }}
-    </span>
-  </button>
-
   <!-- Sidebar-Panel -->
   <div class="workspace-panel">
 
@@ -86,6 +77,5 @@
         </mat-nav-list>
       </section>
     </div>
-
   </div>
 </div>

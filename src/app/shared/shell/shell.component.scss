@@ -1,31 +1,44 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+app-header {
+  flex: 0 0 auto;
+}
+
+/* ---------- FLEX SHELL ---------- */
 .shell {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  position: relative;
+  display: flex;
   gap: 16px;
-  height: calc(100vh - 122px);
-  padding: 16px;
-  transition: grid-template-columns var(--transition20) ease;
+  padding: 0 16px;
+  height: calc(100vh - 90px);
   min-height: 0;
 }
 
-/* Thread offen: left + center + right */
-.shell.shell--thread-open {
-  grid-template-columns: 280px minmax(0, 1fr) 340px;
+/* Spalten */
+.shell__left {
+  flex: 0 0 280px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* Workspace collapsed: left weg */
-.shell.shell--workspace-collapsed {
-  grid-template-columns: 0 minmax(0, 1fr);
+.shell__center {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
 }
 
-/* Workspace collapsed + thread offen */
-.shell.shell--workspace-collapsed.shell--thread-open {
-  grid-template-columns: 0 minmax(0, 1fr) 340px;
-}
-
-.shell.shell--workspace-collapsed .shell__left {
-  padding: 0;
-  border: none;
+.shell__right {
+  flex: 0 0 340px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Cards */
@@ -34,50 +47,45 @@
 .shell__right {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
   min-height: 0;
 }
 
-.shell__right {
-  overflow: hidden;
+.shell__left,
+.shell__center {
+  overflow: auto;
 }
 
-app-thread.hidden {
-  display: none;
+/* Workspace collapsed: left komplett weg */
+.shell.shell--workspace-collapsed .shell__left {
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  overflow: hidden !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 
+/* ---------- Thread Panel ---------- */
 .shell__right {
+  flex-basis: 0;
   width: 0;
   opacity: 0;
   pointer-events: none;
-  transition: width 220ms ease, opacity 220ms ease;
+  transition: flex-basis 220ms ease, opacity 220ms ease;
 }
 
 .shell__right.is-open {
-  width: 340px;
+  flex-basis: 340px;
+  width: auto;
   opacity: 1;
   pointer-events: auto;
 }
 
-.shell__left,
-.shell__center,
-.shell__right {
-  overflow: auto;
-}
-
-.shell__left {
-  padding: 8px;
-}
-
-.shell__center {
-  padding: 0;
-}
-
-.shell__right {
-  padding: 0;
-}
-
-/* ==== Scrollbar OHNE Pfeile ==== */
+/* ---------- Scrollbar styling ---------- */
 .shell__left::-webkit-scrollbar-button,
 .shell__center::-webkit-scrollbar-button,
 .shell__right::-webkit-scrollbar-button {
@@ -88,7 +96,6 @@ app-thread.hidden {
   content: none !important;
 }
 
-/* Einheitliche, zarte Scrollbars – Firefox */
 .shell__left,
 .shell__center,
 .shell__right {
@@ -97,7 +104,6 @@ app-thread.hidden {
   scrollbar-gutter: stable both-edges;
 }
 
-/* Chrome/Edge/Safari (WebKit/Blink) */
 .shell__left::-webkit-scrollbar,
 .shell__center::-webkit-scrollbar,
 .shell__right::-webkit-scrollbar {
@@ -119,8 +125,62 @@ app-thread.hidden {
   background-clip: padding-box;
 }
 
-.shell__left::-webkit-scrollbar-thumb:hover,
-.shell__center::-webkit-scrollbar-thumb:hover,
-.shell__right::-webkit-scrollbar-thumb:hover {
-  background: var(--background-color);
+.workspace-toggle {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border-radius: 24px 0 0 24px;
+  background: #fff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 20;
+  writing-mode: vertical-rl;
+  transform: translateY(-50%) rotate(180deg);
+  text-orientation: mixed;
+  white-space: nowrap;
+  font-size: 16px;
+  transition: all var(--transition15);
+  display: flex;
+  flex-direction: row;
+  height: 270px;
+  justify-content: center;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}
+
+.workspace-toggle-icon {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+}
+
+/* Icon abhängig vom Shell-State */
+.shell:not(.shell--workspace-collapsed) .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-hide.svg');
+}
+
+.shell:not(.shell--workspace-collapsed) .workspace-toggle:hover .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-hide-hover.svg');
+}
+
+.shell.shell--workspace-collapsed .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-show.svg');
+}
+
+.shell.shell--workspace-collapsed .workspace-toggle:hover .workspace-toggle-icon {
+  background-image: url('/public/images/workspace-show-hover.svg');
+}
+
+.workspace-toggle-label {
+  font-weight: 500;
 }

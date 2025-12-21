@@ -55,21 +55,18 @@
 /* Search Dropdown */
 .search-results {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: 2500;
-
   background: #fff;
-  border: 1px solid var(--accent-color);
-  border-radius: 20px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
+  border: none;
+  border-radius: 0 32px 32px 32px;
+  box-shadow: var(--boxShadow);
   overflow: hidden;
-
   padding: 10px;
   max-height: 340px;
   overflow-y: auto;
-
   scrollbar-width: thin;
   scrollbar-color: var(--background-color) transparent;
 

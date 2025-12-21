@@ -79,7 +79,6 @@ export class ShellComponent {
       let r: ActivatedRoute = this.route;
       while (r.firstChild) r = r.firstChild;
 
-      // ✅ immer ParamMap liefern, nie null
       return r.paramMap ? r.paramMap : of(this.route.snapshot.paramMap);
     }),
     map((pm: ParamMap) => pm.get('id')),
@@ -123,6 +122,10 @@ export class ShellComponent {
 
   workspaceCollapsed = false;
   shellThreadOpen = false;
+
+  toggleWorkspace() {
+    this.workspaceCollapsed = !this.workspaceCollapsed;
+  }
 
   onWorkspaceCollapsedChange(collapsed: boolean) {
     this.workspaceCollapsed = collapsed;

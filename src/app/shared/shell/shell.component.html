@@ -1,6 +1,12 @@
 <app-header></app-header>
 
 <div class="shell" [class.shell--workspace-collapsed]="workspaceCollapsed" [class.shell--thread-open]="vm().open">
+  <button class="workspace-toggle" type="button" (click)="toggleWorkspace()">
+    <span class="workspace-toggle-icon"></span>
+    <span class="workspace-toggle-label">
+      {{ workspaceCollapsed ? 'Workspace-Menü öffnen' : 'Workspace-Menü schließen' }}
+    </span>
+  </button>
   <aside class="shell__left">
     <app-channels (workspaceCollapsedChange)="onWorkspaceCollapsedChange($event)"></app-channels>
   </aside>
