@@ -42,6 +42,7 @@ export interface MemberVM {
 };
 
 export type TargetKind = 'channel' | 'user' | 'email';
+
 export interface SuggestItem {
   kind: TargetKind;
   id?: string;

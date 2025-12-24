@@ -11,18 +11,28 @@ import {
   limit,
   doc,
   docData,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { Auth, authState, signOut } from '@angular/fire/auth';
 import { Observable, BehaviorSubject, combineLatest, from, of } from 'rxjs';
 import { map, switchMap, startWith, distinctUntilChanged, debounceTime } from 'rxjs/operators';
-import { UserDoc } from '../../interfaces/user.interface'; // ✅ passe den Pfad ggf. an
+import { UserDoc } from '../../interfaces/user.interface';
 
 type SearchResult =
   | { kind: 'channel'; id: string }
   | { kind: 'user'; id: string; name: string; avatarUrl?: string }
   | { kind: 'message'; channelId: string; text: string };
 
-type HeaderUser = { id: string; name: string; avatarUrl: string; online?: boolean };
+type HeaderUser = {
+  id: string;
+  name: string;
+  email: string;
+  status: 'active' | 'away';
+  avatarUrl: string;
+  online: boolean;
+};
+
+type ProfileView = 'view' | 'edit';
 
 @Component({
   selector: 'app-header',
@@ -42,10 +52,12 @@ export class HeaderComponent {
 
   private readonly DEFAULT_AVATAR = '/public/images/avatars/avatar-default.svg';
 
-  /** ---------- USER ---------- */
+  /** ---------- USER (Firestore users/{uid}) ---------- */
   private guestUser: HeaderUser = {
     id: 'guest',
     name: 'Guest',
+    email: 'guest@dabubble.de',
+    status: 'active',
     avatarUrl: this.DEFAULT_AVATAR,
     online: true,
   };
@@ -55,33 +67,30 @@ export class HeaderComponent {
       if (!u) return of(this.guestUser);
 
       const uref = doc(this.fs, `users/${u.uid}`);
-
       return docData(uref, { idField: 'id' }).pipe(
         map((raw: any) => {
-          const data = (raw || {}) as UserDoc & { id?: string };
+          const data = (raw || {}) as Partial<UserDoc> & { id?: string };
 
-          const name = (data.name || '').trim();
-          const avatarUrl = (data.avatarUrl || '').trim();
-
-          // wenn kein gültiger name vorhanden -> Guest
-          if (!name) {
-            return {
-              ...this.guestUser,
-              id: u.uid,
-              online: data.online ?? true,
-            } as HeaderUser;
-          }
+          const name = String(data.name ?? '').trim() || 'Guest';
+          const email = String(data.email ?? u.email ?? 'guest@dabubble.de').trim();
+          const status = (data.status === 'away' ? 'away' : 'active') as 'active' | 'away';
+          const avatarUrl = String(data.avatarUrl ?? '').trim() || this.DEFAULT_AVATAR;
+          const online = !!(data.online ?? true);
 
           return {
-            id: (data as any).id ?? u.uid,
+            id: data.id ?? u.uid,
             name,
-            avatarUrl: avatarUrl || this.DEFAULT_AVATAR,
-            online: data.online ?? true,
-          } as HeaderUser;
+            email,
+            status,
+            avatarUrl,
+            online,
+          } satisfies HeaderUser;
         }),
         startWith({
           id: u.uid,
           name: '…',
+          email: u.email ?? '',
+          status: 'active',
           avatarUrl: this.DEFAULT_AVATAR,
           online: true,
         } as HeaderUser)
@@ -90,21 +99,74 @@ export class HeaderComponent {
     startWith(this.guestUser)
   );
 
-  /** ---------- PROFILE MENU ---------- */
+  /** ---------- PROFILE ---------- */
   profileOpen = false;
+  profileModalOpen = false;
+  profileView: ProfileView = 'view';
+  editName = '';
 
   toggleProfile() {
     this.profileOpen = !this.profileOpen;
-    if (this.profileOpen) this.closeSearch();
+    if (this.profileOpen) {
+      this.profileModalOpen = false;
+      this.closeSearch();
+    }
+  }
+
+  openProfileModal() {
+    this.profileOpen = false;
+    this.profileModalOpen = true;
+    this.profileView = 'view';
+    this.closeSearch();
+  }
+
+  closeProfileModal() {
+    this.profileModalOpen = false;
+    this.profileView = 'view';
+  }
+
+  openEditProfile(user: HeaderUser) {
+    this.profileView = 'edit';
+    this.editName = user.name ?? '';
+  }
+
+  backToProfileView() {
+    this.profileView = 'view';
+  }
+
+  async saveProfile(user: HeaderUser) {
+    const name = (this.editName || '').trim();
+    if (!name) return;
+
+    const authUser = this.auth.currentUser;
+    if (!authUser) return;
+
+    console.log('[Profile] uid:', authUser.uid);
+
+    try {
+      const uref = doc(this.fs, `users/${authUser.uid}`);
+      await updateDoc(uref, { name });
+      console.log('[Profile] update ok');
+      this.profileView = 'view';
+    } catch (e: any) {
+      console.error('[Profile] update failed:', e?.code, e);
+    }
+  }
+
+  closeAll() {
+    this.profileOpen = false;
+    this.profileModalOpen = false;
+    this.closeSearch();
   }
 
   goToProfile() {
     this.profileOpen = false;
+    this.profileModalOpen = false;
     this.router.navigate(['/profile']);
   }
 
   async logout() {
-    this.profileOpen = false;
+    this.closeAll();
     await signOut(this.auth);
     this.router.navigate(['/login']);
   }
@@ -162,16 +224,18 @@ export class HeaderComponent {
           (rows || [])
             .filter((u) => String(u?.name ?? '').toLowerCase().includes(term))
             .slice(0, 6)
-            .map((u) => ({
-              kind: 'user',
-              id: String(u.id),
-              name: String(u.name ?? 'Unbekannt'),
-              avatarUrl: (u.avatarUrl as string | undefined) ?? this.DEFAULT_AVATAR,
-            }) as SearchResult)
+            .map(
+              (u) =>
+                ({
+                  kind: 'user',
+                  id: String(u.id),
+                  name: String(u.name ?? 'Unbekannt'),
+                  avatarUrl: (u.avatarUrl as string | undefined) ?? this.DEFAULT_AVATAR,
+                }) as SearchResult
+            )
         )
       );
 
-      // ✅ Messages Suche: nur channels scannen (keine permission errors)
       const messages$ = from(this.searchChannelMessages(term));
 
       return combineLatest([channels$, users$, messages$]).pipe(
@@ -197,11 +261,7 @@ export class HeaderComponent {
         if (hits.length >= 10) break;
 
         const msgSnap = await getDocs(
-          query(
-            collection(this.fs, `channels/${channelId}/messages`),
-            orderBy('createdAt', 'desc'),
-            limit(40)
-          )
+          query(collection(this.fs, `channels/${channelId}/messages`), orderBy('createdAt', 'desc'), limit(40))
         );
 
         for (const d of msgSnap.docs) {
@@ -221,11 +281,29 @@ export class HeaderComponent {
     }
   }
 
+  async saveDisplayName(newNameRaw: string) {
+    const newName = (newNameRaw || '').trim();
+    if (!newName) return;
+
+    const authUser = this.auth.currentUser;
+    if (!authUser) {
+      console.warn('[Profile] Not authenticated -> cannot update Firestore');
+      return;
+    }
+
+    try {
+      const ref = doc(this.fs, `users/${authUser.uid}`);
+      await updateDoc(ref, { name: newName });
+      console.log('[Profile] name updated:', newName);
+    } catch (e) {
+      console.error('[Profile] update failed:', e);
+    }
+  }
+
   onSelectResult(r: SearchResult) {
     if (r.kind === 'channel') this.router.navigate(['/channels', r.id]);
     if (r.kind === 'user') this.router.navigate(['/dm', r.id]);
     if (r.kind === 'message') this.router.navigate(['/channels', r.channelId]);
-
     this.clearSearch();
   }
 
@@ -248,8 +326,7 @@ export class HeaderComponent {
       if (picked) this.onSelectResult(picked);
     } else if (ev.key === 'Escape') {
       ev.preventDefault();
-      this.closeSearch();
-      this.profileOpen = false;
+      this.closeAll();
     }
   }
 
@@ -260,16 +337,14 @@ export class HeaderComponent {
     if (!target) return;
 
     if (!this.host.nativeElement.contains(target)) {
-      this.closeSearch();
-      this.profileOpen = false;
+      this.closeAll();
     }
   }
 
   @HostListener('window:keydown', ['$event'])
   onWindowKeydown(ev: KeyboardEvent) {
     if (ev.key === 'Escape') {
-      this.closeSearch();
-      this.profileOpen = false;
+      this.closeAll();
     }
   }
 }

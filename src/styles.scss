@@ -1,17 +1,22 @@
 /* You can add global styles to this file, and also import other style files */
 :root {
-  --primary-color: #4f46e5;
+  --primary-color: #535EF1;
   --secondary-color: #6366f1;
   --accent-color: #a5b4fc;
   --text-color: #1e293b;
   --background-color: #eceefe;
-  --background-online: #10b981;
+  --background-online: #92C83E;
   --background-offline: #9ca3af;
   --btn-hover-violett: #797ef3;
   --border-radius9999: 9999px;
   --transition15: 0.15s ease;
   --transition20: 0.2s ease;
   --boxShadow: 0px 8px 10px rgba(0, 0, 0, 0.2);
+  --overlay-bg: rgba(0, 0, 0, 0.28);
+  --overlay-z: 1800;
+  --surface-bg: #fff;
+  --surface-radius: 20px;
+  --surface-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
 }
 
 ::selection {
@@ -335,4 +340,116 @@ body {
   inset: 0;
   background: transparent;
   z-index: 1999;
+}
+
+/* =============  UI Overlay & Popover  ============= */
+/* dunkler Hintergrund */
+.ui-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: var(--overlay-z);
+  pointer-events: auto;
+}
+
+/* ---------- POPOVER (Dropdown) ---------- */
+.ui-popover {
+  position: absolute;
+  background: var(--surface-bg);
+  border-radius: var(--surface-radius);
+  box-shadow: var(--surface-shadow);
+  overflow: hidden;
+  z-index: calc(var(--overlay-z) + 1);
+}
+
+.ui-popover-btn {
+  width: 100%;
+  border: 0;
+  padding: 18px 26px;
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+
+.ui-popover-btn:hover {
+  color: var(--primary-color);
+  background: var(--background-color);
+  transition: var(--transition15);
+}
+
+/* ---------- MODAL LAYER (Dialog/Sheet) ---------- */
+/* Wrapper-Layer über Overlay */
+.ui-modal {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--overlay-z) + 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Standard Modal Box */
+.ui-modal__panel {
+  width: min(520px, 92vw);
+  max-height: 90vh;
+  background: var(--surface-bg);
+  border-radius: 30px;
+  box-shadow: var(--surface-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Optional: Right-Sheet wie dein Profil-Screenshot */
+.ui-modal--right {
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.ui-modal--right .ui-modal__panel {
+  width: min(520px, 92vw);
+  margin-right: 16px;
+}
+
+/* Header / Body */
+.ui-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.ui-modal__close {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.ui-modal__close:hover {
+  background: var(--background-color);
+}
+
+.ui-modal__body {
+  padding: 0 26px 26px;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* Optional: Right-Sheet wie dein Profil-Screenshot */
+.ui-modal--right {
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-top: 90px;
+}
+
+.ui-modal--right .ui-modal__panel {
+  margin-right: 16px;
 }

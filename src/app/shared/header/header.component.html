@@ -1,8 +1,8 @@
 <div class="header-wrapper">
   <!-- Logo -->
   <div class="img-wrapper">
-    <img src="../../../../public/images/dabubble-logo.svg" class="logo-bubble" alt="DaBubble">
-    <img src="../../../../public/images/Logo name.svg" class="logo-text" alt="DaBubble">
+    <img src="../../../../public/images/dabubble-logo.svg" class="logo-bubble" alt="DaBubble" />
+    <img src="../../../../public/images/Logo name.svg" class="logo-text" alt="DaBubble" />
   </div>
 
   <!-- Search -->
@@ -34,8 +34,8 @@
   </div>
 
   <!-- Profile -->
-  <div class="profile-area" (click)="$event.stopPropagation()" [attr.aria-expanded]="profileOpen">
-    <button type="button" class="profile-trigger" (click)="toggleProfile()">
+  <div class="profile-area" (click)="$event.stopPropagation()">
+    <button type="button" class="profile-trigger" (click)="toggleProfile()" [attr.aria-expanded]="profileOpen">
       <ng-container *ngIf="user$ | async as user">
         <span class="name-text">{{ user.name }}</span>
 
@@ -43,13 +43,89 @@
           <img [src]="user.avatarUrl" class="profile-img" alt="Avatar" />
           <span class="online-status-dot"></span>
         </span>
-        <img src="../../../../public/images/channel-info-arrow-down.svg" class="arrow-down" alt="">
+
+        <img src="../../../../public/images/channel-info-arrow-down.svg" class="arrow-down" alt="" />
       </ng-container>
     </button>
 
-    <div class="profile-menu" *ngIf="profileOpen">
-      <button type="button" class="menu-btn" (click)="goToProfile()">Profil</button>
-      <button type="button" class="menu-btn danger" (click)="logout()">Log out</button>
+    <!-- Dropdown -->
+    <div class="profile-menu ui-popover" *ngIf="profileOpen" (click)="$event.stopPropagation()">
+      <button type="button" class="menu-btn" (click)="openProfileModal()">Profil</button>
+      <button type="button" class="menu-btn" (click)="logout()">Log out</button>
+    </div>
+  </div>
+
+  <!-- Overlay (für Modal) -->
+  <div class="ui-overlay" *ngIf="profileOpen || profileModalOpen" (click)="closeAll()"></div>
+
+  <!-- PROFIL MODAL -->
+  <div class="ui-modal ui-modal--right" *ngIf="profileModalOpen" (click)="closeAll()">
+    <div class="ui-modal__panel profile-modal__panel" (click)="$event.stopPropagation()">
+      <ng-container *ngIf="user$ | async as user">
+
+        <!-- HEADER: Titel je nach View -->
+        <div class="ui-modal__header profile-modal__header">
+          <h3>{{ profileView === 'edit' ? 'Dein Profil bearbeiten' : 'Profil' }}</h3>
+          <button type="button" class="ui-modal__close profile-modal__close" (click)="closeProfileModal()">×</button>
+        </div>
+
+        <!-- VIEW: Profil anzeigen -->
+        <div class="ui-modal__body profile-modal__content" *ngIf="profileView === 'view'">
+          <div class="profile-modal__avatar">
+            <img [src]="user.avatarUrl" alt="Avatar" />
+          </div>
+
+          <div class="profile-modal__row">
+            <div class="profile-modal__name">{{ user.name }}</div>
+            <button type="button" class="profile-modal__edit" (click)="openEditProfile(user)">
+              Bearbeiten
+            </button>
+          </div>
+
+          <div class="profile-modal__status">
+            <span class="status-dot" [class.online]="user.status === 'active'"></span>
+            <span class="status-text">{{ user.status === 'active' ? 'Aktive' : 'Abwesend' }}</span>
+          </div>
+
+          <div class="profile-modal__mail">
+            <span class="mail-icon">✉</span>
+            <div class="mail-block">
+              <div class="mail-title">E-Mail-Adresse</div>
+              <a class="mail-link" [href]="'mailto:' + user.email">{{ user.email }}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDIT: Profil bearbeiten (gleiche Box, anderer Inhalt) -->
+        <div class="ui-modal__body profile-edit__content" *ngIf="profileView === 'edit'">
+          <div class="profile-modal__avatar">
+            <img [src]="user.avatarUrl" alt="Avatar" />
+          </div>
+
+          <label class="profile-edit__label">
+            <span class="profile-edit__label-row">
+              <span class="profile-edit__icon"> <img src="/public/images/account-circle.svg" alt=""
+                  aria-hidden="true" />
+              </span>
+              <span>Vollständiger Name</span>
+            </span>
+
+            <input class="profile-edit__input" type="text" [value]="editName"
+              (input)="editName = $any($event.target).value" placeholder=" " />
+          </label>
+
+          <div class="profile-edit__actions">
+            <button type="button" class="profile-edit__btn outline" (click)="backToProfileView()">
+              Abbrechen
+            </button>
+
+            <button type="button" class="profile-edit__btn primary" (click)="saveProfile(user)">
+              Speichern
+            </button>
+          </div>
+        </div>
+
+      </ng-container>
     </div>
   </div>
 </div>

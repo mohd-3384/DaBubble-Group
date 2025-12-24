@@ -40,7 +40,7 @@
     font-size: 16px;
     font-family: Nunito, sans-serif;
     outline: none;
-    background: #fff;
+    background: var(--surface-bg);
   }
 
   .input-search-icon {
@@ -59,7 +59,7 @@
   left: 0;
   right: 0;
   z-index: 2500;
-  background: #fff;
+  background: var(--surface-bg);
   border: none;
   border-radius: 0 32px 32px 32px;
   box-shadow: var(--boxShadow);
@@ -192,7 +192,7 @@
   height: 16.67px;
   border-radius: 50%;
   background-color: var(--background-online);
-  border: 2px solid #fff;
+  border: 2px solid var(--surface-bg);
 }
 
 .arrow-down {
@@ -202,13 +202,11 @@
   transition: transform 0.15s ease;
 }
 
-/* Hover / Focus -> Hover-Icon */
 .profile-trigger:hover .arrow-down,
 .profile-trigger:focus-visible .arrow-down {
   content: url('../../../../public/images/channel-info-arrow-down-hover.svg');
 }
 
-/* Optional nice UX: drehen wenn Menü offen */
 .profile-area .profile-trigger .arrow-down {
   transform: rotate(0deg);
 }
@@ -217,17 +215,14 @@
   transform: rotate(180deg);
 }
 
-/* Profile Dropdown (wie Screenshot) */
 .profile-menu {
-  position: absolute;
   top: calc(100% + 8px);
   right: 0;
   z-index: 2600;
-  width: 140px;
-  background: #fff;
+  width: 200px;
+  background: var(--surface-bg);
   border-radius: 24px 0 24px 24px;
-  box-shadow: var(--boxShadow);
-  padding: 10px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -237,24 +232,245 @@
   width: 100%;
   border: 0;
   cursor: pointer;
-
   padding: 12px 14px;
-  border-radius: 14px;
-  background: #fff;
-
-  font-family: Nunito, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
+  border-radius: var(--border-radius9999);
+  background: var(--surface-bg);
+  font-size: 24px;
   text-align: center;
-
-  transition: background 150ms ease, transform 150ms ease;
+  transition: var(--transition15);
 
   &:hover {
     background: var(--background-color);
-    transform: translateY(-1px);
+    color: var(--primary-color);
+    transform: scale(1.05);
+  }
+}
+
+/* Modal wie Screenshot */
+.profile-modal.ui-modal {
+  width: 460px;
+  max-width: calc(100vw - 48px);
+  height: 600px;
+  background: var(--surface-bg);
+  border-radius: 24px 0 24px 24px;
+  box-shadow: var(--boxShadow);
+  overflow: hidden;
+}
+
+.profile-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 26px;
+  font-size: 22px;
+
+  h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+.profile-modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition: var(--transition15);
+
+  &:hover {
+    background: var(--background-color);
+    color: var(--primary-color);
+  }
+}
+
+.profile-modal__content {
+  padding: 0 26px 26px;
+}
+
+.profile-modal__avatar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 18px;
+
+  img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+}
+
+.profile-modal__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.profile-modal__name {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.profile-modal__edit {
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 20px;
+  transition: var(--transition15);
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.profile-modal__status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--background-offline);
+
+  &.online {
+    background: var(--background-online);
+  }
+}
+
+.status-text {
+  font-size: 18px;
+  color: var(--background-online);
+}
+
+.profile-modal__mail {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.mail-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.mail-title {
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.mail-link {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.profile-modal__panel {
+  width: 460px;
+  max-width: calc(100vw - 48px);
+  height: 524px;
+  background: var(--surface-bg);
+  border-radius: 24px 0 24px 24px;
+  box-shadow: var(--boxShadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-edit__content {
+  padding: 0 26px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.profile-edit__label {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-edit__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.profile-edit__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+}
+
+.profile-edit__input {
+  height: 54px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--primary-color);
+  padding: 0 18px;
+  font-size: 18px;
+  outline: none;
+  background: var(--surface-bg);
+}
+
+.profile-edit__actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.profile-edit__btn {
+  border-radius: 9999px;
+  padding: 12px 26px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition15);
+  border: 1.5px solid transparent;
+
+  &.outline {
+    background: transparent;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+
+    &:hover {
+      background-color: var(--primary-color);
+      color: var(--surface-bg);
+      border-color: var(--surface-bg);
+    }
   }
 
-  &.danger {
-    color: #111;
+  &.primary {
+    background: var(--primary-color);
+    color: var(--surface-bg);
+
+    &:hover {
+      background-color: var(--btn-hover-violett);
+    }
   }
 }
