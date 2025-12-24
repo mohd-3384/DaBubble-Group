@@ -111,7 +111,7 @@ export class ShellComponent {
             return {
               id: user.uid,
               name: data.name ?? data.displayName ?? user.displayName ?? user.email ?? 'Guest',
-              avatarUrl: data.avatarUrl ?? '/public/images/avatars/avatar1.svg',
+              avatarUrl: data.avatarUrl ?? '/public/images/avatars/avatar-default.svg',
               ...data,
             } as UserDoc & { id: string };
           })

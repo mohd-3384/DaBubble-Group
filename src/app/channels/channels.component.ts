@@ -1,7 +1,6 @@
 import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -13,8 +12,7 @@ import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
 import { ChannelDoc } from '../interfaces/channel.interface';
 import { UserDoc } from '../interfaces/user.interface';
-
-
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-channels',
@@ -28,11 +26,10 @@ import { UserDoc } from '../interfaces/user.interface';
     MatListModule,
     MatTooltipModule,
     ScrollingModule,
+    FormsModule
   ],
   templateUrl: './channels.component.html',
   styleUrl: './channels.component.scss',
-  // Wenn du den Service NUR hier scopen willst, ent-kommentieren:
-  // providers: [ChannelService]
 })
 export class ChannelsComponent {
   private usersSvc = inject(UserService);
@@ -44,26 +41,65 @@ export class ChannelsComponent {
   workspaceCollapsed = signal(false);
   @Output() workspaceCollapsedChange = new EventEmitter<boolean>();
 
+  /** UI State */
+  collapsedChannels = signal(false);
+  collapsedDMs = signal(false);
+  meId: string | null = null;
+
+  /** Channel-Modal */
+  createChannelOpen = false;
+  newChannelName = '';
+  newChannelDescription = '';
+
   toggleWorkspace() {
     this.workspaceCollapsed.update((v) => {
       const next = !v;
-      this.workspaceCollapsedChange.emit(next);   // <-- Shell informieren
+      this.workspaceCollapsedChange.emit(next);
       return next;
     });
   }
 
-  /** UI State */
-  collapsedChannels = signal(false);
-  collapsedDMs = signal(false);
-  meId: string | null = null; // später aus AuthService
-
   constructor(
     private router: Router) {
 
-    // Wichtig: Erst hier (im DI-Kontext) Firebase-APIs aufrufen,
-    // sonst kommt die Warnung „outside of an Injection context“.
     this.users$ = this.usersSvc.users$();
     this.channels$ = this.chanSvc.channels$();
+  }
+
+  /** Modal öffnen */
+  openCreateChannelModal() {
+    this.createChannelOpen = true;
+    this.newChannelName = '';
+    this.newChannelDescription = '';
+  }
+
+  /** Modal schließen */
+  closeCreateChannelModal() {
+    this.createChannelOpen = false;
+  }
+
+  /** Channel wirklich erstellen (Submit im Formular) */
+  async submitCreateChannel() {
+    const raw = (this.newChannelName || '').trim();
+    if (!raw) return;
+
+    const id = raw.toLowerCase().replace(/\s+/g, '-');
+
+    try {
+      await this.chanSvc.createChannel(id);
+      await this.chanSvc.addMeAsMember(id, 'owner');
+      // await this.chanSvc.postWelcome(id);
+
+      // Formular leeren & Modal schließen
+      this.newChannelName = '';
+      this.newChannelDescription = '';
+      this.closeCreateChannelModal();
+
+      // optional: gleich in den neuen Channel springen
+      // this.router.navigate(['/channel', id]);
+    } catch (e) {
+      console.error('[ChannelModal] create failed:', e);
+    }
   }
 
   /** trackBy-Helper für Performance */
@@ -83,10 +119,10 @@ export class ChannelsComponent {
 
     const id = raw.trim().toLowerCase().replace(/\s+/g, '-');
     // TODO: aus Auth holen
-    const me = { id: 'uid_marcus', name: 'Marcus Hartmann', avatar: '/public/images/avatars/avatar1.svg' };
+    const me = { id: 'uid_guest', name: 'Guest', avatar: '/public/images/avatars/avatar-default.svg' };
 
-    await this.chanSvc.createChannel(id, me.id);
-    await this.chanSvc.addMember(id, me.id, 'owner');
-    await this.chanSvc.postWelcome(id, me);
+    await this.chanSvc.createChannel(id);
+    await this.chanSvc.addMeAsMember(id, 'owner');
+    await this.chanSvc.postWelcome(id);
   }
 }

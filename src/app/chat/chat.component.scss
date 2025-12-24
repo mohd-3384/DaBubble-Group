@@ -17,7 +17,6 @@
   flex: 0 0 auto;
 }
 
-
 /* Pill-Stil */
 .header-pill {
   display: flex;
@@ -26,7 +25,7 @@
   padding: 6px 12px;
   border-radius: var(--border-radius9999);
   cursor: pointer;
-  transition: background-color .15s ease, transform .15s ease;
+  transition: var(--transition15);
   background: transparent;
 
   &:hover {
@@ -72,7 +71,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      border: 2px solid #fff;
+      border: 2px solid var(--surface-bg);
       object-fit: cover;
       display: block;
     }
@@ -84,7 +83,7 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      border: 2px solid #fff;
+      border: 2px solid var(--surface-bg);
       background: var(--background-offline);
 
       &.online {
@@ -93,7 +92,6 @@
     }
   }
 }
-
 
 /* ===========================
     Mitgliederbereich rechts
@@ -125,8 +123,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 1px #E6E9F9;
+    border: 2px solid var(--surface-bg);
     object-fit: cover;
     margin-left: -8px;
 
@@ -167,56 +164,10 @@
 
   &:hover {
     background-image: url('/public/images/add-member-hover.svg');
-    background-color: #535af11f;
+    background-color: var(--background-color);
     transform: scale(1.05);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* Grundfarben/Variablen */
 $muted: #6c7280;
@@ -256,6 +207,7 @@ $muted: #6c7280;
 /* ---------- leerer Channel ---------- */
 .channel-empty {
   margin-top: clamp(8vh, 12vh, 18vh);
+  margin-left: 24px;
 
   .empty-title {
     font-weight: 800;
@@ -292,10 +244,10 @@ $muted: #6c7280;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #fff;
+    background: var(--surface-bg);
     border: 1px solid var(--accent-color);
     padding: 6px 14px;
-    border-radius: 999px;
+    border-radius: var(--border-radius9999);
     font-size: 14px;
   }
 }
@@ -322,7 +274,7 @@ $muted: #6c7280;
   }
 
   &:hover .bubble.bubble-light {
-    background: #fff !important;
+    background: var(--surface-bg) !important;
   }
 
   .avatar {
@@ -406,7 +358,7 @@ $muted: #6c7280;
   border: 1px solid var(--background-color);
 
   .edit-card {
-    background: #fff;
+    background: var(--surface-bg);
     border: 1px solid var(--background-color);
     border-radius: 16px;
     padding: 18px;
@@ -440,7 +392,7 @@ $muted: #6c7280;
         cursor: pointer;
 
         &.ghost {
-          background: #fff;
+          background: var(--surface-bg);
           border-color: var(--primary-color);
           color: var(--primary-color);
 
@@ -451,7 +403,7 @@ $muted: #6c7280;
 
         &.primary {
           background: var(--primary-color);
-          color: #fff;
+          color: var(--surface-bg);
 
           &:hover {
             background-color: var(--btn-hover-violett);
@@ -479,8 +431,8 @@ $muted: #6c7280;
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    background: #fff;
-    border: 1px solid #e7e9f5;
+    background: var(--surface-bg);
+    border: 1px solid var(--background-color);
     border-radius: 999px;
     font-size: 14px;
 
@@ -493,7 +445,7 @@ $muted: #6c7280;
 /* Composer unten */
 .composer {
   margin: 10px 16px 0;
-  background: #fff;
+  background: var(--surface-bg);
   border: 1px solid var(--accent-color);
   border-radius: 16px;
   padding: 10px 12px;
@@ -555,7 +507,7 @@ $muted: #6c7280;
       }
 
       &:hover {
-        background-color: #535af11f;
+        background-color: var(--primary-color);
         transform: scale(1.05);
       }
     }
@@ -603,7 +555,7 @@ $muted: #6c7280;
       left: 0;
       transform: translateX(-16px);
       z-index: 2000;
-      background: #fff;
+      background: var(--surface-bg);
       border: 1px solid var(--background-color);
       border-radius: 16px;
       box-shadow: 0 12px 30px var(--background-color);
@@ -632,7 +584,7 @@ $muted: #6c7280;
   left: 0;
   transform: translateX(-16px);
   z-index: 2000;
-  background: #fff;
+  background: var(--surface-bg);
   border: 1px solid var(--background-color);
   border-radius: 24px;
   box-shadow: 0 12px 30px var(--background-color);
@@ -703,7 +655,7 @@ $muted: #6c7280;
     border: 1px solid var(--accent-color);
     padding: 0 16px;
     font-size: 15px;
-    background: #fff;
+    background: var(--surface-bg);
     transition: box-shadow var(--transition15), border-color var(--transition15);
 
     &:hover {
@@ -718,7 +670,7 @@ $muted: #6c7280;
     left: 0;
     right: 0;
     z-index: 30;
-    background: #fff;
+    background: var(--surface-bg);
     border: 1px solid var(--background-color);
     border-radius: 14px;
     box-shadow: 0 12px 30px var(--background-color);
@@ -765,9 +717,7 @@ $muted: #6c7280;
   }
 }
 
-
-
-/* ===== Scrollbar wie im 2. Screenshot (ohne Pfeile) ===== */
+/* ===== Scrollbar ===== */
 .messages-scroll {
   /* Firefox */
   scrollbar-width: thin;

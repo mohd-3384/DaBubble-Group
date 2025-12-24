@@ -26,7 +26,7 @@
           </div>
 
           <button class="icon-swap add" type="button" aria-label="Channel hinzufügen" title="Channel hinzufügen"
-            (click)="addChannel()">
+            (click)="openCreateChannelModal()">
           </button>
         </div>
 
@@ -38,7 +38,7 @@
           </a>
 
           <!-- Inline "Channel hinzufügen" -->
-          <div mat-list-item class="add-inline" (click)="addChannel()" role="button" tabindex="0"
+          <div mat-list-item class="add-inline" (click)="openCreateChannelModal()" role="button" tabindex="0"
             aria-label="Channel hinzufügen">
             <span class="add-circle" aria-hidden="true"></span>
             <span class="add-text">Channel hinzufügen</span>
@@ -78,4 +78,64 @@
       </section>
     </div>
   </div>
+
+  <!-- CHANNEL ERSTELLEN MODAL -->
+  <div class="ui-overlay" *ngIf="createChannelOpen"></div>
+
+  <div class="ui-modal" *ngIf="createChannelOpen" (click)="closeCreateChannelModal()">
+    <div class="ui-modal__panel channel-modal__panel" (click)="$event.stopPropagation()">
+      <div class="ui-modal__header channel-modal__header">
+        <h3>Channel erstellen</h3>
+        <button type="button" class="ui-modal__close" (click)="closeCreateChannelModal()">
+          ×
+        </button>
+      </div>
+
+      <div class="ui-modal__body channel-modal__body">
+        <p class="channel-modal__intro">
+          Channels dienen deinem Team zur Kommunikation. Am besten sollten sie themenbezogen sein,
+          <strong>#marketing</strong> zum Beispiel.
+        </p>
+
+        <form class="channel-modal__form" (ngSubmit)="submitCreateChannel()">
+          <!-- Channel-Name -->
+          <label class="channel-modal__field">
+            <div class="channel-modal__label-row">
+              <span class="channel-modal__label">Channel-Name</span>
+            </div>
+
+            <div class="channel-input-wrap">
+              <span class="channel-hash">#</span>
+              <input class="channel-input" type="text" name="channelName" required autocomplete="off"
+                placeholder="z.B. Kooperationsprojekte" [(ngModel)]="newChannelName" />
+            </div>
+          </label>
+
+          <!-- Beschreibung -->
+          <label class="channel-modal__field">
+            <div class="channel-modal__label-row">
+              <span class="channel-modal__label">Beschreibung</span>
+              <span class="channel-modal__optional">(optional)</span>
+            </div>
+
+            <div class="channel-input-wrap channel-input-wrap--textarea">
+              <textarea class="channel-textarea" name="channelDescription" placeholder="Dein Text hier" maxlength="80"
+                [(ngModel)]="newChannelDescription">
+              </textarea>
+            </div>
+          </label>
+
+          <!-- Aktionen -->
+          <div class="channel-modal__actions">
+            <button type="submit" class="channel-btn channel-btn--primary"
+              [disabled]="!(newChannelName && newChannelName.trim().length)">
+              Erstellen
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
 </div>

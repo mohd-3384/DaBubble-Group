@@ -69,15 +69,8 @@
 
 .icon-swap.edit:hover {
   background-image: url('/public/images/edit_square_hover.svg');
-  background-color: #535af11f;
+  background-color: var(--background-color);
   transform: scale(1.05);
-  box-shadow: 0 0 6px #535af133;
-}
-
-.icon-swap.edit:active {
-  background-image: url('/public/images/edit_square_click.svg');
-  background-color: #535af140;
-  transform: scale(0.95);
 }
 
 .icon-swap.add {
@@ -126,39 +119,62 @@
   .title {
     font-weight: 800;
     font-size: 20px;
-    color: #000;
     letter-spacing: 0.2px;
     transition: color var(--transition15);
   }
 
   /* ===== CHANNELS HEADER ===== */
-  &.channels-header:hover {
-    .arrow {
-      content: url('/public/images/arrow-drop-down-hover.svg');
-    }
+  &.channels-header {
+    .left:hover {
+      .arrow {
+        content: url('/public/images/arrow-drop-down-hover.svg');
+      }
 
-    .section-icon {
-      content: url('/public/images/workspaces-hover.svg');
-    }
+      .section-icon {
+        content: url('/public/images/workspaces-hover.svg');
+      }
 
-    .title {
-      color: var(--primary-color);
+      .title {
+        color: var(--primary-color);
+      }
     }
   }
 
   /* ===== DIREKTNACHRICHTEN HEADER ===== */
-  &.dms-header:hover {
-    .arrow {
-      content: url('/public/images/arrow-drop-down-hover.svg');
-    }
+  &.dms-header {
+    .left:hover {
+      .arrow {
+        content: url('/public/images/arrow-drop-down-hover.svg');
+      }
 
-    .section-icon {
-      content: url('/public/images/account-circle-hover.svg');
-    }
+      .section-icon {
+        content: url('/public/images/account-circle-hover.svg');
+      }
 
-    .title {
-      color: var(--primary-color);
+      .title {
+        color: var(--primary-color);
+      }
     }
+  }
+
+  .icon-swap.add {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background-color: transparent;
+    background-image: url('/public/images/add.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px 20px;
+    transition: background-color var(--transition15),
+      transform var(--transition15),
+      box-shadow var(--transition15);
+  }
+
+  .icon-swap.add:hover {
+    background-image: url('/public/images/add-hover.svg');
+    background-color: var(--background-color);
+    transform: scale(1.05);
   }
 }
 
@@ -211,12 +227,24 @@
     Listen / Hover-Design
    =========================== */
 a.mat-mdc-list-item {
-  margin: 8px 0;
+  margin: 4px 0;
+  border-radius: 24px;
+  transition:
+    background-color var(--transition15),
+    color var(--transition15),
+    transform var(--transition15);
+}
+
+a.mat-mdc-list-item .mdc-list-item__primary-text,
+a.mat-mdc-list-item div[matLine],
+a.mat-mdc-list-item span {
+  transition: color var(--transition15);
 }
 
 a.mat-mdc-list-item:not(.active):hover {
   background-color: var(--background-color) !important;
   color: var(--primary-color) !important;
+  transform: translateX(2px);
 }
 
 a.mat-mdc-list-item:not(.active):hover .mdc-list-item__primary-text,
@@ -226,8 +254,7 @@ a.mat-mdc-list-item:not(.active):hover span {
 }
 
 a.mat-mdc-list-item.active,
-a.mat-mdc-list-item.active:hover,
-a.mat-mdc-list-item.active:focus {
+a.mat-mdc-list-item.active:hover {
   background-color: var(--background-color) !important;
   color: var(--primary-color) !important;
   border-radius: 24px;
@@ -237,12 +264,12 @@ a.mat-mdc-list-item.active .mdc-list-item__primary-text,
 a.mat-mdc-list-item.active div[matLine],
 a.mat-mdc-list-item.active span {
   color: var(--primary-color) !important;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-/* ===========================
+/* ==================================
     Online/Offline-Dot (über Avatar)
-   =========================== */
+   ================================== */
 .avatar {
   position: relative;
   width: 32px;
@@ -268,7 +295,7 @@ a.mat-mdc-list-item.active span {
   height: 10px;
   border-radius: 50%;
   background: var(--background-offline);
-  border: 2px solid #fff;
+  border: 2px solid var(--surface-bg);
 }
 
 .dot--online {
@@ -285,12 +312,12 @@ a.mat-mdc-list-item.active span {
 
 .workspace-panel {
   height: 100%;
-  width: 260px;
+  width: 280px;
   transition: width 0.2s ease, padding 0.2s ease;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 24px 0 0 24px;
-  padding-left: 20px;
+  padding-left: 40px;
   box-sizing: border-box;
   min-height: 0;
   display: flex;
@@ -370,4 +397,165 @@ a.mat-mdc-list-item.active span {
 
 .ws-sections::-webkit-scrollbar-thumb:hover {
   background: var(--background-color);
+}
+
+/* ===========================
+   Channel-Erstellen Modal
+   =========================== */
+.channel-modal__panel {
+  width: min(800px, 96vw);
+  max-height: 80vh;
+  border-radius: 30px;
+}
+
+.channel-modal__header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.channel-modal__header button {
+  font-size: 32px;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}
+
+.channel-modal__body {
+  padding-bottom: 32px;
+}
+
+.channel-modal__intro {
+  margin: 0 0 24px;
+  font-size: 16px;
+}
+
+.channel-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.channel-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.channel-modal__label-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.channel-modal__label {
+  font-weight: 700;
+}
+
+.channel-modal__optional {
+  font-size: 13px;
+  color: var(--background-offline);
+}
+
+.channel-input-wrap {
+  position: relative;
+  display: block;
+  border-radius: 9999px;
+  border: 1px solid #c8ceff;
+  background: var(--surface-bg);
+}
+
+.channel-input-wrap--textarea {
+  border-radius: 9999px;
+}
+
+.channel-hash {
+  position: absolute;
+  color: var(--background-offline);
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.channel-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+  padding: 14px 20px 14px 36px;
+  border-radius: 9999px;
+}
+
+.channel-textarea {
+  width: 100%;
+  height: 48px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+  padding: 14px 20px;
+  border-radius: 9999px;
+  resize: none;
+  overflow-y: auto;
+}
+
+.channel-input:focus,
+.channel-textarea:focus {
+  box-shadow: 0 0 0 2px var(--btn-hover-violett)
+}
+
+.channel-modal__actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.channel-btn {
+  min-width: 120px;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition15),
+    color var(--transition15),
+    transform var(--transition15),
+    box-shadow var(--transition15);
+}
+
+.channel-btn--primary {
+  background: var(--primary-color);
+  color: var(--surface-bg);
+}
+
+.channel-btn--primary:hover:not(:disabled) {
+  background: var(--btn-hover-violett);
+  transform: scale(1.02);
+}
+
+.channel-btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.channel-modal__body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.channel-modal__form,
+.channel-input-wrap,
+.channel-input,
+.channel-textarea {
+  box-sizing: border-box;
+  max-width: 100%;
 }

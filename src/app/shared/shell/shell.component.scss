@@ -22,7 +22,7 @@ app-header {
 
 /* Spalten */
 .shell__left {
-  flex: 0 0 280px;
+  flex: 0 0 300px;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -35,7 +35,7 @@ app-header {
 }
 
 .shell__right {
-  flex: 0 0 340px;
+  flex: 0 0 320px;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -62,7 +62,6 @@ app-header {
   min-width: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
-
   overflow: hidden !important;
   pointer-events: none !important;
   background: transparent !important;
