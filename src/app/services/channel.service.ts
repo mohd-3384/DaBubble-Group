@@ -5,7 +5,7 @@ import {
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { Observable, map } from 'rxjs';
-import { ChannelDoc } from '../interfaces/channel.interface';
+import { ChannelDoc } from '../interfaces/allInterfaces.interface';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
@@ -13,7 +13,7 @@ export class ChannelService {
   private auth = inject(Auth);
 
   /** Channel anlegen – Creator ist IMMER der eingeloggte User */
-  async createChannel(id: string) {
+  async createChannel(id: string, topic: string = '') {
     const authUser = this.auth.currentUser;
     if (!authUser) throw new Error('[ChannelService] createChannel: not authenticated');
 
@@ -25,7 +25,7 @@ export class ChannelService {
       lastMessageAt: null,
       lastMessageBy: null,
       lastReplyAt: null,
-      topic: ''
+      topic,
     });
   }
 

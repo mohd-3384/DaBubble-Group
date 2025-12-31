@@ -10,9 +10,8 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
-import { ChannelDoc } from '../interfaces/channel.interface';
-import { UserDoc } from '../interfaces/user.interface';
 import { FormsModule } from '@angular/forms';
+import { ChannelDoc, UserDoc } from '../interfaces/allInterfaces.interface';
 
 @Component({
   selector: 'app-channels',
@@ -84,19 +83,19 @@ export class ChannelsComponent {
     if (!raw) return;
 
     const id = raw.toLowerCase().replace(/\s+/g, '-');
+    const topic = (this.newChannelDescription || '').trim();
 
     try {
-      await this.chanSvc.createChannel(id);
+      await this.chanSvc.createChannel(id, topic);
       await this.chanSvc.addMeAsMember(id, 'owner');
-      // await this.chanSvc.postWelcome(id);
 
       // Formular leeren & Modal schließen
       this.newChannelName = '';
       this.newChannelDescription = '';
       this.closeCreateChannelModal();
 
-      // optional: gleich in den neuen Channel springen
-      // this.router.navigate(['/channel', id]);
+      // gleich in den neuen Channel springen
+      this.router.navigate(['/channel', id]);
     } catch (e) {
       console.error('[ChannelModal] create failed:', e);
     }

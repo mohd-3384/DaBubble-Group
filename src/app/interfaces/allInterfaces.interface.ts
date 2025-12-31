@@ -6,10 +6,35 @@ export interface Vm {
 }
 
 export interface ChannelDoc {
-  messageCount?: number;
-  createdAt?: any;
+  id: string;
   createdBy?: string;
-};
+  createdAt?: any;
+  memberCount?: number;
+  messageCount?: number;
+  lastMessageAt?: any;
+  lastMessageBy?: string | null;
+  lastReplyAt?: any;
+  topic?: string;
+}
+
+export interface UserDoc {
+  id?: string;
+  name: string;
+  email: string;
+  status: 'active' | 'away';
+  avatarUrl: string;
+  online?: boolean;
+  lastSeen?: any;
+  role?: 'member' | 'guest';
+}
+
+export interface UserMini {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  online?: boolean;
+  status?: 'active' | 'away';
+}
 
 export interface MessageVm {
   id: string;
@@ -38,7 +63,8 @@ export interface MemberDenorm {
 export interface MemberVM {
   uid: string;
   name: string;
-  avatarUrl?: string
+  avatarUrl?: string;
+  online?: boolean;
 };
 
 export type TargetKind = 'channel' | 'user' | 'email';

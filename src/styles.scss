@@ -8,6 +8,7 @@
   --background-online: #92C83E;
   --background-offline: #9ca3af;
   --btn-hover-violett: #797ef3;
+  --placeholder-color: #9ca3af;
   --border-radius9999: 9999px;
   --transition15: 0.15s ease;
   --transition20: 0.2s ease;
@@ -17,6 +18,7 @@
   --surface-bg: #fff;
   --surface-radius: 20px;
   --surface-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  --text-shadow: 0 0 1px #535EF1;
 }
 
 ::selection {
@@ -343,7 +345,6 @@ body {
 }
 
 /* =============  UI Overlay & Popover  ============= */
-/* dunkler Hintergrund */
 .ui-overlay {
   position: fixed;
   inset: 0;
@@ -424,11 +425,18 @@ body {
 }
 
 .ui-modal__close {
+  width: 40px;
+  height: 40px;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 32px;
   border-radius: 50%;
+  margin: 0;
+
+  &:hover {
+    color: var(--primary-color);
+  }
 }
 
 .ui-modal__close:hover {

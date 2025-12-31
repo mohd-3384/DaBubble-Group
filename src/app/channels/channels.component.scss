@@ -400,7 +400,7 @@ a.mat-mdc-list-item.active span {
 }
 
 /* ===========================
-   Channel-Erstellen Modal
+    Channel-Erstellen Modal
    =========================== */
 .channel-modal__panel {
   width: min(800px, 96vw);
@@ -496,11 +496,13 @@ a.mat-mdc-list-item.active span {
   border: none;
   outline: none;
   font-size: 16px;
+  font-family: 'Nunito', sans-serif;
   background: transparent;
   padding: 14px 20px;
   border-radius: 9999px;
   resize: none;
   overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .channel-input:focus,

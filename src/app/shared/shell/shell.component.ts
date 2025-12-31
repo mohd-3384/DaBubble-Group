@@ -22,8 +22,8 @@ import {
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
+import { UserDoc } from '../../interfaces/allInterfaces.interface';
 
-import { UserDoc } from '../../interfaces/user.interface';
 
 type MentionUser = { id: string; name: string; avatarUrl?: string };
 

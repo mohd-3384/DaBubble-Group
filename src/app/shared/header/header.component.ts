@@ -16,7 +16,7 @@ import {
 import { Auth, authState, signOut } from '@angular/fire/auth';
 import { Observable, BehaviorSubject, combineLatest, from, of } from 'rxjs';
 import { map, switchMap, startWith, distinctUntilChanged, debounceTime } from 'rxjs/operators';
-import { UserDoc } from '../../interfaces/user.interface';
+import { UserDoc } from '../../interfaces/allInterfaces.interface';
 
 type SearchResult =
   | { kind: 'channel'; id: string }
