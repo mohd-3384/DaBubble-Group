@@ -301,9 +301,18 @@ export class HeaderComponent {
   }
 
   onSelectResult(r: SearchResult) {
-    if (r.kind === 'channel') this.router.navigate(['/channels', r.id]);
-    if (r.kind === 'user') this.router.navigate(['/dm', r.id]);
-    if (r.kind === 'message') this.router.navigate(['/channels', r.channelId]);
+    if (r.kind === 'channel') {
+      this.router.navigate(['/channel', r.id]);
+    }
+
+    if (r.kind === 'user') {
+      this.router.navigate(['/dm', r.id]);
+    }
+
+    if (r.kind === 'message') {
+      this.router.navigate(['/channel', r.channelId]);
+    }
+
     this.clearSearch();
   }
 
