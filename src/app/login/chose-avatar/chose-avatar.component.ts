@@ -28,6 +28,7 @@ import { CommonModule } from '@angular/common';
 export class ChoseAvatarComponent {
 
   @Output() back = new EventEmitter<void>();
+  @Output() success = new EventEmitter<void>();
  
 
   avatarlist = [
@@ -42,6 +43,17 @@ export class ChoseAvatarComponent {
   chosenAvatarSrc = 'public/images/avatars/avatar-default.svg';
 
   selectedIndex = 0
+
+  successVisible = false;
+
+  userCreatedSuccesful() {
+    this.successVisible = true;
+
+    setTimeout(() => {
+      this.success.emit();           
+      this.successVisible = false;
+    }, 3000);
+  }
 
   selectAvatar(src: string) {
     this.chosenAvatarSrc = src;

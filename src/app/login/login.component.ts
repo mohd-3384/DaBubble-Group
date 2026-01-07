@@ -25,7 +25,7 @@ import { NgIf } from '@angular/common';
     LoginCardComponent,
     RegisterCardComponent, NgIf,
     ChoseAvatarComponent
-],
+  ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,5 +51,12 @@ export class LoginComponent {
   backToRegister() {
     this.showChoseAvatarComponent = false;
     this.showRegisterCardComponent = true;
+  }
+
+  onRegistrationSuccess() {
+
+    this.showChoseAvatarComponent = false;
+    this.showRegisterCardComponent = false;
+    this.showLoginCardComponent = true;
   }
 }

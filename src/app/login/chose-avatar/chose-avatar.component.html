@@ -23,8 +23,12 @@
             </div>
         </div>
 
-        <div class="button-container">
+        <div class="button-container" (click)="userCreatedSuccesful()">
             <button>Weiter</button>
         </div>
     </mat-card>
+
+    <div class="user-seccesful-contaner" [class.visible]="successVisible">
+        <p>Benutzer erfolgreich erstellt!</p>
+    </div>
 </main>
