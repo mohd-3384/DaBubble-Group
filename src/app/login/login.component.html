@@ -18,6 +18,7 @@
         <app-chose-avatar *ngIf="debugMode || showChoseAvatarComponent" (back)="backToRegister()"
             (success)="onRegistrationSuccess()">
         </app-chose-avatar>
+        <app-password-reset *ngIf="debugMode || showPasswordResetComponent"></app-password-reset>
     </main>
 
     <footer class="footer-container">

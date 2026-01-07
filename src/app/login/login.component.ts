@@ -10,6 +10,7 @@ import { LoginCardComponent } from './login-card/login-card.component';
 import { RegisterCardComponent } from './register-card/register-card.component';
 import { ChoseAvatarComponent } from './chose-avatar/chose-avatar.component';
 import { NgIf } from '@angular/common';
+import { PasswordResetComponent } from "./password-reset/password-reset.component";
 
 
 @Component({
@@ -24,18 +25,20 @@ import { NgIf } from '@angular/common';
     MatFormFieldModule,
     LoginCardComponent,
     RegisterCardComponent, NgIf,
-    ChoseAvatarComponent
-  ],
+    ChoseAvatarComponent,
+    PasswordResetComponent
+],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  debugMode = false;
+  debugMode = true;
 
   showLoginCardComponent = true;
   showRegisterCardComponent = false;
   showChoseAvatarComponent = false;
+  showPasswordResetComponent = false;
 
   openRegisterCard() {
     this.showLoginCardComponent = false;
