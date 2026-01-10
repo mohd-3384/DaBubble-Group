@@ -19,8 +19,6 @@ export class ThreadComponent {
   @Input({ required: true }) rootMessage!: Message;
   @Input() replies: Message[] = [];
 
-
-  /** alle User (für @) */
   @Input() users: MentionUser[] = [];
 
   @Output() send = new EventEmitter<string>();
@@ -30,6 +28,68 @@ export class ThreadComponent {
   showEmoji = false;
   showUsers = false;
 
+  messageEmojiForId: string | null = null;
+  emojiPopoverPos = {
+    top: 0,
+    left: 0,
+    placement: 'bottom' as 'top' | 'bottom',
+  };
+
+  private reactionsByMsg: Record<string, Record<string, number>> = {};
+
+  trackReaction = (_: number, it: { emoji: string; count: number }) => it.emoji;
+
+  reactionList(messageId: string): { emoji: string; count: number }[] {
+    const map = this.reactionsByMsg[messageId];
+    if (!map) return [];
+    return Object.entries(map)
+      .map(([emoji, count]) => ({ emoji, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  private addReactionToMessage(messageId: string, emoji: string) {
+    if (!emoji) return;
+    const store = (this.reactionsByMsg[messageId] ||= {});
+    store[emoji] = (store[emoji] || 0) + 1;
+  }
+
+  toggleMessageEmojiPicker(ev: MouseEvent, messageId: string) {
+    ev.stopPropagation();
+
+    if (this.messageEmojiForId === messageId) {
+      this.messageEmojiForId = null;
+      return;
+    }
+
+    const btn = ev.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
+
+    const pickerHeight = 360;
+    const pickerWidth = 360;
+    const offset = 8;
+
+    const roomBelow = viewportH - rect.bottom;
+    const placement: 'top' | 'bottom' =
+      roomBelow > pickerHeight + offset ? 'bottom' : 'top';
+
+    let top = placement === 'bottom'
+      ? rect.bottom + offset
+      : rect.top - pickerHeight - offset;
+
+    let left = rect.left;
+    const maxLeft = viewportW - pickerWidth - 16;
+    if (left > maxLeft) left = Math.max(16, maxLeft);
+
+    this.messageEmojiForId = messageId;
+    this.emojiPopoverPos = { top, left, placement };
+    this.showEmoji = false;
+    this.showUsers = false;
+  }
+
+
   trackReply = (_: number, r: Message) => r.id;
   trackUser = (_: number, u: MentionUser) => u.id;
 
@@ -37,6 +97,7 @@ export class ThreadComponent {
   onDocumentClick() {
     this.showEmoji = false;
     this.showUsers = false;
+    this.messageEmojiForId = null;
   }
 
   toggleEmoji(evt?: Event) {
@@ -54,10 +115,19 @@ export class ThreadComponent {
   closePopovers() {
     this.showEmoji = false;
     this.showUsers = false;
+    this.messageEmojiForId = null;
   }
 
   onEmojiSelect(e: any) {
     const native = e?.emoji?.native ?? e?.emoji?.char ?? e?.native ?? '';
+
+    // If a message reaction picker is open => react to that message
+    if (this.messageEmojiForId) {
+      this.addReactionToMessage(this.messageEmojiForId, native);
+      this.messageEmojiForId = null;
+      return;
+    }
+
     this.draft += native;
     this.showEmoji = false;
   }
@@ -82,5 +152,4 @@ export class ThreadComponent {
     this.draft = '';
     this.closePopovers();
   }
-
 }

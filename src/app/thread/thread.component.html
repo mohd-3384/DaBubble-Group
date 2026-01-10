@@ -25,7 +25,32 @@
           <span class="time" *ngIf="rm.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
         </div>
 
+        <!-- Hover-Actions (Root) -->
+        <div class="message-actions" (click)="$event.stopPropagation()">
+          <button type="button" class="msg-act-btn msg-act-add" (click)="toggleMessageEmojiPicker($event, rm.id)"
+            aria-label="Add reaction"></button>
+        </div>
+
+        <!-- Emoji-Popover für Root -->
+        <div class="msg-emoji-popover" *ngIf="messageEmojiForId === rm.id"
+          [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
+          [class.msg-emoji-popover--top]="emojiPopoverPos.placement === 'top'"
+          [class.msg-emoji-popover--bottom]="emojiPopoverPos.placement === 'bottom'" (click)="$event.stopPropagation()">
+          <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+            (emojiSelect)="onEmojiSelect($event)">
+          </emoji-mart>
+        </div>
+
         <div class="bubble bubble-light">{{ rm.text }}</div>
+
+        <!-- Reactions row (Root) -->
+        <div class="reactions-row" *ngIf="reactionList(rm.id).length">
+          <button type="button" class="reaction" *ngFor="let it of reactionList(rm.id); trackBy: trackReaction"
+            (click)="$event.stopPropagation()">
+            <span class="emoji">{{ it.emoji }}</span>
+            <span class="count">{{ it.count }}</span>
+          </button>
+        </div>
 
         <!-- Unter Root: Anzahl + Linie -->
         <div class="thread-teaser">
@@ -48,7 +73,35 @@
             <span class="time" *ngIf="r.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
           </div>
 
+          <!-- Hover-Actions (Reply) -->
+          <div class="message-actions" (click)="$event.stopPropagation()">
+            <button type="button" class="msg-act-btn msg-act-add" (click)="toggleMessageEmojiPicker($event, r.id)"
+              aria-label="Add reaction"></button>
+          </div>
+
+          <!-- Emoji-Popover für Reply -->
+          <div class="msg-emoji-popover" *ngIf="messageEmojiForId === r.id"
+            [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
+            [class.msg-emoji-popover--top]="emojiPopoverPos.placement === 'top'"
+            [class.msg-emoji-popover--bottom]="emojiPopoverPos.placement === 'bottom'"
+            (click)="$event.stopPropagation()">
+            <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+              (emojiSelect)="onEmojiSelect($event)">
+            </emoji-mart>
+          </div>
+
+
           <div class="bubble bubble-light">{{ r.text }}</div>
+
+          <!-- Reactions row (Reply) -->
+          <div class="reactions-row" *ngIf="reactionList(r.id).length">
+            <button type="button" class="reaction" *ngFor="let it of reactionList(r.id); trackBy: trackReaction"
+              (click)="$event.stopPropagation()">
+              <span class="emoji">{{ it.emoji }}</span>
+              <span class="count">{{ it.count }}</span>
+            </button>
+          </div>
+
         </div>
       </div>
     </ng-container>
@@ -98,5 +151,6 @@
     </div>
   </div>
 
-  <div class="emoji-backdrop" *ngIf="showEmoji || showUsers" (click)="closePopovers()"></div>
+  <div class="emoji-backdrop" *ngIf="showEmoji || showUsers || messageEmojiForId" (click)="closePopovers()"></div>
+
 </section>
