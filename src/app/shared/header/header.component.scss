@@ -192,13 +192,13 @@
 .arrow-down {
   width: 32px;
   height: 32px;
-  content: url('../../../../public/images/channel-info-arrow-down.svg');
+  content: url('/public/images/channel-info-arrow-down.svg');
   transition: transform var(--transition15) ease;
 }
 
 .profile-trigger:hover .arrow-down,
 .profile-trigger:focus-visible .arrow-down {
-  content: url('../../../../public/images/channel-info-arrow-down-hover.svg');
+  content: url('/public/images/channel-info-arrow-down-hover.svg');
 }
 
 .profile-area .profile-trigger .arrow-down {

@@ -9,6 +9,18 @@ export const routes: Routes = [
       import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'imprint',
+    loadComponent: () =>
+      import('./imprint/imprint.component').then((m) => m.ImprintComponent),
+  },
+  {
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./privacypolicy/privacypolicy.component').then(
+        (m) => m.PrivacypolicyComponent
+      ),
+  },
+  {
     path: '',
     component: ShellComponent,
     children: [
