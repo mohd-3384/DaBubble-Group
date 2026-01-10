@@ -106,6 +106,29 @@ export class ChatComponent {
 
   private auth = inject(Auth);
   private thread = inject(ThreadState);
+  @ViewChild('membersBtn') membersBtn!: ElementRef<HTMLElement>;
+  @ViewChild('addMembersBtn') addMembersBtn!: ElementRef<HTMLElement>;
+
+  membersModalPos = { top: 0, left: 0 };
+  addMembersModalPos = { top: 0, left: 0 };
+
+  private positionModalFrom(el: HTMLElement, which: 'members' | 'add') {
+    const rect = el.getBoundingClientRect();
+    const offset = 10;
+
+    const viewportW = window.innerWidth;
+    const panelWidth = which === 'members' ? 360 : 480;
+
+    const left = Math.min(
+      viewportW - panelWidth - 16,
+      Math.max(16, rect.right - panelWidth)
+    );
+
+    const top = rect.bottom + offset;
+
+    if (which === 'members') this.membersModalPos = { top, left };
+    else this.addMembersModalPos = { top, left };
+  }
 
   // Channel-Info Modal
   channelInfoOpen = false;
@@ -281,6 +304,9 @@ export class ChatComponent {
   openMembersModal(event?: MouseEvent) {
     event?.stopPropagation();
     this.membersModalOpen = true;
+
+    const el = this.membersBtn?.nativeElement;
+    if (el) this.positionModalFrom(el, 'members');
   }
 
   closeMembersModal() {
@@ -303,9 +329,9 @@ export class ChatComponent {
   openAddMembersModal() {
     this.membersModalOpen = false;
     this.addMembersOpen = true;
-    this.addMemberInput = '';
-    this.addMemberSelected = null;
-    this.addMemberInput$.next('');
+
+    const el = this.addMembersBtn?.nativeElement;
+    if (el) this.positionModalFrom(el, 'add');
   }
 
   closeAddMembersModal() {

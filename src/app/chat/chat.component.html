@@ -54,7 +54,7 @@
 
     <!-- Nur bei CHANNEL sichtbar -->
     <div *ngIf="vm.kind === 'channel'" class="members-group">
-      <div class="avatars" *ngIf="members$ | async as members" (click)="openMembersModal($event)">
+      <div class="avatars" #membersBtn *ngIf="members$ | async as members" (click)="openMembersModal($event)">
         <ng-container *ngFor="let m of (members | slice: 0 : 3); trackBy: trackMember">
           <img class="avatar" [src]="m.avatarUrl" [alt]="m.name" />
         </ng-container>
@@ -63,7 +63,7 @@
         <span class="count" *ngIf="members.length <= 3">{{ members.length }}</span>
       </div>
 
-      <span class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
+      <span #addMembersBtn class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
         title="Mitglieder hinzufügen" (click)="openAddMembersModal()"></span>
     </div>
   </section>
@@ -383,8 +383,11 @@
     <div class="ui-overlay" *ngIf="membersModalOpen" (click)="closeMembersModal()"></div>
 
     <div class="ui-modal ui-modal--members" *ngIf="membersModalOpen" (click)="closeMembersModal()">
-      <div class="ui-modal__panel members-modal__panel" (click)="$event.stopPropagation()"
-        *ngIf="members$ | async as members">
+      <div class="ui-modal__panel members-modal__panel members-modal__panel--anchored"
+        (click)="$event.stopPropagation()" *ngIf="members$ | async as members" [ngStyle]="{
+      top: membersModalPos.top + 'px',
+      left: membersModalPos.left + 'px'
+      }">
 
         <div class="members-modal__header">
           <h3 class="members-modal__title">Mitglieder</h3>
@@ -421,7 +424,11 @@
   <div class="ui-overlay" *ngIf="addMembersOpen" (click)="closeAddMembersModal()"></div>
 
   <div class="ui-modal ui-modal--add-members" *ngIf="addMembersOpen" (click)="closeAddMembersModal()">
-    <div class="ui-modal__panel add-members__panel" (click)="$event.stopPropagation()">
+    <div class="ui-modal__panel add-members__panel add-members__panel--anchored" (click)="$event.stopPropagation()"
+      [ngStyle]="{
+      top: addMembersModalPos.top + 'px',
+      left: addMembersModalPos.left + 'px'
+    }">
 
       <div class="add-members__header">
         <h3 class="add-members__title">Leute hinzufügen</h3>
@@ -466,5 +473,4 @@
 
     </div>
   </div>
-
 </ng-container>

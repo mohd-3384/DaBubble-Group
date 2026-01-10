@@ -4,6 +4,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  position: relative;
 }
 
 .chat-header {
@@ -1588,14 +1589,13 @@ $muted: #6c7280;
   color: var(--placeholder-color);
 }
 
-/* ===========================
-    Spezielle Positionierung:
-    Mitglieder + Leute-hinzufügen
-   =========================== */
-.ui-modal--members,
-.ui-modal--add-members {
-  justify-content: flex-end;
-  align-items: flex-start;
-  padding-top: 200px;
-  padding-right: 72px;
+.members-modal__panel--anchored,
+.add-members__panel--anchored {
+  position: fixed;
+  margin: 0;
+  z-index: 5000;
+}
+
+.add-members__panel--anchored {
+  transform: translateX(-50px);
 }
