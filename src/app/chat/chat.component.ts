@@ -2,7 +2,6 @@ import {
   Component,
   ElementRef,
   EnvironmentInjector,
-  HostListener,
   PLATFORM_ID,
   ViewChild,
   inject,
@@ -23,6 +22,9 @@ import {
   serverTimestamp,
   limit,
   setDoc,
+  getDoc,
+  getDocs,
+  deleteDoc,
 } from '@angular/fire/firestore';
 import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
 import { map, switchMap, startWith, take } from 'rxjs/operators';
@@ -88,6 +90,14 @@ export class ChatComponent {
     role: 'guest',
   };
 
+  // für Emoji-Popover an einer Nachricht
+  messageEmojiForId: string | null = null;
+  emojiPopoverPos = {
+    top: 0,
+    left: 0,
+    placement: 'bottom' as 'top' | 'bottom',
+  };
+
   @ViewChild('toInputEl') toInputEl!: ElementRef<HTMLInputElement>;
 
   composeMode = false;
@@ -112,6 +122,67 @@ export class ChatComponent {
   editChannelName = '';
   editChannelDesc = '';
 
+  composerEmojiPos = { top: 0, left: 0 };
+
+  private async renameChannel(oldId: string, newIdRaw: string) {
+    const newId = newIdRaw.trim();
+    if (!newId) return;
+
+    if (newId === oldId) return;
+
+    const oldRef = doc(this.fs, `channels/${oldId}`);
+    const newRef = doc(this.fs, `channels/${newId}`);
+
+    // 1) prüfen, ob alter existiert
+    const oldSnap = await getDoc(oldRef);
+    if (!oldSnap.exists()) {
+      console.warn('Alter Channel existiert nicht:', oldId);
+      return;
+    }
+
+    // 2) prüfen, ob neuer schon existiert
+    const newSnap = await getDoc(newRef);
+    if (newSnap.exists()) {
+      console.warn('Neuer Channel existiert schon:', newId);
+      return;
+    }
+
+    const data = oldSnap.data(); // enthält topic, createdAt, memberCount, ...
+
+    // 3) neues Channel-Dokument anlegen (ohne neues Feld!)
+    await setDoc(newRef, {
+      ...data,
+    });
+
+    // 4) Subcollections kopieren (members + messages)
+    // members
+    const oldMembers = await getDocs(collection(this.fs, `channels/${oldId}/members`));
+    for (const m of oldMembers.docs) {
+      await setDoc(doc(this.fs, `channels/${newId}/members/${m.id}`), m.data(), { merge: true });
+    }
+
+    // messages (kann groß werden!)
+    const oldMessages = await getDocs(collection(this.fs, `channels/${oldId}/messages`));
+    for (const msg of oldMessages.docs) {
+      await setDoc(doc(this.fs, `channels/${newId}/messages/${msg.id}`), msg.data(), { merge: true });
+    }
+
+    // 5) altes löschen (erst subcollections, dann doc)
+    // messages löschen
+    for (const msg of oldMessages.docs) {
+      await deleteDoc(doc(this.fs, `channels/${oldId}/messages/${msg.id}`));
+    }
+    // members löschen
+    for (const m of oldMembers.docs) {
+      await deleteDoc(doc(this.fs, `channels/${oldId}/members/${m.id}`));
+    }
+
+    await deleteDoc(oldRef);
+
+    // 6) UI zur neuen Route
+    this.router.navigate(['/channel', newId]);
+  }
+
   openChannelInfoModal() {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.editChannelName = id;
@@ -128,13 +199,46 @@ export class ChatComponent {
     this.channelDescEdit = false;
   }
 
-  toggleChannelNameEdit() {
-    this.channelNameEdit = !this.channelNameEdit;
+  async toggleChannelNameEdit() {
+    if (!this.channelNameEdit) {
+      this.channelNameEdit = true;
+      return;
+    }
+
+    // Speichern => Rename
+    try {
+      const oldId = this.route.snapshot.paramMap.get('id') ?? '';
+      if (!oldId) return;
+
+      await this.renameChannel(oldId, this.editChannelName);
+      this.channelNameEdit = false;
+    } catch (e) {
+      console.error('Rename fehlgeschlagen:', e);
+    }
   }
 
-  toggleChannelDescEdit() {
-    this.channelDescEdit = !this.channelDescEdit;
+  async toggleChannelDescEdit() {
+    if (!this.channelDescEdit) {
+      this.channelDescEdit = true;
+      return;
+    }
+
+    try {
+      const channelId = this.route.snapshot.paramMap.get('id') ?? '';
+      if (!channelId) return;
+
+      await setDoc(
+        doc(this.fs, `channels/${channelId}`),
+        { topic: this.editChannelDesc.trim() },
+        { merge: true }
+      );
+
+      this.channelDescEdit = false;
+    } catch (e) {
+      console.error('Topic speichern fehlgeschlagen:', e);
+    }
   }
+
 
   // User-Profil Modal (für DMs)
   userProfileOpen = false;
@@ -267,6 +371,9 @@ export class ChatComponent {
   draft = '';
   showEmoji = false;
   showMembers = false;
+  // Emoji-Kontext: Composer oder Nachricht
+  emojiContext: 'composer' | 'message' | null = null;
+  emojiMessageTarget: MessageVm | null = null;
 
   // Header-Mitglieder (Channel)
   members$!: Observable<MemberVM[]>;
@@ -777,9 +884,32 @@ export class ChatComponent {
 
   onEmojiSelect(e: any) {
     const native =
-      e?.emoji?.native ?? e?.emoji?.char ?? e?.native ?? e?.colons ?? '';
+      e?.emoji?.native ??
+      e?.emoji?.char ??
+      e?.native ??
+      e?.colons ??
+      '';
+
+    // Reaktion auf Nachricht
+    if (this.emojiContext === 'message' && this.emojiMessageTarget) {
+      this.addReactionToMessage(this.emojiMessageTarget, native);
+
+      // Message-Popover schließen
+      this.messageEmojiForId = null;
+      this.emojiContext = null;
+      this.emojiMessageTarget = null;
+      return;
+    }
+
+    // Standard: Emoji in Composer einfügen
     this.draft += native;
-    this.showEmoji = false;
+    this.closeEmoji();
+  }
+
+  // UI-Stub für Reaktionen – hier kannst du später Firestore-Update einbauen
+  private addReactionToMessage(msg: MessageVm, emoji: string) {
+    console.log('Reaction ausgewählt', emoji, 'für Message', msg.id);
+    // TODO: Firestore-Update für reactions einbauen
   }
 
   onEmojiClick(event: any) {
@@ -808,6 +938,9 @@ export class ChatComponent {
   closeAllPopovers() {
     this.showEmoji = false;
     this.showMembers = false;
+    this.messageEmojiForId = null;
+    this.emojiContext = null;
+    this.emojiMessageTarget = null;
   }
 
   insertMention(m: MemberVM) {
@@ -858,6 +991,106 @@ export class ChatComponent {
       this.toInputEl?.nativeElement.focus();
     });
   }
+
+  private lockBodyScroll(locked: boolean) {
+    if (!isPlatformBrowser(this.platformId)) return;
+    document.body.style.overflow = locked ? 'hidden' : '';
+  }
+
+  openEmojiForComposer(ev: MouseEvent) {
+    ev.stopPropagation();
+
+    // ✅ Toggle: wenn Composer-Emoji schon offen ist -> schließen
+    if (this.showEmoji && this.emojiContext === 'composer') {
+      this.showEmoji = false;
+      this.emojiContext = null;
+      return;
+    }
+
+    const btn = ev.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
+
+    const pickerWidth = 360;
+    const estimatedHeight = 360;
+    const offset = 10;
+
+    // erstmal grob setzen
+    let left = Math.max(10, Math.min(rect.left, viewportW - pickerWidth - 10));
+    let top = rect.top - estimatedHeight - offset;
+
+    this.composerEmojiPos = { top, left };
+
+    // ✅ Kontext setzen + andere Popover schließen
+    this.emojiContext = 'composer';
+    this.emojiMessageTarget = null;
+    this.showEmoji = true;
+    this.showMembers = false;
+
+    // nach Render: echte Höhe messen und neu setzen
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.composer-emoji-popover-fixed') as HTMLElement | null;
+      if (!el) return;
+
+      const realH = el.offsetHeight || estimatedHeight;
+      const roomBelow = viewportH - rect.bottom;
+      const placeAbove = roomBelow < realH + offset;
+
+      let finalTop = placeAbove ? rect.top - realH - offset : rect.bottom + offset;
+      finalTop = Math.max(10, Math.min(finalTop, viewportH - realH - 10));
+
+      this.composerEmojiPos = { top: finalTop, left };
+    });
+  }
+
+
+  toggleMessageEmojiPicker(ev: MouseEvent, msg: MessageVm) {
+    ev.stopPropagation();
+
+    if (this.messageEmojiForId === msg.id) {
+      this.messageEmojiForId = null;
+      this.emojiContext = null;
+      this.emojiMessageTarget = null;
+      return;
+    }
+
+    const btn = ev.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
+
+    const pickerHeight = 360; // ca. Höhe
+    const pickerWidth = 360;  // ca. Breite
+    const offset = 8;
+
+    const roomBelow = viewportH - rect.bottom;
+    const placement: 'top' | 'bottom' =
+      roomBelow > pickerHeight + offset ? 'bottom' : 'top';
+
+    let top: number;
+    if (placement === 'bottom') {
+      top = rect.bottom + offset;
+    } else {
+      top = rect.top - pickerHeight - offset;
+    }
+
+    // Linksposition so clampen, dass der Picker im Viewport bleibt
+    let left = rect.left;
+    const maxLeft = viewportW - pickerWidth - 16; // kleiner Rand
+    if (left > maxLeft) {
+      left = Math.max(16, maxLeft);
+    }
+
+    this.messageEmojiForId = msg.id;
+    this.emojiPopoverPos = { top, left, placement };
+
+    this.emojiContext = 'message';
+    this.emojiMessageTarget = msg;
+  }
+
 
   async send(vm: Vm) {
     const msg = this.draft.trim();

@@ -1,3 +1,7 @@
+<!-- ===================== -->
+<!-- HEADER (Compose/Normal) -->
+<!-- ===================== -->
+
 <!-- COMPOSE-HEADER -->
 <section class="chat-header" *ngIf="(composeMode$ | async) as compose; else normalHeader">
   <div class="compose-header" *ngIf="compose">
@@ -25,7 +29,6 @@
             Keine Treffer für {{ to }}
           </li>
         </ul>
-
       </div>
     </ng-container>
   </div>
@@ -52,7 +55,7 @@
     <!-- Nur bei CHANNEL sichtbar -->
     <div *ngIf="vm.kind === 'channel'" class="members-group">
       <div class="avatars" *ngIf="members$ | async as members" (click)="openMembersModal($event)">
-        <ng-container *ngFor="let m of (members | slice:0:3); trackBy: trackMember">
+        <ng-container *ngFor="let m of (members | slice: 0 : 3); trackBy: trackMember">
           <img class="avatar" [src]="m.avatarUrl" [alt]="m.name" />
         </ng-container>
 
@@ -62,14 +65,17 @@
 
       <span class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
         title="Mitglieder hinzufügen" (click)="openAddMembersModal()"></span>
-
     </div>
   </section>
 </ng-template>
 
-<!-- BODY -->
+<!-- ===================== -->
+<!-- BODY (Compose/Normal) -->
+<!-- ===================== -->
+
 <section class="chat-body" *ngIf="(composeMode$ | async) as compose; else normalBody">
-  <!-- COMPOSE-BODY (leer + Composer) -->
+
+  <!-- COMPOSE-BODY -->
   <div *ngIf="compose">
     <div class="compose-spacer"></div>
 
@@ -79,13 +85,9 @@
       <div class="composer-actions">
         <div class="actions-left">
           <!-- Emoji -->
-          <span class="emoji-wrapper">
+          <span class="emoji-wrapper" (click)="$event.stopPropagation()">
             <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
-              (click)="toggleEmoji($event)"></span>
-            <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
-              <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
-                (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
-            </div>
+              (click)="openEmojiForComposer($event)"></span>
           </span>
 
           <!-- @ -->
@@ -93,13 +95,22 @@
             (click)="toggleMembers($event)"></span>
         </div>
 
-        <!-- SEND-BUTTON -->
+        <!-- SEND (Compose) -->
         <span class="send-btn" role="button" aria-label="Senden" [class.send-btn--disabled]="!composeTarget"
           (click)="composeTarget && sendFromCompose()"></span>
       </div>
     </div>
 
-    <div class="emoji-backdrop" *ngIf="showEmoji" (click)="closeAllPopovers()"></div>
+    <!-- Backdrop für Compose -->
+    <div class="emoji-backdrop" *ngIf="showEmoji || showMembers" (click)="closeAllPopovers()"></div>
+
+    <!-- Composer Emoji Popover (FIXED) -->
+    <div class="composer-emoji-popover-fixed" *ngIf="showEmoji && emojiContext === 'composer'"
+      [ngStyle]="{ top: composerEmojiPos.top + 'px', left: composerEmojiPos.left + 'px' }"
+      (click)="$event.stopPropagation()">
+      <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+        (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+    </div>
   </div>
 </section>
 
@@ -110,6 +121,7 @@
 
       <!-- SCROLLBEREICH NUR FÜR NACHRICHTEN -->
       <div class="messages-scroll">
+
         <!-- CHANNEL leer -->
         <ng-container *ngIf="vm.kind === 'channel' && (isEmpty$ | async); else hasMessages">
           <div class="channel-empty">
@@ -124,16 +136,18 @@
         <!-- CHANNEL/DM mit Nachrichten -->
         <ng-template #hasMessages>
           <div class="top-gap"></div>
+
           <ng-container *ngFor="let g of (groups$ | async)">
             <div class="day-separator"><span class="chip">{{ g.label }}</span></div>
 
             <div class="message-row" *ngFor="let m of g.items; trackBy: trackMsg">
               <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName" />
+
               <div class="message-col">
                 <div class="header">
                   <span class="name">{{ m.authorName }}</span>
                   <span class="dot"></span>
-                  <span class="time" *ngIf="m.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
+                  <span class="time" *ngIf="m.createdAt as d">{{ d | date: 'HH:mm' }} Uhr</span>
                 </div>
 
                 <div class="bubble bubble-light">{{ m.text }}</div>
@@ -143,30 +157,46 @@
                     {{ m.replyCount || 0 }} Antworten
                   </a>
 
-                  <span class="last-reply" *ngIf="m.lastReplyAt as lr">Letzte Antwort {{ lr | date:'HH:mm' }}</span>
+                  <span class="last-reply" *ngIf="m.lastReplyAt as lr">
+                    Letzte Antwort {{ lr | date: 'HH:mm' }}
+                  </span>
                 </div>
+              </div>
+
+              <!-- Hover-Actions -->
+              <div class="message-actions" (click)="$event.stopPropagation()">
+                <button type="button" class="msg-act-btn msg-act-add" (click)="toggleMessageEmojiPicker($event, m)"
+                  aria-label="Reaktion hinzufügen"></button>
+
+                <button type="button" class="msg-act-btn msg-act-thread" (click)="openThread(m, vm)"
+                  aria-label="Thread öffnen"></button>
+              </div>
+
+              <!-- Emoji-Popover für diese Nachricht -->
+              <div class="msg-emoji-popover" *ngIf="messageEmojiForId === m.id"
+                [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
+                [class.msg-emoji-popover--top]="emojiPopoverPos.placement === 'top'"
+                [class.msg-emoji-popover--bottom]="emojiPopoverPos.placement === 'bottom'"
+                (click)="$event.stopPropagation()">
+                <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+                  (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
               </div>
             </div>
           </ng-container>
         </ng-template>
       </div>
 
-      <!-- COMPOSER FEST UNTEN (NICHT SCROLLEN) -->
+      <!-- COMPOSER FEST UNTEN -->
       <div class="composer composer--sticky">
         <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"></textarea>
 
         <div class="composer-actions">
           <div class="actions-left">
 
-            <!-- Emoji -->
-            <span class="emoji-wrapper">
+            <!-- Emoji Button -->
+            <span class="emoji-wrapper" (click)="$event.stopPropagation()">
               <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
-                (click)="toggleEmoji($event)"></span>
-
-              <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
-                <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
-                  (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
-              </div>
+                (click)="openEmojiForComposer($event)"></span>
             </span>
 
             <!-- @ Erwähnungen NUR im Channel -->
@@ -175,312 +205,266 @@
                 (click)="toggleMembers($event)"></span>
 
               <ng-container *ngIf="showMembers">
-                <div class="mention-popover" (click)="$event.stopPropagation()" *ngIf="members$ | async as members">
+                <div class="mention-popover" *ngIf="members$ | async as members" (click)="$event.stopPropagation()">
                   <div class="mention-item" *ngFor="let m of members; trackBy: trackMember" (click)="insertMention(m)">
                     <img class="mention-avatar" [src]="m.avatarUrl" />
                     <span class="mention-name">{{ m.name }}</span>
                   </div>
-
                 </div>
               </ng-container>
             </span>
           </div>
+
+          <!-- SEND normal -->
           <span class="send-btn" role="button" aria-label="Senden" (click)="send(vm)"></span>
         </div>
       </div>
 
-      <!-- Backdrop für Emoji + Mitglieder (nur EINMAL!) -->
-      <div class="emoji-backdrop" *ngIf="showEmoji || showMembers" (click)="closeEmoji(); closeMembers()"></div>
+      <!-- Backdrop für Popovers -->
+      <div class="emoji-backdrop" *ngIf="showEmoji || showMembers || messageEmojiForId" (click)="closeAllPopovers()">
+      </div>
+
+      <!-- Composer Emoji Popover (FIXED) -->
+      <div class="composer-emoji-popover-fixed" *ngIf="showEmoji && emojiContext === 'composer'"
+        [ngStyle]="{ top: composerEmojiPos.top + 'px', left: composerEmojiPos.left + 'px' }"
+        (click)="$event.stopPropagation()">
+        <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+          (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+      </div>
+
     </section>
-
-
-
-
-
-
-
-    <!-- CHANNEL-INFO MODAL -->
-    <ng-container *ngIf="vm.kind === 'channel'">
-      <!-- Overlay -->
-      <div class="ui-overlay" *ngIf="channelInfoOpen"></div>
-
-      <!-- Klick außerhalb des Panels schließt Modal -->
-      <div class="ui-modal" *ngIf="channelInfoOpen" (click)="closeChannelInfoModal()">
-        <div class="ui-modal__panel channel-info__panel" (click)="$event.stopPropagation()">
-
-          <div>
-            <!-- Header -->
-            <div class="ui-modal__header channel-info__header">
-              <div class="channel-info__title">
-                <span class="channel-info__name">{{ vm.title }}</span>
-              </div>
-              <button type="button" class="ui-modal__close" (click)="closeChannelInfoModal()">
-                ×
-              </button>
-            </div>
-
-            <!-- Body -->
-            <div class="ui-modal__body channel-info__body">
-              <!-- CARD: CHANNEL-NAME -->
-              <section class="channel-info__card" [class.channel-info__card--edit]="channelNameEdit">
-                <div class="channel-info__card-header">
-                  <span class="channel-info__label">Channel-Name</span>
-
-                  <button type="button" class="channel-info__edit-btn" (click)="toggleChannelNameEdit()">
-                    {{ channelNameEdit ? 'Speichern' : 'Bearbeiten' }}
-                  </button>
-                </div>
-
-                <!-- Anzeige-Modus -->
-                <div *ngIf="!channelNameEdit" class="channel-info__field-pill">
-                  <span class="channel-info__field-text">
-                    {{ vm.title }}
-                  </span>
-                </div>
-
-                <!-- Edit-Modus -->
-                <div *ngIf="channelNameEdit" class="channel-info__field-pill channel-info__field-pill--edit">
-                  <div class="channel-input-wrap channel-input-wrap--info">
-                    <span class="channel-hash">#</span>
-                    <input class="channel-input" type="text" [(ngModel)]="editChannelName" autocomplete="off" />
-                  </div>
-                </div>
-              </section>
-
-              <!-- CARD: BESCHREIBUNG -->
-              <section class="channel-info__card" [class.channel-info__card--edit]="channelDescEdit">
-                <div class="channel-info__card-header">
-                  <span class="channel-info__label">Beschreibung</span>
-
-                  <button type="button" class="channel-info__edit-btn" (click)="toggleChannelDescEdit()">
-                    {{ channelDescEdit ? 'Speichern' : 'Bearbeiten' }}
-                  </button>
-                </div>
-
-                <div class="channel-info__desc-box">
-
-                  <!-- Anzeige-Modus -->
-                  <ng-container *ngIf="!channelDescEdit; else descEditTpl">
-                    <!-- hat Topic -->
-                    <p class="channel-info__desc-text" *ngIf="channelTopic; else noTopicTpl">
-                      {{ channelTopic }}
-                    </p>
-
-                    <!-- kein Topic gesetzt -->
-                    <ng-template #noTopicTpl>
-                      <p class="channel-info__desc-text channel-info__desc-text--empty">
-                        Noch keine Beschreibung hinzugefügt.
-                      </p>
-                    </ng-template>
-                  </ng-container>
-
-                  <!-- Edit-Modus: nur das Eingabefeld ändert sich -->
-                  <ng-template #descEditTpl>
-                    <div class="channel-input-wrap channel-input-wrap--info channel-input-wrap--textarea">
-                      <textarea class="channel-textarea channel-info__textarea" maxlength="250"
-                        placeholder="Dein Text hier" [(ngModel)]="editChannelDesc">
-                  </textarea>
-                    </div>
-                  </ng-template>
-
-                  <!-- Linie + Erstellt von bleiben IMMER gleich -->
-                  <div class="channel-info__divider"></div>
-
-                  <div class="channel-info__meta">
-                    <div class="channel-info__meta-label">Erstellt von</div>
-                    <div class="channel-info__creator">
-                      Noah Braun
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </div>
-
-          <!-- FOOTER-ACTIONS -->
-          <div class="channel-info__footer">
-            <button type="button" class="channel-info__leave-btn">
-              Channel verlassen
-            </button>
-          </div>
-        </div>
-      </div>
-    </ng-container>
-
-
-
-
-
-
-
-
-
-    <!-- USER-PROFILE MODAL (für DM UND Channel) -->
-    <div class="ui-overlay" *ngIf="userProfileOpen" (click)="closeUserProfileModal()"></div>
-
-    <div class="ui-modal" *ngIf="userProfileOpen" (click)="closeUserProfileModal()">
-      <div class="ui-modal__panel user-profile__panel" (click)="$event.stopPropagation()" *ngIf="userProfile as up">
-
-        <!-- Header -->
-        <div class="user-profile__header">
-          <h3 class="user-profile__title">Profil</h3>
-          <button type="button" class="ui-modal__close" (click)="closeUserProfileModal()">
-            ×
-          </button>
-        </div>
-
-        <!-- Avatar -->
-        <div class="user-profile__avatar-wrap">
-          <img class="user-profile__avatar" [src]="up.avatarUrl" [alt]="up.name" />
-        </div>
-
-        <!-- Name + Status -->
-        <div class="user-profile__main">
-          <h2 class="user-profile__name">{{ up.name }}</h2>
-
-          <div class="user-profile__status">
-            <span class="user-profile__status-dot"
-              [class.user-profile__status-dot--active]="up.status === 'active'"></span>
-
-            <span class="user-profile__status-label"
-              [class.user-profile__status-label--active]="up.status === 'active'">
-              {{ up.status === 'active' ? 'Aktiv' : 'Offline' }}
-            </span>
-          </div>
-        </div>
-
-        <!-- E-Mail-Bereich -->
-        <div class="user-profile__section">
-          <div class="user-profile__section-label">
-            <span class="user-profile__icon-mail">✉</span>
-            <span>E-Mail-Adresse</span>
-          </div>
-
-          <div *ngIf="up.email" class="user-profile__email">
-            {{ up.email }}
-          </div>
-        </div>
-
-        <!-- Footer-Button -->
-        <div class="user-profile__footer">
-          <button type="button" class="user-profile__message-btn" (click)="closeUserProfileModal()">
-            <img class="user-profile__message-icon" src="/public/images/message-icon.svg" alt="" />
-            <span>Nachricht</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-
-
-
-
-
-
-    <!-- MITGLIEDER-MODAL (Channel) -->
-    <ng-container *ngIf="vm.kind === 'channel'">
-      <div class="ui-overlay" *ngIf="membersModalOpen" (click)="closeMembersModal()"></div>
-
-      <div class="ui-modal ui-modal--members" *ngIf="membersModalOpen" (click)="closeMembersModal()">
-        <div class="ui-modal__panel members-modal__panel" (click)="$event.stopPropagation()"
-          *ngIf="members$ | async as members">
-          <!-- Header -->
-          <div class="members-modal__header">
-            <h3 class="members-modal__title">Mitglieder</h3>
-            <button type="button" class="ui-modal__close" (click)="closeMembersModal()">×</button>
-          </div>
-
-          <!-- Nur DIESE Liste soll scrollen -->
-          <div class="members-modal__list">
-            <button type="button" class="members-modal__item" *ngFor="let m of members; trackBy: trackMember"
-              (click)="onMemberClick(m.uid)">
-              <div class="members-modal__avatar-wrap">
-                <img class="members-modal__avatar" [src]="m.avatarUrl" [alt]="m.name" />
-                <div class="members-modal__status-dot" [class.members-modal__status-dot--active]="m.online"></div>
-              </div>
-
-              <div class="members-modal__info">
-                <div class="members-modal__name">
-                  {{ m.name }}
-                  <ng-container *ngIf="m.uid === currentUser?.id">
-                    (Du)
-                  </ng-container>
-                </div>
-              </div>
-            </button>
-          </div>
-
-          <!-- Footer-Button: NICHT in .members-modal__list -->
-          <button type="button" class="members-modal__add-btn" (click)="openAddMembersModal()">
-            <span class="members-modal__add-icon"></span>
-            <span>Mitglieder hinzufügen</span>
-          </button>
-        </div>
-      </div>
-    </ng-container>
-
-
-
-
-
-
-
-
-    <!-- ADD-MEMBERS MODAL -->
-    <div class="ui-overlay" *ngIf="addMembersOpen" (click)="closeAddMembersModal()"></div>
-
-    <div class="ui-modal ui-modal--add-members" *ngIf="addMembersOpen" (click)="closeAddMembersModal()">
-      <div class="ui-modal__panel add-members__panel" (click)="$event.stopPropagation()">
-        <!-- Header -->
-        <div class="add-members__header">
-          <h3 class="add-members__title">Leute hinzufügen</h3>
-          <button type="button" class="ui-modal__close" (click)="closeAddMembersModal()">
-            ×
-          </button>
-        </div>
-
-        <!-- Channel-Zeile -->
-        <div class="add-members__channel">
-          <span class="add-members__hash">#</span>
-          <span class="add-members__channel-name">
-            {{ vm.title.replace('# ', '') }}
-          </span>
-        </div>
-
-        <!-- Body -->
-        <div class="add-members__body">
-          <div class="add-members__input-wrap" (click)="$event.stopPropagation()">
-            <input type="text" class="add-members__input" placeholder="Name eingeben" [(ngModel)]="addMemberInput"
-              (ngModelChange)="onAddMemberInput($event)" />
-
-            <!-- Dropdown mit Vorschlägen -->
-            <ng-container *ngIf="addMemberSuggestions$ | async as sugg">
-              <div class="add-members__suggest" *ngIf="addMemberInput.trim() && showAddMemberSuggest">
-                <button type="button" class="add-members__suggest-item" *ngFor="let u of sugg"
-                  (click)="selectAddMember(u)">
-                  <div class="add-members__suggest-avatar-wrap">
-                    <img class="add-members__suggest-avatar" [src]="u.avatarUrl" [alt]="u.name" />
-                    <span class="add-members__suggest-dot" [class.add-members__suggest-dot--active]="u.online"></span>
-                  </div>
-                  <span class="add-members__suggest-name">{{ u.name }}</span>
-                </button>
-
-                <div *ngIf="sugg.length === 0" class="add-members__suggest-empty">
-                  Keine passenden Personen
-                </div>
-              </div>
-            </ng-container>
-          </div>
-
-          <div class="add-members__footer">
-            <button type="button" class="add-members__submit-btn" [disabled]="!addMemberSelected"
-              (click)="submitAddMember()">
-              Hinzufügen
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </ng-container>
 </ng-template>
+
+<!-- ===================== -->
+<!-- MODALS (immer ganz unten!) -->
+<!-- ===================== -->
+
+<ng-container *ngIf="vm$ | async as vm">
+
+  <!-- CHANNEL-INFO MODAL -->
+  <ng-container *ngIf="vm.kind === 'channel'">
+    <div class="ui-overlay" *ngIf="channelInfoOpen" (click)="closeChannelInfoModal()"></div>
+
+    <div class="ui-modal" *ngIf="channelInfoOpen" (click)="closeChannelInfoModal()">
+      <div class="ui-modal__panel channel-info__panel" (click)="$event.stopPropagation()">
+
+        <div>
+          <div class="ui-modal__header channel-info__header">
+            <div class="channel-info__title">
+              <span class="channel-info__name">{{ vm.title }}</span>
+            </div>
+            <button type="button" class="ui-modal__close" (click)="closeChannelInfoModal()">×</button>
+          </div>
+
+          <div class="ui-modal__body channel-info__body">
+
+            <section class="channel-info__card" [class.channel-info__card--edit]="channelNameEdit">
+              <div class="channel-info__card-header">
+                <span class="channel-info__label">Channel-Name</span>
+
+                <button type="button" class="channel-info__edit-btn" (click)="toggleChannelNameEdit()">
+                  {{ channelNameEdit ? 'Speichern' : 'Bearbeiten' }}
+                </button>
+              </div>
+
+              <div *ngIf="!channelNameEdit" class="channel-info__field-pill">
+                <span class="channel-info__field-text">{{ vm.title }}</span>
+              </div>
+
+              <div *ngIf="channelNameEdit" class="channel-info__field-pill channel-info__field-pill--edit">
+                <div class="channel-input-wrap channel-input-wrap--info">
+                  <span class="channel-hash">#</span>
+                  <input class="channel-input" type="text" [(ngModel)]="editChannelName" autocomplete="off" />
+                </div>
+              </div>
+            </section>
+
+            <section class="channel-info__card" [class.channel-info__card--edit]="channelDescEdit">
+              <div class="channel-info__card-header">
+                <span class="channel-info__label">Beschreibung</span>
+
+                <button type="button" class="channel-info__edit-btn" (click)="toggleChannelDescEdit()">
+                  {{ channelDescEdit ? 'Speichern' : 'Bearbeiten' }}
+                </button>
+              </div>
+
+              <div class="channel-info__desc-box">
+                <ng-container *ngIf="!channelDescEdit; else descEditTpl">
+                  <p class="channel-info__desc-text" *ngIf="channelTopic; else noTopicTpl">
+                    {{ channelTopic }}
+                  </p>
+
+                  <ng-template #noTopicTpl>
+                    <p class="channel-info__desc-text channel-info__desc-text--empty">
+                      Noch keine Beschreibung hinzugefügt.
+                    </p>
+                  </ng-template>
+                </ng-container>
+
+                <ng-template #descEditTpl>
+                  <div class="channel-input-wrap channel-input-wrap--info channel-input-wrap--textarea">
+                    <textarea class="channel-textarea channel-info__textarea" maxlength="100"
+                      placeholder="Dein Text hier" [(ngModel)]="editChannelDesc"></textarea>
+                  </div>
+                </ng-template>
+
+                <div class="channel-info__divider"></div>
+
+                <div class="channel-info__meta">
+                  <div class="channel-info__meta-label">Erstellt von</div>
+                  <div class="channel-info__creator">Noah Braun</div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+
+        <div class="channel-info__footer">
+          <button type="button" class="channel-info__leave-btn">
+            Channel verlassen
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- USER-PROFILE MODAL -->
+  <div class="ui-overlay" *ngIf="userProfileOpen" (click)="closeUserProfileModal()"></div>
+
+  <div class="ui-modal" *ngIf="userProfileOpen" (click)="closeUserProfileModal()">
+    <div class="ui-modal__panel user-profile__panel" (click)="$event.stopPropagation()" *ngIf="userProfile as up">
+
+      <div class="user-profile__header">
+        <h3 class="user-profile__title">Profil</h3>
+        <button type="button" class="ui-modal__close" (click)="closeUserProfileModal()">×</button>
+      </div>
+
+      <div class="user-profile__avatar-wrap">
+        <img class="user-profile__avatar" [src]="up.avatarUrl" [alt]="up.name" />
+      </div>
+
+      <div class="user-profile__main">
+        <h2 class="user-profile__name">{{ up.name }}</h2>
+
+        <div class="user-profile__status">
+          <span class="user-profile__status-dot"
+            [class.user-profile__status-dot--active]="up.status === 'active'"></span>
+
+          <span class="user-profile__status-label" [class.user-profile__status-label--active]="up.status === 'active'">
+            {{ up.status === 'active' ? 'Aktiv' : 'Offline' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="user-profile__section">
+        <div class="user-profile__section-label">
+          <span class="user-profile__icon-mail">✉</span>
+          <span>E-Mail-Adresse</span>
+        </div>
+
+        <div *ngIf="up.email" class="user-profile__email">{{ up.email }}</div>
+      </div>
+
+      <div class="user-profile__footer">
+        <button type="button" class="user-profile__message-btn" (click)="closeUserProfileModal()">
+          <img class="user-profile__message-icon" src="/public/images/message-icon.svg" alt="" />
+          <span>Nachricht</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MEMBERS MODAL -->
+  <ng-container *ngIf="vm.kind === 'channel'">
+    <div class="ui-overlay" *ngIf="membersModalOpen" (click)="closeMembersModal()"></div>
+
+    <div class="ui-modal ui-modal--members" *ngIf="membersModalOpen" (click)="closeMembersModal()">
+      <div class="ui-modal__panel members-modal__panel" (click)="$event.stopPropagation()"
+        *ngIf="members$ | async as members">
+
+        <div class="members-modal__header">
+          <h3 class="members-modal__title">Mitglieder</h3>
+          <button type="button" class="ui-modal__close" (click)="closeMembersModal()">×</button>
+        </div>
+
+        <div class="members-modal__list">
+          <button type="button" class="members-modal__item" *ngFor="let m of members; trackBy: trackMember"
+            (click)="onMemberClick(m.uid)">
+            <div class="members-modal__avatar-wrap">
+              <img class="members-modal__avatar" [src]="m.avatarUrl" [alt]="m.name" />
+              <div class="members-modal__status-dot" [class.members-modal__status-dot--active]="m.online"></div>
+            </div>
+
+            <div class="members-modal__info">
+              <div class="members-modal__name">
+                {{ m.name }}
+                <ng-container *ngIf="m.uid === currentUser?.id">(Du)</ng-container>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <button type="button" class="members-modal__add-btn" (click)="openAddMembersModal()">
+          <span class="members-modal__add-icon"></span>
+          <span>Mitglieder hinzufügen</span>
+        </button>
+
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ADD-MEMBERS MODAL -->
+  <div class="ui-overlay" *ngIf="addMembersOpen" (click)="closeAddMembersModal()"></div>
+
+  <div class="ui-modal ui-modal--add-members" *ngIf="addMembersOpen" (click)="closeAddMembersModal()">
+    <div class="ui-modal__panel add-members__panel" (click)="$event.stopPropagation()">
+
+      <div class="add-members__header">
+        <h3 class="add-members__title">Leute hinzufügen</h3>
+        <button type="button" class="ui-modal__close" (click)="closeAddMembersModal()">×</button>
+      </div>
+
+      <div class="add-members__channel">
+        <span class="add-members__hash">#</span>
+        <span class="add-members__channel-name">{{ vm.title.replace('# ', '') }}</span>
+      </div>
+
+      <div class="add-members__body">
+        <div class="add-members__input-wrap" (click)="$event.stopPropagation()">
+          <input type="text" class="add-members__input" placeholder="Name eingeben" [(ngModel)]="addMemberInput"
+            (ngModelChange)="onAddMemberInput($event)" />
+
+          <ng-container *ngIf="addMemberSuggestions$ | async as sugg">
+            <div class="add-members__suggest" *ngIf="addMemberInput.trim() && showAddMemberSuggest">
+              <button type="button" class="add-members__suggest-item" *ngFor="let u of sugg"
+                (click)="selectAddMember(u)">
+                <div class="add-members__suggest-avatar-wrap">
+                  <img class="add-members__suggest-avatar" [src]="u.avatarUrl" [alt]="u.name" />
+                  <span class="add-members__suggest-dot" [class.add-members__suggest-dot--active]="u.online"></span>
+                </div>
+                <span class="add-members__suggest-name">{{ u.name }}</span>
+              </button>
+
+              <div *ngIf="sugg.length === 0" class="add-members__suggest-empty">
+                Keine passenden Personen
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="add-members__footer">
+          <button type="button" class="add-members__submit-btn" [disabled]="!addMemberSelected"
+            (click)="submitAddMember()">
+            Hinzufügen
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</ng-container>

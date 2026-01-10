@@ -263,6 +263,7 @@ $muted: #6c7280;
 
 /* Eine Nachricht (Avatar links, Text rechts) */
 .message-row {
+  position: relative;
   display: grid;
   grid-template-columns: 48px 1fr;
   gap: 14px;
@@ -273,10 +274,16 @@ $muted: #6c7280;
 
   &:hover {
     background: var(--background-color);
-  }
 
-  &:hover .bubble.bubble-light {
-    background: var(--surface-bg) !important;
+    .bubble.bubble-light {
+      background: var(--surface-bg) !important;
+    }
+
+    .message-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
   }
 
   .avatar {
@@ -346,6 +353,84 @@ $muted: #6c7280;
       }
     }
   }
+
+  .message-actions {
+    position: absolute;
+    top: 8px;
+    right: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 32px 32px 0 32px;
+    background: var(--surface-bg);
+    border: 1px solid var(--accent-color);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(32px);
+    transition: opacity var(--transition20), transform var(--transition20);
+    z-index: 15;
+  }
+}
+
+/* Buttons im Popover */
+.msg-act-btn {
+  border: none;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition15);
+  background-repeat: no-repeat;
+  background-position: center;
+
+  &:hover {
+    background-color: var(--background-color);
+    transform: scale(1.05);
+  }
+}
+
+/* Add-Reaction Icon */
+.msg-act-add {
+  background-image: url('/public/images/add-reaction-comment.svg');
+
+  &:hover {
+    background-image: url('/public/images/add-reaction-comment-hover.svg');
+  }
+}
+
+/* Comment / Thread Icon */
+.msg-act-thread {
+  background-image: url('/public/images/comment.svg');
+
+  &:hover {
+    background-image: url('/public/images/comment-hover.svg');
+  }
+}
+
+.msg-emoji-popover {
+  position: fixed; // wichtig: bezogen auf Viewport
+  z-index: 10000;
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+/* Composer Popover FIXED: über Backdrop */
+.composer-emoji-popover-fixed {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
 }
 
 /* Editor-Row (helle Fläche + Card + Avatar rechts) */
@@ -549,20 +634,26 @@ $muted: #6c7280;
         transform: scale(1.05);
       }
     }
+  }
+}
 
-    /* Das Popover selbst */
-    .emoji-popover {
-      position: absolute;
-      bottom: calc(100% + 10px);
-      left: 0;
-      transform: translateX(-16px);
-      z-index: 2000;
-      background: var(--surface-bg);
-      border: 1px solid var(--background-color);
-      border-radius: 16px;
-      box-shadow: 0 12px 30px var(--background-color);
-      overflow: hidden;
-    }
+.composer-emoji-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  transform: translateX(-16px);
+  z-index: 99999;
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+/* optional für mobile */
+@media (max-width: 520px) {
+  .composer-emoji-popover {
+    transform: none;
   }
 }
 
@@ -571,17 +662,47 @@ $muted: #6c7280;
   cursor: not-allowed !important;
 }
 
-.emoji-backdrop {
-  z-index: 5;
+.emoji-popover {
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  z-index: 99999;
+}
+
+/* Composer-Variante: direkt über dem Icon */
+.emoji-popover--composer {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  transform: translateX(-16px);
+  z-index: 99999;
+}
+
+@media (max-width: 520px) {
+  .emoji-popover--composer {
+    left: 0;
+    transform: none;
+  }
+}
+
+/* Globale Variante (z.B. im /new-Composer) */
+.emoji-popover--global {
+  position: fixed;
+  bottom: 110px;
+  right: 40px;
+  z-index: 99999;
 }
 
 .composer--sticky {
-  z-index: 6;
+  z-index: 100;
 }
 
+.composer-emoji-popover-fixed,
 .emoji-popover,
 .mention-popover {
-  z-index: 2000;
+  z-index: 10000;
 }
 
 /* Vollflächiger Backdrop zum Schließen per Klick außerhalb */
@@ -590,7 +711,7 @@ $muted: #6c7280;
   bottom: calc(100% + 10px);
   left: 0;
   transform: translateX(-16px);
-  z-index: 2000;
+  z-index: 99999;
   background: var(--surface-bg);
   border: 1px solid var(--background-color);
   border-radius: 24px;
