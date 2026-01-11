@@ -411,7 +411,6 @@ body {
   flex-direction: column;
 }
 
-/* Optional: Right-Sheet wie dein Profil-Screenshot */
 .ui-modal--right {
   justify-content: flex-end;
   align-items: center;
@@ -457,7 +456,6 @@ body {
   min-height: 0;
 }
 
-/* Optional: Right-Sheet wie dein Profil-Screenshot */
 .ui-modal--right {
   justify-content: flex-end;
   align-items: flex-start;
@@ -466,4 +464,20 @@ body {
 
 .ui-modal--right .ui-modal__panel {
   margin-right: 16px;
+}
+
+@media (max-width: 768px) {
+  .ui-modal {
+    padding: 12px;
+  }
+
+  .ui-modal--right {
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 12px !important;
+  }
+
+  .ui-modal--right .ui-modal__panel {
+    margin-right: 0 !important;
+  }
 }

@@ -1,0 +1,148 @@
+/* Modal */
+.profile-modal.ui-modal {
+  width: 460px;
+  max-width: calc(100vw - 48px);
+  height: 600px;
+  background: var(--surface-bg);
+  border-radius: 24px 0 24px 24px;
+  box-shadow: var(--boxShadow);
+  overflow: hidden;
+}
+
+.profile-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 26px;
+  font-size: 22px;
+
+  h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+.profile-modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition: var(--transition15);
+
+  &:hover {
+    background: var(--background-color);
+    color: var(--primary-color);
+  }
+}
+
+.profile-modal__content {
+  padding: 0 26px 26px;
+}
+
+.profile-modal__avatar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 18px;
+
+  img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+}
+
+.profile-modal__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.profile-modal__name {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.profile-modal__edit {
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 20px;
+  transition: var(--transition15);
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.profile-modal__status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--background-offline);
+
+  &.online {
+    background: var(--background-online);
+  }
+}
+
+.status-text {
+  font-size: 18px;
+  color: var(--background-online);
+}
+
+.profile-modal__mail {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 14px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.mail-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.mail-title {
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.mail-link {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.profile-modal__panel {
+  width: 460px;
+  max-width: calc(100vw - 48px);
+  height: 524px;
+  background: var(--surface-bg);
+  border-radius: 24px 0 24px 24px;
+  box-shadow: var(--boxShadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

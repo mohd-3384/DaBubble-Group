@@ -39,7 +39,7 @@ type ProfileView = 'view' | 'edit';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss',
+  styleUrls: ['./header.component.scss', './header.responsive.scss', './header.modal.scss'],
 })
 export class HeaderComponent {
   private fs = inject(Firestore);

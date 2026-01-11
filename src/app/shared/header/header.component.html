@@ -1,8 +1,8 @@
 <div class="header-wrapper">
   <!-- Logo -->
   <div class="img-wrapper">
-    <img src="../../../../public/images/dabubble-logo.svg" class="logo-bubble" alt="DaBubble" />
-    <img src="../../../../public/images/Logo name.svg" class="logo-text" alt="DaBubble" />
+    <img src="/public/images/dabubble-logo.svg" class="logo-bubble" alt="DaBubble" />
+    <img src="/public/images/Logo name.svg" class="logo-text" alt="DaBubble" />
   </div>
 
   <!-- Search -->
@@ -44,14 +44,21 @@
           <span class="online-status-dot"></span>
         </span>
 
-        <img src="../../../../public/images/channel-info-arrow-down.svg" class="arrow-down" alt="" />
+        <img src="/public/images/channel-info-arrow-down.svg" class="arrow-down" alt="" />
       </ng-container>
     </button>
 
     <!-- Dropdown -->
     <div class="profile-menu ui-popover" *ngIf="profileOpen" (click)="$event.stopPropagation()">
-      <button type="button" class="menu-btn" (click)="openProfileModal()">Profil</button>
-      <button type="button" class="menu-btn" (click)="logout()">Log out</button>
+      <button type="button" class="menu-btn menu-btn--profile" (click)="openProfileModal()">
+        <span class="menu-ic" aria-hidden="true"></span>
+        <span>Profil</span>
+      </button>
+
+      <button type="button" class="menu-btn menu-btn--logout" (click)="logout()">
+        <span class="menu-ic" aria-hidden="true"></span>
+        <span>Log out</span>
+      </button>
     </div>
   </div>
 
