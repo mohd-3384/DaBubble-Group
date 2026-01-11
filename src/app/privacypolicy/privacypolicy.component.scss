@@ -134,3 +134,131 @@
     background-clip: content-box;
   }
 }
+
+/* 1330px -> 768px (Tablet/Desktop) */
+@media (max-width: 1330px) and (min-width: 769px) {
+  .legal-logo {
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 56px;
+  }
+
+  .privacypolicy-page {
+    padding: 110px 24px 32px;
+    align-items: center;
+  }
+
+  .privacypolicy-card {
+    width: min(720px, 92vw);
+    height: min(78vh, 760px);
+    padding: 22px 22px 26px;
+    border-radius: 18px;
+  }
+}
+
+/* ===== <= 768 (Mobile) ===== */
+@media (max-width: 768px) {
+  .legal-logo {
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 44px;
+  }
+
+  .privacypolicy-page {
+    padding: 88px 16px 24px;
+    align-items: center;
+  }
+
+  .privacypolicy-card {
+    width: 100%;
+    max-width: 560px;
+    height: min(76vh, 720px);
+    padding: 18px 16px 18px;
+    border-radius: 16px;
+  }
+
+  .back-btn {
+    margin-bottom: 14px;
+    width: 36px;
+    height: 36px;
+    background-size: 18px 18px;
+  }
+
+  .title {
+    margin-top: 6px;
+    font-size: 28px;
+    padding-bottom: 10px;
+  }
+
+  .content {
+    padding-right: 4px;
+    padding-bottom: 12px;
+
+    h2 {
+      margin: 18px 0 8px;
+      font-size: 16px;
+    }
+
+    h3 {
+      margin: 14px 0 6px;
+      font-size: 14px;
+    }
+
+    p {
+      margin: 8px 0;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    ul {
+      padding-left: 16px;
+
+      li {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+    }
+
+    .seal {
+      font-size: 12px;
+    }
+  }
+}
+
+/* ===== <= 380 (Very small) ===== */
+@media (max-width: 380px) {
+  .legal-logo {
+    height: 40px;
+  }
+
+  .privacypolicy-page {
+    padding: 78px 12px 18px;
+  }
+
+  .privacypolicy-card {
+    padding: 16px 12px 14px;
+    border-radius: 14px;
+    height: min(78vh, 700px);
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .content {
+    h2 {
+      font-size: 15px;
+    }
+
+    h3 {
+      font-size: 13px;
+    }
+
+    p,
+    ul li {
+      font-size: 13px;
+    }
+  }
+}
