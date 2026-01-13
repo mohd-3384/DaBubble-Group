@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +11,7 @@ import { RegisterCardComponent } from './register-card/register-card.component';
 import { ChoseAvatarComponent } from './chose-avatar/chose-avatar.component';
 import { NgIf } from '@angular/common';
 import { PasswordResetComponent } from "./password-reset/password-reset.component";
+import { EventEmitter } from 'stream';
 
 
 @Component({
@@ -33,7 +34,8 @@ import { PasswordResetComponent } from "./password-reset/password-reset.componen
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  debugMode = true;
+ 
+  debugMode = false;
 
   showLoginCardComponent = true;
   showRegisterCardComponent = false;
@@ -44,6 +46,13 @@ export class LoginComponent {
     this.showLoginCardComponent = false;
     this.showRegisterCardComponent = true;
     this.showChoseAvatarComponent = false;
+  }
+
+  openPasswordReset() {
+    this.showLoginCardComponent = false;
+    this.showPasswordResetComponent = true;
+    this.showRegisterCardComponent = false;
+    this.showChoseAvatarComponent = false;  
   }
 
   goToAvatarPicker() {

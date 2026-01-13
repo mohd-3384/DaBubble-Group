@@ -16,19 +16,19 @@
                 <div class="avatar-selection">
                     @for (avatar of avatarlist; track avatar; let i = $index) {
                     <img [src]="avatar" alt="avatar-{{i}}" class="avatar-img"
-                        [class.selected]="chosenAvatarSrc === avatar" (click)="selectAvatar(avatar)">
+                        [class.selected]="chosenAvatarSrc === avatar" (click)="selectAvatar(avatar, i)">
                     }
 
                 </div>
             </div>
         </div>
 
-        <div class="button-container" (click)="userCreatedSuccesful()">
-            <button>Weiter</button>
+        <div class="button-container">
+            <button (click)="saveAndFinish()">Weiter</button>
         </div>
     </mat-card>
 
-    <div class="user-seccesful-contaner" [class.visible]="successVisible">
+    <div class="user-successful-container" [class.visible]="successVisible">
         <p>Benutzer erfolgreich erstellt!</p>
     </div>
 </main>

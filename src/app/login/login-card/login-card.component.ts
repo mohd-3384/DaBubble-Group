@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Output, EventEmitter } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,6 +29,13 @@ import { Auth, signInWithEmailAndPassword } from '@angular/fire/auth';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginCardComponent {
+
+  @Output() forgotPassword = new EventEmitter<void>();
+
+  onForgotPasswordClick() {
+    this.forgotPassword.emit();
+  }
+
   private auth = inject(Auth);
   private router = inject(Router);
 

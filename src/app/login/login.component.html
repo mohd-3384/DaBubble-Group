@@ -12,7 +12,7 @@
     </header>
 
     <main>
-        <app-login-card *ngIf="debugMode || showLoginCardComponent"></app-login-card>
+        <app-login-card *ngIf="debugMode || showLoginCardComponent" (forgotPassword)="openPasswordReset()"></app-login-card>
         <app-register-card *ngIf=" debugMode || showRegisterCardComponent"
             (nextstep)="goToAvatarPicker()"></app-register-card>
         <app-chose-avatar *ngIf="debugMode || showChoseAvatarComponent" (back)="backToRegister()"
