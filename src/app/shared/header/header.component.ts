@@ -12,10 +12,12 @@ import {
   doc,
   docData,
   updateDoc,
+  serverTimestamp,
 } from '@angular/fire/firestore';
 import { Auth, authState, signOut } from '@angular/fire/auth';
 import { Observable, BehaviorSubject, combineLatest, from, of } from 'rxjs';
 import { map, switchMap, startWith, distinctUntilChanged, debounceTime } from 'rxjs/operators';
+import { catchError, shareReplay } from 'rxjs/operators';
 import { UserDoc } from '../../interfaces/allInterfaces.interface';
 
 type SearchResult =
@@ -70,30 +72,16 @@ export class HeaderComponent {
       return docData(uref, { idField: 'id' }).pipe(
         map((raw: any) => {
           const data = (raw || {}) as Partial<UserDoc> & { id?: string };
-
-          const name = String(data.name ?? '').trim() || 'Guest';
-          const email = String(data.email ?? u.email ?? 'guest@dabubble.de').trim();
-          const status = (data.status === 'away' ? 'away' : 'active') as 'active' | 'away';
-          const avatarUrl = String(data.avatarUrl ?? '').trim() || this.DEFAULT_AVATAR;
-          const online = !!(data.online ?? true);
-
           return {
             id: data.id ?? u.uid,
-            name,
-            email,
-            status,
-            avatarUrl,
-            online,
+            name: String(data.name ?? '').trim() || 'Guest',
+            email: String(data.email ?? u.email ?? 'guest@dabubble.de').trim(),
+            status: (data.status === 'away' ? 'away' : 'active') as 'active' | 'away',
+            avatarUrl: String(data.avatarUrl ?? '').trim() || this.DEFAULT_AVATAR,
+            online: !!(data.online ?? true),
           } satisfies HeaderUser;
         }),
-        startWith({
-          id: u.uid,
-          name: '…',
-          email: u.email ?? '',
-          status: 'active',
-          avatarUrl: this.DEFAULT_AVATAR,
-          online: true,
-        } as HeaderUser)
+        catchError(() => of(this.guestUser))
       );
     }),
     startWith(this.guestUser)
@@ -167,6 +155,19 @@ export class HeaderComponent {
 
   async logout() {
     this.closeAll();
+
+    const u = this.auth.currentUser;
+    if (u) {
+      try {
+        await updateDoc(doc(this.fs, `users/${u.uid}`), {
+          online: false,
+          lastSeen: serverTimestamp(),
+        });
+      } catch (e) {
+        console.warn('[Logout] could not set offline:', e);
+      }
+    }
+
     await signOut(this.auth);
     this.router.navigate(['/login']);
   }
@@ -204,11 +205,15 @@ export class HeaderComponent {
     this.activeIndex = -1;
   }
 
-  results$: Observable<SearchResult[]> = this.search$.pipe(
-    debounceTime(120),
-    distinctUntilChanged(),
-    switchMap((term) => {
-      if (!term) return of([] as SearchResult[]);
+  results$: Observable<SearchResult[]> = combineLatest([
+    authState(this.auth),
+    this.search$.pipe(debounceTime(120), distinctUntilChanged())
+  ]).pipe(
+    switchMap(([u, term]) => {
+      if (!u || !term) {
+        this.latestResults = [];
+        return of([] as SearchResult[]);
+      }
 
       const channels$ = collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
         map((rows: any[]) =>
@@ -216,37 +221,40 @@ export class HeaderComponent {
             .filter((c) => String(c.id || '').toLowerCase().includes(term))
             .slice(0, 6)
             .map((c) => ({ kind: 'channel', id: String(c.id) } as SearchResult))
-        )
+        ),
+        catchError(() => of([] as SearchResult[]))
       );
 
       const users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }).pipe(
         map((rows: any[]) =>
           (rows || [])
-            .filter((u) => String(u?.name ?? '').toLowerCase().includes(term))
+            .filter((x) => String(x?.name ?? '').toLowerCase().includes(term))
             .slice(0, 6)
-            .map(
-              (u) =>
-                ({
-                  kind: 'user',
-                  id: String(u.id),
-                  name: String(u.name ?? 'Unbekannt'),
-                  avatarUrl: (u.avatarUrl as string | undefined) ?? this.DEFAULT_AVATAR,
-                }) as SearchResult
-            )
-        )
+            .map((x) => ({
+              kind: 'user',
+              id: String(x.id),
+              name: String(x.name ?? 'Unbekannt'),
+              avatarUrl: (x.avatarUrl as string | undefined) ?? this.DEFAULT_AVATAR,
+            }) as SearchResult)
+        ),
+        catchError(() => of([] as SearchResult[]))
       );
 
-      const messages$ = from(this.searchChannelMessages(term));
+      const messages$ = from(this.searchChannelMessages(term)).pipe(
+        catchError(() => of([] as SearchResult[]))
+      );
 
       return combineLatest([channels$, users$, messages$]).pipe(
-        map(([c, u, m]) => {
-          const merged = [...c, ...u, ...m].slice(0, 10);
+        map(([c, uu, m]) => {
+          const merged = [...c, ...uu, ...m].slice(0, 10);
           this.latestResults = merged;
           return merged;
-        })
+        }),
+        catchError(() => of([] as SearchResult[]))
       );
     }),
-    startWith([] as SearchResult[])
+    startWith([] as SearchResult[]),
+    shareReplay({ bufferSize: 1, refCount: true })
   );
 
   private async searchChannelMessages(term: string): Promise<SearchResult[]> {

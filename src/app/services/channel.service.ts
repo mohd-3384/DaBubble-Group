@@ -1,24 +1,30 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  Firestore, doc, setDoc, serverTimestamp, runTransaction,
-  increment, collection, addDoc, collectionData
+  Firestore,
+  doc,
+  setDoc,
+  serverTimestamp,
+  runTransaction,
+  increment,
+  collection,
+  addDoc,
+  collectionData,
 } from '@angular/fire/firestore';
-import { Auth } from '@angular/fire/auth';
 import { Observable, map } from 'rxjs';
 import { ChannelDoc } from '../interfaces/allInterfaces.interface';
+import { AuthReadyService } from './auth-ready.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
   private fs = inject(Firestore);
-  private auth = inject(Auth);
+  private authReady = inject(AuthReadyService);
 
   /** Channel anlegen – Creator ist IMMER der eingeloggte User */
-  async createChannel(id: string, topic: string = '') {
-    const authUser = this.auth.currentUser;
-    if (!authUser) throw new Error('[ChannelService] createChannel: not authenticated');
+  async createChannel(id: string, topic: string = ''): Promise<void> {
+    const user = await this.authReady.requireUser();
 
     await setDoc(doc(this.fs, `channels/${id}`), {
-      createdBy: authUser.uid,
+      createdBy: user.uid,
       createdAt: serverTimestamp(),
       memberCount: 0,
       messageCount: 0,
@@ -29,47 +35,67 @@ export class ChannelService {
     });
   }
 
-  /** Aktuellen User als Member hinzufügen + memberCount hochzählen */
-  async addMeAsMember(channelId: string, role: 'owner' | 'member' = 'member') {
-    const authUser = this.auth.currentUser;
-    if (!authUser) throw new Error('[ChannelService] addMeAsMember: not authenticated');
+  /**
+   * Aktuellen User als Member hinzufügen
+   * + memberCount nur hochzählen, wenn der Member-Datensatz vorher NICHT existierte
+   */
+  async addMeAsMember(channelId: string, role: 'owner' | 'member' = 'member'): Promise<void> {
+    const user = await this.authReady.requireUser();
 
-    const uid = authUser.uid;
+    const uid = user.uid;
     const chRef = doc(this.fs, `channels/${channelId}`);
     const memRef = doc(this.fs, `channels/${channelId}/members/${uid}`);
 
-    await runTransaction(this.fs, tx => {
-      tx.set(memRef, { role, joinedAt: serverTimestamp() });
-      tx.update(chRef, { memberCount: increment(1) });
-      return Promise.resolve();
+    await runTransaction(this.fs, async (tx) => {
+      const memSnap = await tx.get(memRef);
+
+      if (!memSnap.exists()) {
+        tx.set(memRef, { role, joinedAt: serverTimestamp() });
+        tx.update(chRef, { memberCount: increment(1) });
+      } else {
+        tx.set(memRef, { role }, { merge: true });
+      }
     });
   }
 
-  /** Welcome-Message – authorId = eingeloggter User */
-  async postWelcome(channelId: string) {
-    const authUser = this.auth.currentUser;
-    if (!authUser) {
-      console.warn('[ChannelService] postWelcome: no auth user -> skip');
-      return;
-    }
+  /** Welcome-Message (Bot) – authorId bleibt echter User (dein aktuelles Modell) */
+  async postWelcome(channelId: string): Promise<void> {
+    const user = await this.authReady.requireUser();
 
     await addDoc(collection(this.fs, `channels/${channelId}/messages`), {
       text: `Willkommen in #${channelId}!`,
-      authorId: authUser.uid,
+      authorId: user.uid,
       authorName: 'Devspace Bot',
       authorAvatar: '/public/images/avatars/avatar-default.svg',
       createdAt: serverTimestamp(),
       editedAt: null,
       replyCount: 0,
       lastReplyAt: null,
-      reactions: {}
+      reactions: {},
+    });
+  }
+
+  async leaveChannel(channelId: string): Promise<void> {
+    const user = await this.authReady.requireUser();
+
+    const uid = user.uid;
+    const chRef = doc(this.fs, `channels/${channelId}`);
+    const memRef = doc(this.fs, `channels/${channelId}/members/${uid}`);
+
+    await runTransaction(this.fs, async (tx) => {
+      const memSnap = await tx.get(memRef);
+
+      if (memSnap.exists()) {
+        tx.delete(memRef);
+        tx.update(chRef, { memberCount: increment(-1) });
+      }
     });
   }
 
   channels$(): Observable<ChannelDoc[]> {
     const ref = collection(this.fs, 'channels');
     return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(
-      map(list =>
+      map((list) =>
         [...list].sort((a: any, b: any) =>
           String(a.id).localeCompare(String(b.id), 'de', { sensitivity: 'base' })
         )

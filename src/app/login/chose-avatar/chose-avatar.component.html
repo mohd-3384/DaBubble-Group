@@ -1,34 +1,34 @@
 <main>
-    <mat-card appearance="outlined">
-        <mat-card-header>
-            <img src="public/images/arrow-back.svg" alt="arrow-back" class="back-arrow" (click)="back.emit()">
-            <mat-card-title>Wähle deinen Avatar</mat-card-title>
-        </mat-card-header>
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <img src="/public/images/arrow-back.svg" alt="arrow-back" class="back-arrow" (click)="back.emit()">
+      <mat-card-title>Wähle deinen Avatar</mat-card-title>
+    </mat-card-header>
 
-        <div class="avatar-container">
-            <div class="chosen-avatar-container">
-                <img [src]="chosenAvatarSrc" alt="Gewählter Avatar">
-            </div>
+    <div class="avatar-container">
+      <div class="chosen-avatar-container">
+        <img [src]="chosenAvatarSrc" alt="Gewählter Avatar">
+      </div>
 
-            <div class="pick-avatar-container">
-                <h2>Name</h2>
-                <span>Aus der Liste wählen</span>
-                <div class="avatar-selection">
-                    @for (avatar of avatarlist; track avatar; let i = $index) {
-                    <img [src]="avatar" alt="avatar-{{i}}" class="avatar-img"
-                        [class.selected]="chosenAvatarSrc === avatar" (click)="selectAvatar(avatar, i)">
-                    }
+      <div class="pick-avatar-container">
+        <h2>Name</h2>
+        <span>Aus der Liste wählen</span>
+        <div class="avatar-selection">
+          @for (avatar of avatarlist; track avatar; let i = $index) {
+          <img [src]="avatar" alt="avatar-{{i}}" class="avatar-img" [class.selected]="chosenAvatarSrc === avatar"
+            (click)="selectAvatar(avatar, i)">
+          }
 
-                </div>
-            </div>
         </div>
-
-        <div class="button-container">
-            <button (click)="saveAndFinish()">Weiter</button>
-        </div>
-    </mat-card>
-
-    <div class="user-successful-container" [class.visible]="successVisible">
-        <p>Benutzer erfolgreich erstellt!</p>
+      </div>
     </div>
+
+    <div class="button-container">
+      <button (click)="saveAndFinish()">Weiter</button>
+    </div>
+  </mat-card>
+
+  <div class="user-successful-container" [class.visible]="successVisible">
+    <p>Benutzer erfolgreich erstellt!</p>
+  </div>
 </main>

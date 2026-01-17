@@ -15,10 +15,9 @@
         <div class="span-input">
           <div class="mail-input">
             <img src="./public/images/mail-icon.svg" alt="email icon">
-            <input type="email" name="email" [(ngModel)]="email" placeholder="beispielname@email.com" required
-              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+            <input type="email" name="email" [(ngModel)]="email" required email placeholder="beispielname@email.com" />
           </div>
-          <span class="wrong-password" *ngIf="authErrorCode === 'auth/invalid-email'">
+          <span class="wrong-password" *ngIf="f.submitted && f.controls['email']?.errors?.['email']">
             *Diese E-Mail-Adresse ist leider ungültig.
           </span>
         </div>

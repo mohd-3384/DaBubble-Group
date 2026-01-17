@@ -76,3 +76,39 @@ export interface SuggestItem {
   value: string;
   avatarUrl?: string;
 }
+
+export interface UserMeta {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+}
+
+export interface Reaction {
+  emoji: string;
+  count: number;
+}
+
+export interface Message {
+  id: string;
+  author: UserMeta;
+  text: string;
+  createdAt: Date | string;
+  reactions?: Reaction[];
+}
+
+export interface ThreadVM {
+  open: boolean;
+  header?: { title: string; channel?: string };
+  root?: Message;
+  replies: Message[];
+  channelId?: string;
+}
+
+export type ReplyDoc = {
+  text: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  createdAt?: any;
+  reactions?: Record<string, number> | any;
+};

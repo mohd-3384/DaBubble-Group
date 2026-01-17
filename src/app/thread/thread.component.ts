@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, HostListener } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { Message } from '../services/thread.state';
+import { Message } from '../interfaces/allInterfaces.interface';
 
 type MentionUser = { id: string; name: string; avatarUrl?: string };
 
@@ -11,14 +11,15 @@ type MentionUser = { id: string; name: string; avatarUrl?: string };
   standalone: true,
   imports: [CommonModule, FormsModule, PickerModule],
   templateUrl: './thread.component.html',
-  styleUrl: './thread.component.scss',
+  styleUrls: ['./thread.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThreadComponent {
+  constructor(private host: ElementRef<HTMLElement>) { }
+
   @Input() header: { title: string; channel?: string } = { title: 'Thread' };
   @Input({ required: true }) rootMessage!: Message;
   @Input() replies: Message[] = [];
-
   @Input() users: MentionUser[] = [];
 
   @Output() send = new EventEmitter<string>();
@@ -29,22 +30,18 @@ export class ThreadComponent {
   showUsers = false;
 
   messageEmojiForId: string | null = null;
-  emojiPopoverPos = {
-    top: 0,
-    left: 0,
-    placement: 'bottom' as 'top' | 'bottom',
-  };
+  emojiPopoverPos = { top: 0, left: 0, placement: 'bottom' as 'top' | 'bottom' };
 
   private reactionsByMsg: Record<string, Record<string, number>> = {};
 
   trackReaction = (_: number, it: { emoji: string; count: number }) => it.emoji;
+  trackReply = (_: number, r: Message) => r.id;
+  trackUser = (_: number, u: MentionUser) => u.id;
 
-  reactionList(messageId: string): { emoji: string; count: number }[] {
+  reactionList(messageId: string) {
     const map = this.reactionsByMsg[messageId];
     if (!map) return [];
-    return Object.entries(map)
-      .map(([emoji, count]) => ({ emoji, count }))
-      .sort((a, b) => b.count - a.count);
+    return Object.entries(map).map(([emoji, count]) => ({ emoji, count })).sort((a, b) => b.count - a.count);
   }
 
   private addReactionToMessage(messageId: string, emoji: string) {
@@ -72,12 +69,9 @@ export class ThreadComponent {
     const offset = 8;
 
     const roomBelow = viewportH - rect.bottom;
-    const placement: 'top' | 'bottom' =
-      roomBelow > pickerHeight + offset ? 'bottom' : 'top';
+    const placement: 'top' | 'bottom' = roomBelow > pickerHeight + offset ? 'bottom' : 'top';
 
-    let top = placement === 'bottom'
-      ? rect.bottom + offset
-      : rect.top - pickerHeight - offset;
+    const top = placement === 'bottom' ? rect.bottom + offset : rect.top - pickerHeight - offset;
 
     let left = rect.left;
     const maxLeft = viewportW - pickerWidth - 16;
@@ -89,15 +83,15 @@ export class ThreadComponent {
     this.showUsers = false;
   }
 
+  // nur schließen wenn Klick außerhalb des Thread-Components
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(ev: MouseEvent) {
+    const target = ev.target as Node | null;
+    if (!target) return;
 
-  trackReply = (_: number, r: Message) => r.id;
-  trackUser = (_: number, u: MentionUser) => u.id;
+    if (this.host.nativeElement.contains(target)) return;
 
-  @HostListener('document:click')
-  onDocumentClick() {
-    this.showEmoji = false;
-    this.showUsers = false;
-    this.messageEmojiForId = null;
+    this.closePopovers();
   }
 
   toggleEmoji(evt?: Event) {
@@ -121,7 +115,6 @@ export class ThreadComponent {
   onEmojiSelect(e: any) {
     const native = e?.emoji?.native ?? e?.emoji?.char ?? e?.native ?? '';
 
-    // If a message reaction picker is open => react to that message
     if (this.messageEmojiForId) {
       this.addReactionToMessage(this.messageEmojiForId, native);
       this.messageEmojiForId = null;

@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { Auth, signInWithEmailAndPassword } from '@angular/fire/auth';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-login-card',
@@ -29,27 +30,30 @@ import { Auth, signInWithEmailAndPassword } from '@angular/fire/auth';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginCardComponent {
-
   @Output() forgotPassword = new EventEmitter<void>();
 
-  onForgotPasswordClick() {
-    this.forgotPassword.emit();
-  }
-
+  private userSvc = inject(UserService);
   private auth = inject(Auth);
   private router = inject(Router);
 
   email = '';
   password = '';
-
   authErrorCode: string | null = null;
 
-  /** Normales Login mit E-Mail + Passwort */
+  onForgotPasswordClick() {
+    this.forgotPassword.emit();
+  }
+
   async login() {
     this.authErrorCode = null;
     try {
       await signInWithEmailAndPassword(this.auth, this.email, this.password);
-      // nach erfolgreichem Login z.B. in den zuletzt genutzten Channel
+
+      await this.userSvc.ensureUserDoc({
+        role: 'member',
+        status: 'active',
+      });
+
       await this.router.navigate(['/channel', 'Entwicklerteam']);
     } catch (err: any) {
       console.error('Login fehlgeschlagen', err);
@@ -57,7 +61,7 @@ export class LoginCardComponent {
     }
   }
 
-  /** Gäste-Login: immer mit demselben Guest-Account */
+  /** Gäste-Login: IMMER derselbe Account => IMMER dieselbe UID => nur 1 users/{uid} möglich */
   async loginAsGuest() {
     this.authErrorCode = null;
 
@@ -66,6 +70,13 @@ export class LoginCardComponent {
 
     try {
       await signInWithEmailAndPassword(this.auth, GUEST_EMAIL, GUEST_PASSWORD);
+
+      await this.userSvc.ensureUserDoc({
+        name: 'Guest',
+        role: 'guest',
+        status: 'active',
+      });
+
       await this.router.navigate(['/channel', 'Entwicklerteam']);
     } catch (err: any) {
       console.error('Guest-Login fehlgeschlagen', err);

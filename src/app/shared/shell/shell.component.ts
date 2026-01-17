@@ -21,8 +21,9 @@ import {
 
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of } from 'rxjs';
-import { distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
 import { UserDoc } from '../../interfaces/allInterfaces.interface';
+import { PresenceService } from '../../services/presence.service';
 
 
 type MentionUser = { id: string; name: string; avatarUrl?: string };
@@ -52,20 +53,28 @@ export class ShellComponent {
   private fs = inject(Firestore);
   private route = inject(ActivatedRoute);
   private auth = inject(Auth);
+  private presence = inject(PresenceService);
 
   // ---- Mentions: alle User ----
-  usersAllForMentions$: Observable<MentionUser[]> = collectionData(
-    collection(this.fs, 'users'),
-    { idField: 'id' }
-  ).pipe(
-    map((rows: any[]) =>
-      (rows || []).map(u => ({
-        id: u.id,
-        name: u?.name ?? u?.displayName ?? 'Unbekannt',
-        avatarUrl: u?.avatarUrl,
-      }))
-    ),
-    startWith([] as MentionUser[])
+  usersAllForMentions$: Observable<MentionUser[]> = authState(this.auth).pipe(
+    switchMap(user => {
+      if (!user) return of([] as MentionUser[]);
+
+      return collectionData(collection(this.fs, 'users'), { idField: 'id' }).pipe(
+        map((rows: any[]) =>
+          (rows || []).map(u => ({
+            id: u.id,
+            name: u?.name ?? u?.displayName ?? 'Unbekannt',
+            avatarUrl: u?.avatarUrl,
+          }))
+        ),
+        startWith([] as MentionUser[]),
+        catchError((e) => {
+          console.warn('[Mentions] users stream error:', e);
+          return of([] as MentionUser[]);
+        })
+      );
+    })
   );
 
   usersAllForMentions: MentionUser[] = [];
@@ -89,6 +98,8 @@ export class ShellComponent {
   private channelId: string | null = null;
 
   constructor() {
+    this.presence.init();
+
     // sichere Klasse statt :has
     effect(() => {
       this.shellThreadOpen = !!this.vm().open;

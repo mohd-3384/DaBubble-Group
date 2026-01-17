@@ -11,7 +11,7 @@
       (input)="setSearch($any($event.target).value)" (focus)="openSearch()" (keydown)="onSearchKeydown($event)" />
     <img src="/public/images/search.svg" class="input-search-icon" alt="Search" />
 
-    <div class="search-results" *ngIf="searchOpen">
+    <div class="search-results" *ngIf="searchOpen" (click)="$event.stopPropagation()">
       <ng-container *ngIf="results$ | async as results">
         <ng-container *ngIf="results.length; else noResults">
           <button type="button" class="search-item" *ngFor="let r of results; let i = index"

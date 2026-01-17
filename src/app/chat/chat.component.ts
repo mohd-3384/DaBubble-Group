@@ -42,6 +42,8 @@ import {
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { ThreadState } from '../services/thread.state';
 import { Auth, authState } from '@angular/fire/auth';
+import { AuthReadyService } from '../services/auth-ready.service';
+import { ChannelService } from '../services/channel.service';
 
 function toDateMaybe(ts: any): Date | null {
   if (!ts) return null;
@@ -76,6 +78,7 @@ function dayLabel(d: Date): string {
   styleUrls: ['./chat.component.scss'],
 })
 export class ChatComponent {
+  private authReady = inject(AuthReadyService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fs = inject(Firestore);
@@ -147,7 +150,11 @@ export class ChatComponent {
 
   composerEmojiPos = { top: 0, left: 0 };
 
+  private me$ = authState(this.auth).pipe(startWith(this.auth.currentUser));
+  private chanSvc = inject(ChannelService);
+
   private async renameChannel(oldId: string, newIdRaw: string) {
+    await this.authReady.requireUser();
     const newId = newIdRaw.trim();
     if (!newId) return;
 
@@ -206,6 +213,20 @@ export class ChatComponent {
     this.router.navigate(['/channel', newId]);
   }
 
+  async onLeaveChannel() {
+    const channelId = this.route.snapshot.paramMap.get('id');
+    if (!channelId) return;
+
+    try {
+      await this.chanSvc.leaveChannel(channelId);
+      this.closeChannelInfoModal(); // Modal zu
+      // optional: wohin navigieren, z.B. Home oder Login
+      // this.router.navigate(['/new']);
+    } catch (e) {
+      console.error('Channel verlassen fehlgeschlagen:', e);
+    }
+  }
+
   openChannelInfoModal() {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.editChannelName = id;
@@ -228,8 +249,8 @@ export class ChatComponent {
       return;
     }
 
-    // Speichern => Rename
     try {
+      await this.authReady.requireUser();
       const oldId = this.route.snapshot.paramMap.get('id') ?? '';
       if (!oldId) return;
 
@@ -247,6 +268,8 @@ export class ChatComponent {
     }
 
     try {
+      await this.authReady.requireUser();
+
       const channelId = this.route.snapshot.paramMap.get('id') ?? '';
       if (!channelId) return;
 
@@ -614,82 +637,53 @@ export class ChatComponent {
     );
 
     /** ---------- NACHRICHTEN ---------- */
-    const baseMessages$ = this.route.paramMap.pipe(
-      switchMap((params) => {
-        const id = params.get('id')!;
+    const baseMessages$ = combineLatest([
+      this.route.paramMap.pipe(map(p => p.get('id')!)),
+      this.me$,
+    ]).pipe(
+      switchMap(([id, me]) => {
         const isDM = this.router.url.includes('/dm/');
-
-        if (!isPlatformBrowser(this.platformId)) {
-          return of([] as MessageVm[]);
-        }
+        if (!isPlatformBrowser(this.platformId)) return of([] as MessageVm[]);
 
         // Channel
         if (!isDM) {
           const collRef = collection(this.fs, `channels/${id}/messages`);
           const qRef = query(collRef, orderBy('createdAt', 'asc'));
-          const source$ = runInInjectionContext(this.env, () =>
+          return runInInjectionContext(this.env, () =>
             collectionData(qRef, { idField: 'id' }) as Observable<any[]>
-          );
-
-          const guestEmail = 'guest@dabubble.de';
-
-          return source$.pipe(
-            map((rows) =>
-              rows.map(
-                (m) =>
-                ({
-                  id: m.id,
-                  text: m.text ?? '',
-                  authorName:
-                    m.authorName === guestEmail
-                      ? 'Guest'
-                      : m.authorName ?? 'Unbekannt',
-                  authorAvatar:
-                    m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
-                  createdAt: toDateMaybe(m.createdAt),
-                  replyCount: (m.replyCount ?? 0) as number,
-                  lastReplyAt: toDateMaybe(m.lastReplyAt),
-                } as MessageVm)
-              )
-            ),
+          ).pipe(
+            map(rows => rows.map(m => ({
+              id: m.id,
+              text: m.text ?? '',
+              authorName: m.authorName ?? 'Unbekannt',
+              authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
+              createdAt: toDateMaybe(m.createdAt),
+              replyCount: (m.replyCount ?? 0),
+              lastReplyAt: toDateMaybe(m.lastReplyAt),
+            } as MessageVm))),
             startWith([] as MessageVm[])
           );
         }
 
         // DM
-        const me = this.auth.currentUser;
-        if (!me) {
-          return of([] as MessageVm[]);
-        }
+        if (!me) return of([] as MessageVm[]); // warten bis auth da ist
 
         const convId = this.makeConvId(me.uid, id);
         const collRef = collection(this.fs, `conversations/${convId}/messages`);
         const qRef = query(collRef, orderBy('createdAt', 'asc'));
-        const source$ = runInInjectionContext(this.env, () =>
+
+        return runInInjectionContext(this.env, () =>
           collectionData(qRef, { idField: 'id' }) as Observable<any[]>
-        );
-
-        const guestEmail = 'guest@dabubble.de';
-
-        return source$.pipe(
-          map((rows) =>
-            rows.map(
-              (m) =>
-              ({
-                id: m.id,
-                text: m.text ?? '',
-                authorName:
-                  m.authorName === guestEmail
-                    ? 'Guest'
-                    : m.authorName ?? 'Unbekannt',
-                authorAvatar:
-                  m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
-                createdAt: toDateMaybe(m.createdAt),
-                replyCount: (m.replyCount ?? 0) as number,
-                lastReplyAt: toDateMaybe(m.lastReplyAt),
-              } as MessageVm)
-            )
-          ),
+        ).pipe(
+          map(rows => rows.map(m => ({
+            id: m.id,
+            text: m.text ?? '',
+            authorName: m.authorName ?? 'Unbekannt',
+            authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
+            createdAt: toDateMaybe(m.createdAt),
+            replyCount: (m.replyCount ?? 0),
+            lastReplyAt: toDateMaybe(m.lastReplyAt),
+          } as MessageVm))),
           startWith([] as MessageVm[])
         );
       })
@@ -1125,11 +1119,7 @@ export class ChatComponent {
     const id = this.route.snapshot.paramMap.get('id')!;
     const isDM = vm.kind === 'dm';
 
-    const authUser = this.auth.currentUser;
-    if (!authUser) {
-      console.warn('Kein Auth-User vorhanden, Nachricht wird nicht gesendet.');
-      return;
-    }
+    const authUser = await this.authReady.requireUser();
 
     const u = this.currentUser;
 
@@ -1189,11 +1179,7 @@ export class ChatComponent {
       return;
     }
 
-    const authUser = this.auth.currentUser;
-    if (!authUser) {
-      console.warn('Kein Auth-User vorhanden, Nachricht wird nicht gesendet.');
-      return;
-    }
+    const authUser = await this.authReady.requireUser();
 
     const u = this.currentUser;
     const guestEmail = 'guest@dabubble.de';

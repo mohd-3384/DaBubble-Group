@@ -1,4 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Auth, authState } from '@angular/fire/auth';
 import {
   Firestore,
   collection,
@@ -7,51 +8,25 @@ import {
   onSnapshot,
   Unsubscribe,
 } from '@angular/fire/firestore';
+import { Message, Reaction, ReplyDoc, ThreadVM } from '../interfaces/allInterfaces.interface';
 
-export interface UserMeta {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-}
-
-export interface Reaction {
-  emoji: string;
-  count: number;
-}
-
-export interface Message {
-  id: string;
-  author: UserMeta;
-  text: string;
-  createdAt: Date | string;
-  reactions?: Reaction[];
-}
-
-export interface ThreadVM {
-  open: boolean;
-  header?: { title: string; channel?: string };
-  root?: Message;
-  replies: Message[];
-  channelId?: string;
-}
-
-type ReplyDoc = {
-  text: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  createdAt?: any;
-  reactions?: Record<string, number> | any;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ThreadState {
   private fs = inject(Firestore);
+  private auth = inject(Auth);
 
   private _vm = signal<ThreadVM>({ open: false, replies: [] });
   vm = this._vm.asReadonly();
 
   private unsubscribeReplies: Unsubscribe | null = null;
+
+  constructor() {
+    // ✅ Wenn ausgeloggt -> alle Listener stoppen (sonst Permission Error)
+    authState(this.auth).subscribe((u) => {
+      if (!u) this.close();
+    });
+  }
 
   openThread(opts: {
     channelId: string;
@@ -89,7 +64,9 @@ export class ThreadState {
             author: {
               id: raw.authorId ?? '',
               name: raw.authorName ?? 'Unbekannt',
-              avatarUrl: raw.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+              avatarUrl:
+                raw.authorAvatar ??
+                '/public/images/avatars/avatar-default.svg',
             },
             text: raw.text ?? '',
             createdAt: this.toDateOrString(raw.createdAt),
@@ -97,12 +74,17 @@ export class ThreadState {
           };
         });
 
+        // ✅ falls zwischenzeitlich geschlossen wurde
         const v = this._vm();
         if (!v.open) return;
 
         this._vm.set({ ...v, replies });
       },
-      (err) => console.error('[ThreadState] Replies listener error:', err)
+      (err) => {
+        // ✅ Permission Errors beim Logout abfangen und clean schließen
+        console.error('[ThreadState] Replies listener error:', err);
+        this.close();
+      }
     );
   }
 

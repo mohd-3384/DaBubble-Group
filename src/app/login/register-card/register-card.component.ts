@@ -8,12 +8,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule, FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+
 import { Auth, createUserWithEmailAndPassword, updateProfile } from '@angular/fire/auth';
-import { Firestore, doc, setDoc } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-register-card',
-  imports: [MatButtonModule,
+  imports: [
+    MatButtonModule,
     MatCardModule,
     MatIconModule,
     MatDividerModule,
@@ -22,6 +25,7 @@ import { Firestore, doc, setDoc } from '@angular/fire/firestore';
     MatFormFieldModule,
     ReactiveFormsModule,
     CommonModule,
+    RouterLink,
   ],
   templateUrl: './register-card.component.html',
   styleUrls: ['./register-card.component.scss'],
@@ -48,46 +52,41 @@ export class RegisterCardComponent {
   async onSubmit() {
     if (this.form.invalid) return;
 
-    const { name, email, password } = this.form.value;
+    const name = String(this.form.value.name ?? '').trim();
+    const email = String(this.form.value.email ?? '').trim();
+    const password = String(this.form.value.password ?? '');
 
     try {
-      // 1. User in Firebase Auth anlegen
+      // 1) Firebase Auth user anlegen
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       const user = userCredential.user;
 
-      // 2. DisplayName in Auth setzen (optional, aber sehr empfohlen)
-      await updateProfile(user, { displayName: name.trim() });
+      // 2) DisplayName setzen (optional aber gut)
+      await updateProfile(user, { displayName: name });
 
-      // 3. User-Dokument in Firestore anlegen – inkl. Passwort (wie aktuell bei dir)
+      // 3) Firestore user doc (OHNE Passwort!)
       await setDoc(doc(this.firestore, 'users', user.uid), {
         uid: user.uid,
-        name: name.trim(),
-        email: email,
-        password: password,               // ← bewusst noch drin, wie bei dir aktuell
-        avatarUrl: '/public/images/avatars/default.svg', // oder leer
+        name,
+        email,
+        avatarUrl: '/public/images/avatars/avatar-default.svg',
         role: 'member',
         status: 'active',
         online: true,
-        createdAt: new Date().toISOString()
-      });
+        createdAt: serverTimestamp(),
+        lastSeen: serverTimestamp(),
+      }, { merge: true });
 
-      console.log('User erfolgreich erstellt mit UID:', user.uid);
-      this.nextstep.emit();  // → weiter zu Avatar-Auswahl
-
+      this.nextstep.emit();
     } catch (error: any) {
       console.error('Registrierung fehlgeschlagen:', error);
 
       let message = 'Etwas ist schiefgelaufen';
+      if (error?.code === 'auth/email-already-in-use') message = 'Diese E-Mail-Adresse ist bereits registriert';
+      else if (error?.code === 'auth/invalid-email') message = 'Ungültige E-Mail-Adresse';
+      else if (error?.code === 'auth/weak-password') message = 'Passwort ist zu schwach';
 
-      if (error.code === 'auth/email-already-in-use') {
-        message = 'Diese E-Mail-Adresse ist bereits registriert';
-      } else if (error.code === 'auth/invalid-email') {
-        message = 'Ungültige E-Mail-Adresse';
-      } else if (error.code === 'auth/weak-password') {
-        message = 'Passwort ist zu schwach';
-
-        alert(message);  // später → Snackbar/MatDialog
-      }
+      alert(message);
     }
   }
 }
