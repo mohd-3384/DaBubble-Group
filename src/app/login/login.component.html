@@ -12,18 +12,22 @@
   </header>
 
   <main>
-    <app-login-card *ngIf="showLoginCardComponent" (forgotPassword)="openPasswordReset()"></app-login-card>
+    <app-login-card *ngIf="showLoginCard()" (forgotPassword)="openPasswordReset()"></app-login-card>
 
-    <app-register-card *ngIf="showRegisterCardComponent" (nextstep)="goToAvatarPicker()"></app-register-card>
+    <app-register-card *ngIf="showRegisterCard()" (nextstep)="goToAvatarPicker()"></app-register-card>
 
-    <app-chose-avatar *ngIf="showChoseAvatarComponent" (back)="backToRegister()"
+    <app-chose-avatar *ngIf="showAvatar()" (back)="backToRegister()"
       (success)="onRegistrationSuccess()"></app-chose-avatar>
 
-    <app-password-reset *ngIf="showPasswordResetComponent"></app-password-reset>
+    <app-password-reset *ngIf="showReset()"></app-password-reset>
 
     <!-- optional: Link/Button "zurück zum Login" -->
-    <button *ngIf="showPasswordResetComponent" (click)="backToLogin()">Zurück</button>
+    <button *ngIf="showReset()" (click)="backToLogin()">Zurück</button>
   </main>
+
+  <div class="user-successful-container" [class.visible]="successMessage()">
+    <p>Benutzer erfolgreich erstellt!</p>
+  </div>
 
   <footer class="footer-container">
     <a routerLink="/imprint">Impressum</a>

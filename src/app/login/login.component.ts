@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -7,7 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 
 import { LoginCardComponent } from './login-card/login-card.component';
 import { RegisterCardComponent } from './register-card/register-card.component';
@@ -40,46 +40,60 @@ import { PasswordResetComponent } from './password-reset/password-reset.componen
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  showLoginCardComponent = true;
-  showRegisterCardComponent = false;
-  showChoseAvatarComponent = false;
-  showPasswordResetComponent = false;
+  showLoginCard = signal(true);
+  showRegisterCard = signal(false);
+  showAvatar = signal(false);
+  showReset = signal(false);
+
+  successMessage = signal(false);
+
+  private router = inject(Router);
 
   openRegisterCard() {
-    this.showLoginCardComponent = false;
-    this.showRegisterCardComponent = true;
-    this.showChoseAvatarComponent = false;
-    this.showPasswordResetComponent = false;
+    this.showLoginCard.set(false);
+    this.showRegisterCard.set(true);
+    this.showAvatar.set(false);
+    this.showReset.set(false);
   }
 
+
   openPasswordReset() {
-    this.showLoginCardComponent = false;
-    this.showPasswordResetComponent = true;
-    this.showRegisterCardComponent = false;
-    this.showChoseAvatarComponent = false;
+    this.showLoginCard.set(false);
+    this.showReset.set(true);
+    this.showRegisterCard.set(false);
+    this.showAvatar.set(false);
   }
 
   backToLogin() {
-    this.showLoginCardComponent = true;
-    this.showRegisterCardComponent = false;
-    this.showChoseAvatarComponent = false;
-    this.showPasswordResetComponent = false;
+    this.showLoginCard.set(true);
+    this.showRegisterCard.set(false);
+    this.showAvatar.set(false);
+    this.showReset.set(false);
   }
 
   // RegisterCard -> "Weiter" => Avatar Picker
   goToAvatarPicker() {
-    this.showRegisterCardComponent = false;
-    this.showChoseAvatarComponent = true;
+    this.showRegisterCard.set(false);
+    this.showAvatar.set(true);
   }
 
   // Avatar Picker -> Zurück
   backToRegister() {
-    this.showChoseAvatarComponent = false;
-    this.showRegisterCardComponent = true;
+    this.showAvatar.set(false);
+    this.showRegisterCard.set(true);
   }
 
   // Avatar gespeichert -> zurück zum Login
   onRegistrationSuccess() {
-    this.backToLogin();
+    console.log('onRegistrationSuccess aufgerufen');
+
+    this.successMessage.set(true);
+
+    setTimeout(() => {
+      console.log('Timeout – zurück zum Login');
+      this.successMessage.set(false);
+      this.backToLogin();
+    }, 3000);
   }
 }
+

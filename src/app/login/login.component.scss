@@ -94,3 +94,28 @@ main {
     }
   }
 }
+
+.user-successful-container {
+  position: absolute;           
+  right: 20px;
+  bottom: 60px;
+  padding: 20px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(68, 77, 242, 1);
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+
+  opacity: 0;
+  transform: translate(150%);
+  transition: all 0.5s ease-in-out;
+
+  &.visible {
+    opacity: 1;
+    transform: translate(0);
+  }
+}

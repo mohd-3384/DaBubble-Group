@@ -30,7 +30,7 @@ import { Firestore, doc, updateDoc, serverTimestamp } from '@angular/fire/firest
   templateUrl: './chose-avatar.component.html',
   styleUrl: './chose-avatar.component.scss',
 })
-export class ChoseAvatarComponent implements OnDestroy {
+export class ChoseAvatarComponent {
   @Output() back = new EventEmitter<void>();
   @Output() success = new EventEmitter<void>();
 
@@ -38,7 +38,6 @@ export class ChoseAvatarComponent implements OnDestroy {
   private firestore = inject(Firestore);
   private router = inject(Router);
 
-  private successTimer: any = null;
 
   avatarlist = [
     '/public/images/avatars/avatar1.svg',
@@ -52,11 +51,7 @@ export class ChoseAvatarComponent implements OnDestroy {
   chosenAvatarSrc = '/public/images/avatars/avatar-default.svg';
   selectedIndex = -1;
 
-  successVisible = false;
 
-  ngOnDestroy(): void {
-    if (this.successTimer) clearTimeout(this.successTimer);
-  }
 
   selectAvatar(src: string, index: number) {
     this.chosenAvatarSrc = src;
@@ -86,20 +81,13 @@ export class ChoseAvatarComponent implements OnDestroy {
 
       await updateProfile(user, { photoURL: this.chosenAvatarSrc });
 
-      this.successVisible = true;
+      console.log('Avatar gespeichert – Erfolg!');
 
-      this.successTimer = setTimeout(() => {
-        this.successVisible = false;
+      this.success.emit();
 
-        // optional: parent informieren (kannst du auch entfernen)
-        this.success.emit();
-
-        // zurück zum Login
-        this.router.navigate(['/login']);
-      }, 1200);
     } catch (error) {
       console.error('Fehler beim Speichern des Avatars:', error);
-      alert('Avatar konnte nicht gespeichert werden. Versuch es später nochmal.');
+      alert('Avatar konnte nicht gespeichert werden.');
     }
   }
 }
