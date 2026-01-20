@@ -17,8 +17,9 @@
 
   <aside class="shell__right" [class.is-open]="vm().open" aria-label="Thread">
     <ng-container *ngIf="vm().open">
-      <app-thread [header]="vm().header!" [rootMessage]="vm().root!" [replies]="vm().replies"
-        [users]="usersAllForMentions" (send)="onSend($event)" (close)="onClose()"></app-thread>
+      <app-thread [currentUserId]="currentUser?.id ?? null" [header]="vm().header!" [rootMessage]="vm().root!"
+        [replies]="vm().replies" [users]="usersAllForMentions" (send)="onSend($event)" (close)="onClose()">
+      </app-thread>
     </ng-container>
   </aside>
 </div>

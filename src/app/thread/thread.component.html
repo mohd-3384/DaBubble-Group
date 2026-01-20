@@ -14,7 +14,7 @@
   <!-- SCROLLBEREICH -->
   <div class="messages-scroll">
     <!-- Root (Nachricht, auf die geantwortet wird) -->
-    <div class="message-row root" *ngIf="rootMessage as rm">
+    <div class="message-row root" *ngIf="rootMessage as rm" [class.own]="isOwnMessage(rm)">
       <img class="avatar" [src]="rm.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
         [alt]="rm.author.name" />
 
@@ -41,7 +41,7 @@
           </emoji-mart>
         </div>
 
-        <div class="bubble bubble-light">{{ rm.text }}</div>
+        <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(rm)">{{ rm.text }}</div>
 
         <!-- Reactions row (Root) -->
         <div class="reactions-row" *ngIf="reactionList(rm.id).length">
@@ -62,7 +62,7 @@
 
     <!-- Replies -->
     <ng-container *ngIf="replies.length > 0; else noReplies">
-      <div class="message-row" *ngFor="let r of replies; trackBy: trackReply">
+      <div class="message-row" [class.own]="isOwnMessage(r)" *ngFor="let r of replies; trackBy: trackReply">
         <img class="avatar" [src]="r.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
           [alt]="r.author.name" />
 
@@ -91,7 +91,7 @@
           </div>
 
 
-          <div class="bubble bubble-light">{{ r.text }}</div>
+          <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(r)">{{ r.text }}</div>
 
           <!-- Reactions row (Reply) -->
           <div class="reactions-row" *ngIf="reactionList(r.id).length">

@@ -140,7 +140,7 @@
           <ng-container *ngFor="let g of (groups$ | async)">
             <div class="day-separator"><span class="chip">{{ g.label }}</span></div>
 
-            <div class="message-row" *ngFor="let m of g.items; trackBy: trackMsg">
+            <div class="message-row" [class.own]="isOwnMessage(m)" *ngFor="let m of g.items; trackBy: trackMsg">
               <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName" />
 
               <div class="message-col">
@@ -150,7 +150,7 @@
                   <span class="time" *ngIf="m.createdAt as d">{{ d | date: 'HH:mm' }} Uhr</span>
                 </div>
 
-                <div class="bubble bubble-light">{{ m.text }}</div>
+                <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(m)">{{ m.text }}</div>
 
                 <div class="thread-teaser" *ngIf="m.replyCount || m.lastReplyAt">
                   <a class="replies" href="javascript:void(0)" (click)="openThread(m, vm)">

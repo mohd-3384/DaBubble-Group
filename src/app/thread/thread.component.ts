@@ -145,4 +145,11 @@ export class ThreadComponent {
     this.draft = '';
     this.closePopovers();
   }
+
+  @Input() currentUserId: string | null = null;
+
+  isOwnMessage(m: { author?: { id?: string } } | null | undefined): boolean {
+    return !!this.currentUserId && String(m?.author?.id ?? '') === this.currentUserId;
+  }
+
 }

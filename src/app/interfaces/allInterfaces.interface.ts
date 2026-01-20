@@ -40,6 +40,7 @@ export interface MessageVm {
   id: string;
   text: string;
   authorName: string;
+  authorId: string;
   authorAvatar?: string;
   createdAt?: Date | null;
   replyCount?: number;

@@ -498,6 +498,11 @@ export class ChatComponent {
     this.composeTarget = s;
   }
 
+  isOwnMessage(m: any): boolean {
+    const uid = this.auth.currentUser?.uid;
+    return !!uid && String(m?.authorId ?? '') === uid;
+  }
+
   private normalize(s: string) {
     return (s || '').toLowerCase().trim();
   }
@@ -655,6 +660,7 @@ export class ChatComponent {
             map(rows => rows.map(m => ({
               id: m.id,
               text: m.text ?? '',
+              authorId: m.authorId ?? '',
               authorName: m.authorName ?? 'Unbekannt',
               authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
               createdAt: toDateMaybe(m.createdAt),
@@ -666,7 +672,7 @@ export class ChatComponent {
         }
 
         // DM
-        if (!me) return of([] as MessageVm[]); // warten bis auth da ist
+        if (!me) return of([] as MessageVm[]);
 
         const convId = this.makeConvId(me.uid, id);
         const collRef = collection(this.fs, `conversations/${convId}/messages`);
@@ -678,6 +684,7 @@ export class ChatComponent {
           map(rows => rows.map(m => ({
             id: m.id,
             text: m.text ?? '',
+            authorId: m.authorId ?? '',
             authorName: m.authorName ?? 'Unbekannt',
             authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
             createdAt: toDateMaybe(m.createdAt),
