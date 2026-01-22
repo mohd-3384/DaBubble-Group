@@ -599,8 +599,8 @@ export class ChatComponent {
   }
 
   isOwnMessage(m: { authorId?: string } | null | undefined): boolean {
-    const uid = this.auth.currentUser?.uid;
-    return !!uid && String(m?.authorId ?? '') === uid;
+    const uid = this.currentUser?.id ?? this.auth.currentUser?.uid;
+    return !!uid && String(m?.authorId ?? '') === String(uid);
   }
 
   closePopovers() {
@@ -764,16 +764,18 @@ export class ChatComponent {
           return runInInjectionContext(this.env, () =>
             collectionData(qRef, { idField: 'id' }) as Observable<any[]>
           ).pipe(
-            map(rows => rows.map(m => ({
-              id: m.id,
-              text: m.text ?? '',
-              authorId: m.authorId ?? '',
-              authorName: m.authorName ?? 'Unbekannt',
-              authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
-              createdAt: toDateMaybe(m.createdAt),
-              replyCount: (m.replyCount ?? 0),
-              lastReplyAt: toDateMaybe(m.lastReplyAt),
-            } as MessageVm))),
+            map(rows => rows.map(m => {
+              return ({
+                id: m.id,
+                text: m.text ?? '',
+                authorId: m.authorId ?? '',
+                authorName: m.authorName ?? 'Unbekannt',
+                authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+                createdAt: toDateMaybe(m.createdAt),
+                replyCount: (m.replyCount ?? 0),
+                lastReplyAt: toDateMaybe(m.lastReplyAt),
+              } as MessageVm);
+            })),
             startWith([] as MessageVm[])
           );
         }
@@ -788,16 +790,18 @@ export class ChatComponent {
         return runInInjectionContext(this.env, () =>
           collectionData(qRef, { idField: 'id' }) as Observable<any[]>
         ).pipe(
-          map(rows => rows.map(m => ({
-            id: m.id,
-            text: m.text ?? '',
-            authorId: m.authorId ?? '',
-            authorName: m.authorName ?? 'Unbekannt',
-            authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar1.svg',
-            createdAt: toDateMaybe(m.createdAt),
-            replyCount: (m.replyCount ?? 0),
-            lastReplyAt: toDateMaybe(m.lastReplyAt),
-          } as MessageVm))),
+          map(rows => rows.map(m => {
+            return ({
+              id: m.id,
+              text: m.text ?? '',
+              authorId: m.authorId ?? '',
+              authorName: m.authorName ?? 'Unbekannt',
+              authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+              createdAt: toDateMaybe(m.createdAt),
+              replyCount: (m.replyCount ?? 0),
+              lastReplyAt: toDateMaybe(m.lastReplyAt),
+            } as MessageVm);
+          })),
           startWith([] as MessageVm[])
         );
       })
@@ -850,14 +854,6 @@ export class ChatComponent {
     /** ---------- LEER/AKTIV ---------- */
     const channelId$ = this.route.paramMap.pipe(map((p) => p.get('id')!));
 
-    // this.channelDoc$ = channelId$.pipe(
-    //   switchMap((id) =>
-    //     isPlatformBrowser(this.platformId)
-    //       ? (docData(doc(this.fs, `channels/${id}`)) as Observable<ChannelDoc>)
-    //       : of(<ChannelDoc>{})
-    //   ),
-    //   startWith(<ChannelDoc | null>null)
-    // );
     this.channelDoc$ = channelId$.pipe(
       switchMap((id) => {
         if (!isPlatformBrowser(this.platformId)) return of<ChannelDoc | null>(null);
@@ -994,7 +990,6 @@ export class ChatComponent {
         return [...channelMatches, ...userMatches];
       })
     );
-
 
     /** ---------- aktueller User ---------- */
     authState(this.auth)
@@ -1195,7 +1190,6 @@ export class ChatComponent {
     });
   }
 
-
   toggleMessageEmojiPicker(ev: MouseEvent, msg: MessageVm) {
     ev.stopPropagation();
 
@@ -1229,7 +1223,7 @@ export class ChatComponent {
 
     // Linksposition so clampen, dass der Picker im Viewport bleibt
     let left = rect.left;
-    const maxLeft = viewportW - pickerWidth - 16; // kleiner Rand
+    const maxLeft = viewportW - pickerWidth - 16;
     if (left > maxLeft) {
       left = Math.max(16, maxLeft);
     }
@@ -1240,7 +1234,6 @@ export class ChatComponent {
     this.emojiContext = 'message';
     this.emojiMessageTarget = msg;
   }
-
 
   async send(vm: Vm) {
     const msg = this.draft.trim();
