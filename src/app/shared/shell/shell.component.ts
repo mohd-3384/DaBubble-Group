@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, ActivatedRoute, ParamMap } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
@@ -82,7 +82,7 @@ export class ShellComponent {
   // ---- Current user (für Guest/User author) ----
   currentUser: (UserDoc & { id: string }) | null = null;
 
-  // ✅ channelId aus der DEEPEST child route (router-outlet route)
+  // channelId aus der DEEPEST child route (router-outlet route)
   channelId$: Observable<string | null> = this.route.paramMap.pipe(
     switchMap(() => {
       let r: ActivatedRoute = this.route;
@@ -96,6 +96,8 @@ export class ShellComponent {
   );
 
   private channelId: string | null = null;
+
+  @Input() currentUserId?: string | null = null;
 
   constructor() {
     this.presence.init();
@@ -142,7 +144,7 @@ export class ShellComponent {
     this.workspaceCollapsed = collapsed;
   }
 
-  // ✅ SEND: schreibt in Firestore + updated parent message + updated UI
+  // SEND: schreibt in Firestore + updated parent message + updated UI
   async onSend(text: string) {
     const msg = (text || '').trim();
     if (!msg) return;
@@ -210,7 +212,33 @@ export class ShellComponent {
       console.error('[Thread] Fehler beim Speichern der Reply:', err);
     }
   }
+
   onClose() {
     this.thread.close();
   }
+
+  async onEditThreadMessage(ev: { messageId: string; text: string }) {
+    const vm = this.thread.vm();
+    if (!vm?.open || !vm.root?.id) return;
+
+    const channelId = this.channelId;
+    if (!channelId) return;
+
+    // Root oder Reply? Root liegt in channels/{channelId}/messages/{rootId}
+    // Replies liegen in channels/{channelId}/messages/{rootId}/replies/{replyId}
+    const rootId = vm.root.id;
+
+    try {
+      if (ev.messageId === rootId) {
+        const ref = doc(this.fs, `channels/${channelId}/messages/${rootId}`);
+        await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
+      } else {
+        const ref = doc(this.fs, `channels/${channelId}/messages/${rootId}/replies/${ev.messageId}`);
+        await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
+      }
+    } catch (e) {
+      console.error('[Thread] Fehler beim Speichern der Edit:', e);
+    }
+  }
+
 }

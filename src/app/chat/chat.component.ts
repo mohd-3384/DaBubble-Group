@@ -25,9 +25,10 @@ import {
   getDoc,
   getDocs,
   deleteDoc,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
-import { map, switchMap, startWith, take } from 'rxjs/operators';
+import { map, switchMap, startWith, take, catchError } from 'rxjs/operators';
 import {
   ChannelDoc,
   DayGroup,
@@ -139,6 +140,7 @@ export class ChatComponent {
   // aktueller Channel aus Firestore
   channelDoc$!: Observable<ChannelDoc | null>;
   channelTopic = '';
+  channelCreator$!: Observable<UserDoc | null>;
 
   // Edit-States für Channel-Info
   channelNameEdit = false;
@@ -149,6 +151,105 @@ export class ChatComponent {
   editChannelDesc = '';
 
   composerEmojiPos = { top: 0, left: 0 };
+
+  editingMessageId: string | null = null;
+  editDraft = '';
+
+  editMenuForId: string | null = null;
+  editMenuPos = { top: 0, left: 0 };
+
+  toggleEditMenu(ev: MouseEvent, m: any) {
+    ev.stopPropagation();
+    if (!this.isOwnMessage(m)) return;
+    if (this.editingMessageId === m.id) return;
+
+    if (this.editMenuForId === m.id) {
+      this.editMenuForId = null;
+      return;
+    }
+
+    const btn = ev.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+
+    const popW = 320;
+    const offset = 8;
+
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
+    const left = Math.max(16, Math.min(rect.right - popW, viewportW - popW - 16));
+    const top = rect.bottom + offset;
+
+    this.editMenuForId = m.id;
+    this.editMenuPos = { top, left };
+
+    // andere Popover schließen
+    this.messageEmojiForId = null;
+    this.showEmoji = false;
+    this.showMembers = false;
+  }
+
+  onMessageRowLeave(messageId: string) {
+    // Dots Popover schließen
+    if (this.editMenuForId === messageId) this.editMenuForId = null;
+
+    // ✅ Emoji-Popover schließen
+    if (this.messageEmojiForId === messageId) {
+      this.messageEmojiForId = null;
+      this.emojiContext = null;
+      this.emojiMessageTarget = null;
+    }
+  }
+
+  startEdit(m: any) {
+    if (!this.isOwnMessage(m)) return;
+    this.editMenuForId = null;
+    this.messageEmojiForId = null;
+    this.showEmoji = false;
+    this.showMembers = false;
+
+    this.editingMessageId = m.id;
+    this.editDraft = (m.text ?? '').toString();
+  }
+
+  cancelEdit() {
+    this.editingMessageId = null;
+    this.editDraft = '';
+  }
+
+  closeAllPopovers() {
+    this.showEmoji = false;
+    this.showMembers = false;
+    this.messageEmojiForId = null;
+    this.editMenuForId = null;
+  }
+
+  async saveEdit(m: any, vm: Vm) {
+    if (!this.isOwnMessage(m)) return;
+
+    const next = (this.editDraft || '').trim();
+    if (!next || next === (m.text ?? '').trim()) {
+      this.cancelEdit();
+      return;
+    }
+
+    const id = this.route.snapshot.paramMap.get('id')!;
+    const authUser = await this.authReady.requireUser();
+
+    try {
+      if (vm.kind === 'dm') {
+        const otherUserId = id;
+        const convId = this.makeConvId(authUser.uid, otherUserId);
+        const ref = doc(this.fs, `conversations/${convId}/messages/${m.id}`);
+        await updateDoc(ref, { text: next, editedAt: serverTimestamp() });
+      } else {
+        const ref = doc(this.fs, `channels/${id}/messages/${m.id}`);
+        await updateDoc(ref, { text: next, editedAt: serverTimestamp() });
+      }
+
+      this.cancelEdit();
+    } catch (err) {
+      console.error('[Chat] Fehler beim Editieren der Message:', err);
+    }
+  }
 
   private me$ = authState(this.auth).pipe(startWith(this.auth.currentUser));
   private chanSvc = inject(ChannelService);
@@ -177,7 +278,7 @@ export class ChatComponent {
       return;
     }
 
-    const data = oldSnap.data(); // enthält topic, createdAt, memberCount, ...
+    const data = oldSnap.data();
 
     // 3) neues Channel-Dokument anlegen (ohne neues Feld!)
     await setDoc(newRef, {
@@ -284,7 +385,6 @@ export class ChatComponent {
       console.error('Topic speichern fehlgeschlagen:', e);
     }
   }
-
 
   // User-Profil Modal (für DMs)
   userProfileOpen = false;
@@ -498,9 +598,16 @@ export class ChatComponent {
     this.composeTarget = s;
   }
 
-  isOwnMessage(m: any): boolean {
+  isOwnMessage(m: { authorId?: string } | null | undefined): boolean {
     const uid = this.auth.currentUser?.uid;
     return !!uid && String(m?.authorId ?? '') === uid;
+  }
+
+  closePopovers() {
+    this.showEmoji = false;
+    this.showMembers = false;
+    this.messageEmojiForId = null;
+    this.editMenuForId = null;
   }
 
   private normalize(s: string) {
@@ -743,13 +850,37 @@ export class ChatComponent {
     /** ---------- LEER/AKTIV ---------- */
     const channelId$ = this.route.paramMap.pipe(map((p) => p.get('id')!));
 
+    // this.channelDoc$ = channelId$.pipe(
+    //   switchMap((id) =>
+    //     isPlatformBrowser(this.platformId)
+    //       ? (docData(doc(this.fs, `channels/${id}`)) as Observable<ChannelDoc>)
+    //       : of(<ChannelDoc>{})
+    //   ),
+    //   startWith(<ChannelDoc | null>null)
+    // );
     this.channelDoc$ = channelId$.pipe(
-      switchMap((id) =>
-        isPlatformBrowser(this.platformId)
-          ? (docData(doc(this.fs, `channels/${id}`)) as Observable<ChannelDoc>)
-          : of(<ChannelDoc>{})
-      ),
-      startWith(<ChannelDoc | null>null)
+      switchMap((id) => {
+        if (!isPlatformBrowser(this.platformId)) return of<ChannelDoc | null>(null);
+
+        return (docData(doc(this.fs, `channels/${id}`)) as Observable<any>).pipe(
+          map(data => (data ? ({ id, ...data } as ChannelDoc) : null)),
+          catchError(() => of<ChannelDoc | null>(null))
+        );
+      }),
+      startWith<ChannelDoc | null>(null)
+    );
+
+    this.channelCreator$ = this.channelDoc$.pipe(
+      switchMap((ch) => {
+        const uid = ch?.createdBy;
+        if (!uid) return of<UserDoc | null>(null);
+
+        return (docData(doc(this.fs, `users/${uid}`)) as Observable<any>).pipe(
+          map(u => (u ? ({ id: uid, ...u } as UserDoc) : null)),
+          catchError(() => of<UserDoc | null>(null))
+        );
+      }),
+      startWith<UserDoc | null>(null)
     );
 
     // Topic in lokale Variable spiegeln (für Modal & Editfeld)
@@ -960,14 +1091,6 @@ export class ChatComponent {
 
   closeMembers() {
     this.showMembers = false;
-  }
-
-  closeAllPopovers() {
-    this.showEmoji = false;
-    this.showMembers = false;
-    this.messageEmojiForId = null;
-    this.emojiContext = null;
-    this.emojiMessageTarget = null;
   }
 
   insertMention(m: MemberVM) {

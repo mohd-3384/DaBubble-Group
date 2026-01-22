@@ -120,7 +120,7 @@
     <section class="chat-body">
 
       <!-- SCROLLBEREICH NUR FÜR NACHRICHTEN -->
-      <div class="messages-scroll">
+      <div class="messages-scroll" (scroll)="closeAllPopovers()">
 
         <!-- CHANNEL leer -->
         <ng-container *ngIf="vm.kind === 'channel' && (isEmpty$ | async); else hasMessages">
@@ -140,46 +140,83 @@
           <ng-container *ngFor="let g of (groups$ | async)">
             <div class="day-separator"><span class="chip">{{ g.label }}</span></div>
 
-            <div class="message-row" [class.own]="isOwnMessage(m)" *ngFor="let m of g.items; trackBy: trackMsg">
-              <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar1.svg'" [alt]="m.authorName" />
+            <div class="message-row" *ngFor="let m of g.items; trackBy: trackMsg" [class.own]="isOwnMessage(m)"
+              [class.is-editing]="editingMessageId === m.id" (mouseleave)="onMessageRowLeave(m.id)">
+
+              <img class="avatar" [src]="m.authorAvatar || '/public/images/avatars/avatar-default.svg'"
+                [alt]="m.authorName" />
 
               <div class="message-col">
                 <div class="header">
                   <span class="name">{{ m.authorName }}</span>
                   <span class="dot"></span>
-                  <span class="time" *ngIf="m.createdAt as d">{{ d | date: 'HH:mm' }} Uhr</span>
+                  <span class="time" *ngIf="m.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
                 </div>
 
-                <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(m)">{{ m.text }}</div>
+                <!-- Hover Actions -->
+                <div class="message-actions" *ngIf="editingMessageId !== m.id" (click)="$event.stopPropagation()">
+                  <button type="button" class="msg-act-btn msg-act-add" aria-label="Add reaction"
+                    (click)="toggleMessageEmojiPicker($event, m)">
+                  </button>
 
-                <div class="thread-teaser" *ngIf="m.replyCount || m.lastReplyAt">
-                  <a class="replies" href="javascript:void(0)" (click)="openThread(m, vm)">
-                    {{ m.replyCount || 0 }} Antworten
-                  </a>
+                  <button type="button" class="msg-act-btn msg-act-thread" aria-label="Open thread"
+                    (click)="openThread(m, vm)">
+                  </button>
 
-                  <span class="last-reply" *ngIf="m.lastReplyAt as lr">
-                    Letzte Antwort {{ lr | date: 'HH:mm' }}
-                  </span>
+                  <!-- NUR OWN: Dots / More -->
+                  <button *ngIf="isOwnMessage(m)" type="button" class="msg-act-btn msg-act-more"
+                    aria-label="Nachricht Optionen" (click)="toggleEditMenu($event, m)">
+                  </button>
                 </div>
-              </div>
 
-              <!-- Hover-Actions -->
-              <div class="message-actions" (click)="$event.stopPropagation()">
-                <button type="button" class="msg-act-btn msg-act-add" (click)="toggleMessageEmojiPicker($event, m)"
-                  aria-label="Reaktion hinzufügen"></button>
+                <!-- Message Emoji Popover -->
+                <div class="msg-emoji-popover" *ngIf="messageEmojiForId === m.id"
+                  [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
+                  (click)="$event.stopPropagation()">
+                  <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+                    (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+                </div>
 
-                <button type="button" class="msg-act-btn msg-act-thread" (click)="openThread(m, vm)"
-                  aria-label="Thread öffnen"></button>
-              </div>
+                <!-- Popover für Dots -->
+                <div class="msg-more-popover" *ngIf="editMenuForId === m.id && editingMessageId !== m.id"
+                  [ngStyle]="{ top: editMenuPos.top + 'px', left: editMenuPos.left + 'px' }"
+                  (click)="$event.stopPropagation()">
+                  <button type="button" class="msg-more-item" (click)="startEdit(m)">
+                    Nachricht bearbeiten
+                  </button>
+                </div>
 
-              <!-- Emoji-Popover für diese Nachricht -->
-              <div class="msg-emoji-popover" *ngIf="messageEmojiForId === m.id"
-                [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
-                [class.msg-emoji-popover--top]="emojiPopoverPos.placement === 'top'"
-                [class.msg-emoji-popover--bottom]="emojiPopoverPos.placement === 'bottom'"
-                (click)="$event.stopPropagation()">
-                <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
-                  (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+                <!-- Normal bubble ODER Edit Mode -->
+                <ng-container *ngIf="editingMessageId !== m.id; else editTpl">
+                  <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(m)">
+                    {{ m.text }}
+                  </div>
+                </ng-container>
+
+                <ng-template #editTpl>
+                  <div class="edit-box" (click)="$event.stopPropagation()">
+                    <textarea class="edit-input" rows="3" [(ngModel)]="editDraft"></textarea>
+
+                    <div class="edit-actions">
+                      <div class="edit-actions-left">
+                        <!-- nur UI wie Composer -->
+                        <span class="icon-span emoji-icon" role="button" tabindex="0"
+                          aria-label="Emoji auswählen"></span>
+                      </div>
+
+                      <div class="edit-actions-right">
+                        <button type="button" class="btn-cancel" (click)="cancelEdit()">Abbrechen</button>
+                        <button type="button" class="btn-save" (click)="saveEdit(m, vm)">Speichern</button>
+                      </div>
+                    </div>
+                  </div>
+                </ng-template>
+
+                <!-- Thread teaser -->
+                <div class="thread-teaser" (click)="openThread(m, vm)" *ngIf="m.replyCount">
+                  <a class="replies">{{ m.replyCount }} Antworten</a>
+                  <span class="last-reply" *ngIf="m.lastReplyAt as lr">Letzte Antwort {{ lr | date:'HH:mm' }} Uhr</span>
+                </div>
               </div>
             </div>
           </ng-container>
@@ -221,7 +258,8 @@
       </div>
 
       <!-- Backdrop für Popovers -->
-      <div class="emoji-backdrop" *ngIf="showEmoji || showMembers || messageEmojiForId" (click)="closeAllPopovers()">
+      <div class="emoji-backdrop" *ngIf="showEmoji || showMembers || messageEmojiForId || editMenuForId"
+        (click)="closeAllPopovers()">
       </div>
 
       <!-- Composer Emoji Popover (FIXED) -->
@@ -313,7 +351,9 @@
 
                 <div class="channel-info__meta">
                   <div class="channel-info__meta-label">Erstellt von</div>
-                  <div class="channel-info__creator">Noah Braun</div>
+                  <div class="channel-info__creator">
+                    {{ (channelCreator$ | async)?.name || 'Unbekannt' }}
+                  </div>
                 </div>
               </div>
             </section>

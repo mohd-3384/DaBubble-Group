@@ -127,6 +127,7 @@
 }
 
 .message-row {
+  position: relative;
   display: grid;
   grid-template-columns: 48px 1fr;
   gap: 14px;
@@ -380,10 +381,6 @@
   }
 }
 
-.message-row {
-  position: relative;
-}
-
 /* Hover actions like Chat */
 .message-actions {
   position: absolute;
@@ -403,7 +400,8 @@
   z-index: 15;
 }
 
-.message-row:hover .message-actions {
+.message-row:hover .message-actions,
+.message-row.is-active .message-actions {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0);
@@ -436,6 +434,110 @@
   &:hover {
     background-image: url('/public/images/add-reaction-comment-hover.svg');
   }
+}
+
+/* Dots icon button */
+.msg-act-more {
+  background-image: url('/public/images/dots.svg');
+
+  &:hover {
+    background-image: url('/public/images/dots-hover.svg');
+  }
+}
+
+/* Popover */
+.msg-more-popover {
+  position: absolute;
+  z-index: 10000;
+
+  // unter den actions
+  top: 44px;
+  right: 24px;
+
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 24px;
+  border-top-left-radius: 0;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  min-width: 240px;
+
+  margin: 0;
+}
+
+.msg-more-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 12px 14px;
+  border-radius: 16px;
+  text-align: center;
+  transition: var(--transition15);
+
+  &:hover {
+    color: var(--primary-color);
+    background: var(--background-color);
+  }
+}
+
+/* Edit Mode Box wie Composer */
+.edit-box {
+  width: 100%;
+  max-width: min(720px, 92%);
+  box-sizing: border-box;
+
+  background: var(--surface-bg);
+  border: 1px solid var(--accent-color);
+  border-radius: 24px;
+
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .edit-input {
+    width: 100%;
+    box-sizing: border-box;
+
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+
+    min-height: 72px;
+    font-size: 15px;
+    line-height: 1.5;
+
+    &::placeholder {
+      color: var(--background-offline);
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .edit-actions-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .edit-actions-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* while editing: hide hover actions */
+.message-row.is-editing .message-actions {
+  display: none !important;
 }
 
 /* Emoji popover fixed like Chat */
@@ -521,7 +623,63 @@
     transform: translateX(-32px);
   }
 
-  &:hover>.message-col>.message-actions {
+  .messages-scroll .message-row.own:hover>.message-col>.message-actions,
+  .messages-scroll .message-row.own.is-active>.message-col>.message-actions {
     transform: translateX(0);
   }
+
+}
+
+.btn-cancel {
+  font-size: 12px;
+  border: 1px solid var(--accent-color);
+  background: transparent;
+  color: var(--primary-color);
+  padding: 6px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: var(--transition15);
+
+  &:hover {
+    background: var(--background-color);
+  }
+}
+
+.btn-save {
+  font-size: 12px;
+  border: none;
+  background: var(--primary-color);
+  color: var(--surface-bg);
+  padding: 6px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: var(--transition15);
+
+  &:hover {
+    background-color: var(--btn-hover-violett);
+  }
+}
+
+.messages-scroll .message-row.own .msg-more-popover {
+  left: 60px;
+  top: 48px;
+  right: auto;
+}
+
+/* ======================================================
+    FIX: Wenn Popover offen ist -> Actions bleiben stabil
+    (kein Hover-Jitter, kein rein/raus sliden)
+   ====================================================== */
+
+.message-row.is-active .message-actions {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateX(0) !important;
+  transition: none !important; // <- killt das “wackeln”
+}
+
+/* auch für own messages: deren baseline ist translateX(-32px) */
+.messages-scroll .message-row.own.is-active>.message-col>.message-actions {
+  transform: translateX(0) !important;
+  transition: none !important;
 }

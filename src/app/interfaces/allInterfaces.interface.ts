@@ -6,7 +6,7 @@ export interface Vm {
 }
 
 export interface ChannelDoc {
-  id: string;
+  id?: string;
   createdBy?: string;
   createdAt?: any;
   memberCount?: number;
