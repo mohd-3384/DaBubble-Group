@@ -155,8 +155,7 @@
 
                 <!-- Hover Actions -->
                 <div class="message-actions" *ngIf="editingMessageId !== m.id" (click)="$event.stopPropagation()">
-                  <button type="button" class="msg-act-btn msg-act-add" aria-label="Add reaction"
-                    (click)="toggleMessageEmojiPicker($event, m)">
+                  <button class="msg-act-btn msg-act-add" (click)="toggleMessageEmojiPicker($event, m, 'actions')">
                   </button>
 
                   <button type="button" class="msg-act-btn msg-act-thread" aria-label="Open thread"
@@ -170,7 +169,7 @@
                 </div>
 
                 <!-- Message Emoji Popover -->
-                <div class="msg-emoji-popover" *ngIf="messageEmojiForId === m.id"
+                <div #msgEmojiPopover class="msg-emoji-popover" *ngIf="messageEmojiForId === m.id"
                   [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
                   (click)="$event.stopPropagation()">
                   <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
@@ -191,6 +190,34 @@
                   <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(m)">
                     {{ m.text }}
                   </div>
+
+                  <!-- reactions-row Block -->
+                  <div class="reactions-row" *ngIf="hasReactions(m)" (mouseleave)="onMessageRowLeaveKeepEmoji(m.id)"
+                    (click)="$event.stopPropagation()">
+
+                    <div class="reaction-wrap" *ngFor="let r of reactionList(m); trackBy: trackReaction"
+                      (mouseenter)="onReactionHover(m, r.emoji)" (mouseleave)="onReactionHover(null)">
+                      <button type="button" class="reaction" (click)="onReactionChipClick($event, m, r.emoji)"
+                        aria-label="Reaction">
+                        <span class="emoji">{{ r.emoji }}</span>
+                        <span class="count" *ngIf="r.count > 1">{{ r.count }}</span>
+                      </button>
+
+                      <div class="reaction-tooltip" *ngIf="isReactionHovered(m, r.emoji)">
+                        <div class="rt-emoji">{{ r.emoji }}</div>
+
+                        <div class="rt-names">
+                          <div class="rt-name" *ngFor="let n of reactionNames(m, r.emoji)">{{ n }}</div>
+                        </div>
+
+                        <div class="rt-text">{{ reactionVerb(m, r.emoji) }}</div>
+                      </div>
+                    </div>
+
+                    <button type="button" class="reaction reaction-add" aria-label="Add reaction"
+                      (click)="toggleMessageEmojiPicker($event, m, 'reactions')">
+                    </button>
+                  </div>
                 </ng-container>
 
                 <ng-template #editTpl>
@@ -198,16 +225,28 @@
                     <textarea class="edit-input" rows="3" [(ngModel)]="editDraft"></textarea>
 
                     <div class="edit-actions">
+
+                      <!-- LINKS: Emoji-Button -->
                       <div class="edit-actions-left">
-                        <!-- nur UI wie Composer -->
-                        <span class="icon-span emoji-icon" role="button" tabindex="0"
-                          aria-label="Emoji auswählen"></span>
+                        <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
+                          (click)="openEmojiForEdit($event)"></span>
                       </div>
 
+                      <!-- Popover (kann bleiben wo er ist, aber am besten direkt hier in edit-actions) -->
+                      <div class="composer-emoji-popover-fixed" *ngIf="showEmoji && emojiContext === 'edit'"
+                        [ngStyle]="{ top: composerEmojiPos.top + 'px', left: composerEmojiPos.left + 'px' }"
+                        (click)="$event.stopPropagation()">
+                        <!-- Edit -->
+                        <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
+                          (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
+                      </div>
+
+                      <!-- RECHTS: Buttons -->
                       <div class="edit-actions-right">
                         <button type="button" class="btn-cancel" (click)="cancelEdit()">Abbrechen</button>
                         <button type="button" class="btn-save" (click)="saveEdit(m, vm)">Speichern</button>
                       </div>
+
                     </div>
                   </div>
                 </ng-template>

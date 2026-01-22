@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   EnvironmentInjector,
+  HostListener,
   PLATFORM_ID,
   ViewChild,
   inject,
@@ -26,6 +27,9 @@ import {
   getDocs,
   deleteDoc,
   updateDoc,
+  deleteField,
+  increment,
+  runTransaction
 } from '@angular/fire/firestore';
 import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
 import { map, switchMap, startWith, take, catchError } from 'rxjs/operators';
@@ -158,6 +162,15 @@ export class ChatComponent {
   editMenuForId: string | null = null;
   editMenuPos = { top: 0, left: 0 };
 
+  emojiOpenedFrom: 'actions' | 'reactions' | null = null;
+
+  emojiMartCfg = {
+    showPreview: false,
+    showSkinTones: false,
+    autoFocus: true,
+    // set: 'apple', perLine: 8, emojiSize: 20, ...
+  };
+
   toggleEditMenu(ev: MouseEvent, m: any) {
     ev.stopPropagation();
     if (!this.isOwnMessage(m)) return;
@@ -188,15 +201,43 @@ export class ChatComponent {
   }
 
   onMessageRowLeave(messageId: string) {
-    // Dots Popover schließen
     if (this.editMenuForId === messageId) this.editMenuForId = null;
 
-    // ✅ Emoji-Popover schließen
-    if (this.messageEmojiForId === messageId) {
-      this.messageEmojiForId = null;
-      this.emojiContext = null;
-      this.emojiMessageTarget = null;
+    // Emoji-Popover nur schließen, wenn er aus message-actions geöffnet wurde
+    if (this.messageEmojiForId === messageId && this.emojiOpenedFrom === 'actions') {
+      this.closeMessageEmojiPopover();
     }
+  }
+
+  onMessageRowLeaveKeepEmoji(messageId: string) {
+    if (this.editMenuForId === messageId) this.editMenuForId = null;
+  }
+
+  @ViewChild('msgEmojiPopover') msgEmojiPopover?: ElementRef<HTMLElement>;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(ev: MouseEvent) {
+    if (!this.messageEmojiForId) return;
+
+    const target = ev.target as Node;
+
+    // Klick IM Popover -> nix
+    const popEl = this.msgEmojiPopover?.nativeElement;
+    if (popEl && popEl.contains(target)) return;
+
+    this.closeMessageEmojiPopover();
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    if (!this.messageEmojiForId) return;
+    this.closeMessageEmojiPopover();
+  }
+
+  @HostListener('window:touchmove', [])
+  onTouchMove() {
+    if (!this.messageEmojiForId) return;
+    this.closeMessageEmojiPopover();
   }
 
   startEdit(m: any) {
@@ -213,6 +254,8 @@ export class ChatComponent {
   cancelEdit() {
     this.editingMessageId = null;
     this.editDraft = '';
+    this.showEmoji = false;
+    this.emojiContext = null;
   }
 
   closeAllPopovers() {
@@ -228,6 +271,8 @@ export class ChatComponent {
     const next = (this.editDraft || '').trim();
     if (!next || next === (m.text ?? '').trim()) {
       this.cancelEdit();
+      this.showEmoji = false;
+      this.emojiContext = null;
       return;
     }
 
@@ -520,8 +565,8 @@ export class ChatComponent {
   draft = '';
   showEmoji = false;
   showMembers = false;
-  // Emoji-Kontext: Composer oder Nachricht
-  emojiContext: 'composer' | 'message' | null = null;
+  emojiContext: 'composer' | 'message' | 'edit' | null = null;
+
   emojiMessageTarget: MessageVm | null = null;
 
   // Header-Mitglieder (Channel)
@@ -764,8 +809,8 @@ export class ChatComponent {
           return runInInjectionContext(this.env, () =>
             collectionData(qRef, { idField: 'id' }) as Observable<any[]>
           ).pipe(
-            map(rows => rows.map(m => {
-              return ({
+            map(rows =>
+              rows.map(m => ({
                 id: m.id,
                 text: m.text ?? '',
                 authorId: m.authorId ?? '',
@@ -774,8 +819,10 @@ export class ChatComponent {
                 createdAt: toDateMaybe(m.createdAt),
                 replyCount: (m.replyCount ?? 0),
                 lastReplyAt: toDateMaybe(m.lastReplyAt),
-              } as MessageVm);
-            })),
+                reactions: m.reactions ?? {},
+                reactionBy: m.reactionBy ?? {},
+              } as MessageVm))
+            ),
             startWith([] as MessageVm[])
           );
         }
@@ -790,8 +837,8 @@ export class ChatComponent {
         return runInInjectionContext(this.env, () =>
           collectionData(qRef, { idField: 'id' }) as Observable<any[]>
         ).pipe(
-          map(rows => rows.map(m => {
-            return ({
+          map(rows =>
+            rows.map(m => ({
               id: m.id,
               text: m.text ?? '',
               authorId: m.authorId ?? '',
@@ -800,8 +847,10 @@ export class ChatComponent {
               createdAt: toDateMaybe(m.createdAt),
               replyCount: (m.replyCount ?? 0),
               lastReplyAt: toDateMaybe(m.lastReplyAt),
-            } as MessageVm);
-          })),
+              reactions: m.reactions ?? {},
+              reactionBy: m.reactionBy ?? {},
+            } as MessageVm))
+          ),
           startWith([] as MessageVm[])
         );
       })
@@ -1043,26 +1092,87 @@ export class ChatComponent {
       e?.colons ??
       '';
 
-    // Reaktion auf Nachricht
     if (this.emojiContext === 'message' && this.emojiMessageTarget) {
       this.addReactionToMessage(this.emojiMessageTarget, native);
 
-      // Message-Popover schließen
       this.messageEmojiForId = null;
       this.emojiContext = null;
       this.emojiMessageTarget = null;
       return;
     }
 
-    // Standard: Emoji in Composer einfügen
+    // Edit-Mode: Emoji in editDraft einfügen
+    if (this.emojiContext === 'edit') {
+      this.editDraft = (this.editDraft || '') + native;
+
+      // optional: Picker schließen wie beim Composer
+      this.showEmoji = false;
+      this.emojiContext = null;
+      return;
+    }
+
     this.draft += native;
     this.closeEmoji();
   }
 
   // UI-Stub für Reaktionen – hier kannst du später Firestore-Update einbauen
-  private addReactionToMessage(msg: MessageVm, emoji: string) {
-    console.log('Reaction ausgewählt', emoji, 'für Message', msg.id);
-    // TODO: Firestore-Update für reactions einbauen
+  private async addReactionToMessage(msg: MessageVm, emoji: string) {
+    try {
+      const id = this.route.snapshot.paramMap.get('id')!;
+      const isDM = this.router.url.includes('/dm/');
+      const authUser = await this.authReady.requireUser();
+
+      const uid = authUser.uid;
+      const key = String(emoji);
+
+      const ref = !isDM
+        ? doc(this.fs, `channels/${id}/messages/${msg.id}`)
+        : doc(this.fs, `conversations/${this.makeConvId(uid, id)}/messages/${msg.id}`);
+
+      await runTransaction(this.fs, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return;
+
+        const data = snap.data() as any;
+
+        const already = !!data?.reactionBy?.[key]?.[uid];
+        const currentCount = Number(data?.reactions?.[key] ?? 0);
+
+        const displayName =
+          this.currentUser?.name ??
+          authUser.displayName ??
+          authUser.email ??
+          'Unbekannt';
+
+        if (already) {
+          const updatePayload: any = {
+            [`reactionBy.${key}.${uid}`]: deleteField(),
+          };
+
+          if (currentCount <= 1) {
+            updatePayload[`reactions.${key}`] = deleteField();
+          } else {
+            updatePayload[`reactions.${key}`] = increment(-1);
+          }
+
+          tx.update(ref, updatePayload);
+          return;
+        }
+
+        tx.update(ref, {
+          [`reactionBy.${key}.${uid}`]: displayName,
+          [`reactions.${key}`]: increment(1),
+        });
+      });
+
+    } catch (e) {
+      console.error('[Chat] Reaction update failed:', e);
+    }
+  }
+
+  onReactionChipClick(ev: MouseEvent, m: MessageVm, emoji: string) {
+    ev.stopPropagation();
+    this.addReactionToMessage(m, emoji);
   }
 
   onEmojiClick(event: any) {
@@ -1145,7 +1255,7 @@ export class ChatComponent {
   openEmojiForComposer(ev: MouseEvent) {
     ev.stopPropagation();
 
-    // ✅ Toggle: wenn Composer-Emoji schon offen ist -> schließen
+    // Toggle: wenn Composer-Emoji schon offen ist -> schließen
     if (this.showEmoji && this.emojiContext === 'composer') {
       this.showEmoji = false;
       this.emojiContext = null;
@@ -1162,13 +1272,12 @@ export class ChatComponent {
     const estimatedHeight = 360;
     const offset = 10;
 
-    // erstmal grob setzen
     let left = Math.max(10, Math.min(rect.left, viewportW - pickerWidth - 10));
     let top = rect.top - estimatedHeight - offset;
 
     this.composerEmojiPos = { top, left };
 
-    // ✅ Kontext setzen + andere Popover schließen
+    // Kontext setzen + andere Popover schließen
     this.emojiContext = 'composer';
     this.emojiMessageTarget = null;
     this.showEmoji = true;
@@ -1190,15 +1299,15 @@ export class ChatComponent {
     });
   }
 
-  toggleMessageEmojiPicker(ev: MouseEvent, msg: MessageVm) {
+  toggleMessageEmojiPicker(ev: MouseEvent, msg: MessageVm, from: 'actions' | 'reactions' = 'reactions') {
     ev.stopPropagation();
 
     if (this.messageEmojiForId === msg.id) {
-      this.messageEmojiForId = null;
-      this.emojiContext = null;
-      this.emojiMessageTarget = null;
+      this.closeMessageEmojiPopover();
       return;
     }
+
+    this.emojiOpenedFrom = from;
 
     const btn = ev.currentTarget as HTMLElement;
     const rect = btn.getBoundingClientRect();
@@ -1206,33 +1315,32 @@ export class ChatComponent {
     const viewportH = window.innerHeight || document.documentElement.clientHeight;
     const viewportW = window.innerWidth || document.documentElement.clientWidth;
 
-    const pickerHeight = 360; // ca. Höhe
-    const pickerWidth = 360;  // ca. Breite
+    const pickerHeight = 360;
+    const pickerWidth = 360;
     const offset = 8;
 
     const roomBelow = viewportH - rect.bottom;
     const placement: 'top' | 'bottom' =
       roomBelow > pickerHeight + offset ? 'bottom' : 'top';
 
-    let top: number;
-    if (placement === 'bottom') {
-      top = rect.bottom + offset;
-    } else {
-      top = rect.top - pickerHeight - offset;
-    }
+    let top = placement === 'bottom' ? rect.bottom + offset : rect.top - pickerHeight - offset;
 
-    // Linksposition so clampen, dass der Picker im Viewport bleibt
     let left = rect.left;
     const maxLeft = viewportW - pickerWidth - 16;
-    if (left > maxLeft) {
-      left = Math.max(16, maxLeft);
-    }
+    if (left > maxLeft) left = Math.max(16, maxLeft);
 
     this.messageEmojiForId = msg.id;
     this.emojiPopoverPos = { top, left, placement };
 
     this.emojiContext = 'message';
     this.emojiMessageTarget = msg;
+  }
+
+  private closeMessageEmojiPopover() {
+    this.messageEmojiForId = null;
+    this.emojiContext = null;
+    this.emojiMessageTarget = null;
+    this.emojiOpenedFrom = null;
   }
 
   async send(vm: Vm) {
@@ -1387,5 +1495,123 @@ export class ChatComponent {
     } catch (err) {
       console.error('Fehler beim Senden aus /new:', err);
     }
+  }
+
+  hasReactions(m: MessageVm): boolean {
+    const r = (m as any)?.reactions || {};
+    return Object.keys(r).length > 0;
+  }
+
+  reactionList(m: MessageVm): Array<{ emoji: string; count: number }> {
+    const r = ((m as any)?.reactions || {}) as Record<string, number>;
+    return Object.entries(r)
+      .map(([emoji, count]) => ({ emoji, count: Number(count || 0) }))
+      .filter(x => x.count > 0)
+      .sort((a, b) => b.count - a.count);
+  }
+
+  trackReaction = (_: number, r: { emoji: string; count: number }) => r.emoji;
+  private asEmojiString(e: any): string {
+    return (
+      e?.emoji?.native ??
+      e?.native ??
+      e?.emoji?.char ??
+      e?.char ??
+      (typeof e === 'string' ? e : '')
+    );
+  }
+
+  hasUserReacted(m: MessageVm, emoji: string, uid: string): boolean {
+    const by = (m as any)?.reactionBy || {};
+    return !!by?.[emoji]?.[uid];
+  }
+
+  hoveredReaction: { msgId: string; emoji: string } | null = null;
+
+  onReactionHover(m: MessageVm | null, emoji?: string) {
+    if (!m || !emoji) {
+      this.hoveredReaction = null;
+      return;
+    }
+    this.hoveredReaction = { msgId: m.id, emoji };
+  }
+
+  isReactionHovered(m: MessageVm, emoji: string): boolean {
+    return !!this.hoveredReaction
+      && this.hoveredReaction.msgId === m.id
+      && this.hoveredReaction.emoji === emoji;
+  }
+
+  reactionNames(m: MessageVm, emoji: string): string[] {
+    const by = ((m as any)?.reactionBy?.[emoji] || {}) as Record<string, any>;
+
+    const myUid = this.currentUser?.id ?? this.auth.currentUser?.uid ?? '';
+
+    const names = Object.entries(by)
+      .map(([uid, v]) => {
+        if (myUid && uid === myUid) return 'Du';
+
+        return typeof v === 'string' && v.trim() ? v : 'Unbekannt';
+      })
+      .filter(Boolean);
+
+    return names.length ? names : ['Unbekannt'];
+  }
+
+  reactionVerb(m: MessageVm, emoji: string): string {
+    const names = this.reactionNames(m, emoji);
+
+    const includesYou = names.includes('Du');
+
+    if (includesYou && names.length === 1) return 'hast reagiert';
+
+    return names.length === 1 ? 'hat reagiert' : 'haben reagiert';
+  }
+
+  openEmojiForEdit(ev: MouseEvent) {
+    ev.stopPropagation();
+
+    // Toggle: wenn Edit-Emoji schon offen ist -> schließen
+    if (this.showEmoji && this.emojiContext === 'edit') {
+      this.showEmoji = false;
+      this.emojiContext = null;
+      return;
+    }
+
+    const btn = ev.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const viewportW = window.innerWidth || document.documentElement.clientWidth;
+
+    const pickerWidth = 360;
+    const estimatedHeight = 360;
+    const offset = 10;
+
+    let left = Math.max(10, Math.min(rect.left, viewportW - pickerWidth - 10));
+    let top = rect.top - estimatedHeight - offset;
+
+    this.composerEmojiPos = { top, left };
+
+    // Kontext setzen + andere Popover schließen
+    this.emojiContext = 'edit';
+    this.emojiMessageTarget = null;
+    this.showEmoji = true;
+    this.showMembers = false;
+    this.messageEmojiForId = null;
+
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.composer-emoji-popover-fixed') as HTMLElement | null;
+      if (!el) return;
+
+      const realH = el.offsetHeight || estimatedHeight;
+      const roomBelow = viewportH - rect.bottom;
+      const placeAbove = roomBelow < realH + offset;
+
+      let finalTop = placeAbove ? rect.top - realH - offset : rect.bottom + offset;
+      finalTop = Math.max(10, Math.min(finalTop, viewportH - realH - 10));
+
+      this.composerEmojiPos = { top: finalTop, left };
+    });
   }
 }

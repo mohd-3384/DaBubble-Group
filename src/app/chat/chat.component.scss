@@ -521,28 +521,6 @@ $muted: #6c7280;
   }
 }
 
-/* Reactions (kleine Chips) */
-.reactions-row {
-  display: flex;
-  gap: 8px;
-  padding-left: 78px;
-
-  .reaction {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    background: var(--surface-bg);
-    border: 1px solid var(--background-color);
-    border-radius: 999px;
-    font-size: 14px;
-
-    span {
-      color: $muted;
-    }
-  }
-}
-
 /* Composer unten */
 .composer {
   margin: 10px 16px 0;
@@ -1808,4 +1786,169 @@ $muted: #6c7280;
 
 .message-row.is-editing .message-actions {
   display: none !important;
+}
+
+
+
+
+
+
+
+
+
+/* Reactions (unter der Bubble) */
+.reactions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding-left: 0;
+}
+
+.reaction {
+  border: 1px solid var(--accent-color);
+  background: var(--surface-bg);
+  border-radius: 999px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: var(--transition15);
+  font-size: 14px;
+
+  .count {
+    font-weight: 700;
+    opacity: 0.85;
+  }
+}
+
+/* Add-Reaction Icon als “nacktes” Icon rechts daneben */
+.reaction-add {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--surface-bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+  border: none;
+  background-image: url('/public/images/add-reaction-comment.svg');
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: var(--background-color);
+    background-image: url('/public/images/add-reaction-comment-hover.svg');
+    transform: scale(1.05);
+  }
+}
+
+/* Own message: Reactions unter Bubble rechts ausrichten */
+.message-row.own {
+  .reactions-row {
+    align-self: flex-end;
+    justify-content: flex-end;
+  }
+}
+
+.message-row.own .message-col {
+  align-items: flex-end;
+}
+
+.reaction-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reaction-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(0);
+  z-index: 20000;
+
+  background: var(--primary-color);
+  color: var(--surface-bg);
+  border-radius: 24px;
+  border-bottom-left-radius: 0;
+  padding: 14px 16px;
+  min-width: 100px;
+  max-width: 160px;
+
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.rt-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.rt-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rt-name {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.rt-text {
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+/* Edit-Box Emoji Button sichtbar machen */
+.edit-box {
+  .edit-actions-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+  }
+
+  .edit-actions-left .icon-span {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 22px;
+    cursor: pointer;
+    transition: all var(--transition20);
+
+    &:hover {
+      background-color: var(--background-color);
+      transform: scale(1.05);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--background-color);
+      outline-offset: 2px;
+    }
+  }
+
+  .edit-actions-left .emoji-icon {
+    background-image: url('/public/images/add-reaction.svg');
+
+    &:hover {
+      background-image: url('/public/images/add-reaction-hover.svg');
+    }
+  }
 }

@@ -39,13 +39,15 @@ export interface UserMini {
 export interface MessageVm {
   id: string;
   text: string;
-  authorName: string;
   authorId: string;
-  authorAvatar?: string;
-  createdAt?: Date | null;
-  replyCount?: number;
-  lastReplyAt?: Date | null;
-};
+  authorName: string;
+  authorAvatar: string;
+  createdAt: Date | null;
+  replyCount: number;
+  lastReplyAt: Date | null;
+  reactions?: Record<string, number>;
+  reactionBy?: Record<string, Record<string, boolean>>;
+}
 
 export interface DayGroup {
   label: string;
