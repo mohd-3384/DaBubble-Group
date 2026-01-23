@@ -21,7 +21,7 @@
 
       <div class="message-col">
         <div class="header">
-          <span class="name">{{ rm.author.name }}</span>
+          <span class="name">{{ userName(rm.author.id) }}</span>
           <span class="dot"></span>
           <span class="time" *ngIf="rm.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
         </div>
@@ -133,7 +133,7 @@
 
         <div class="message-col">
           <div class="header">
-            <span class="name">{{ r.author.name }}</span>
+            <span class="name">{{ userName(r.author.id) }}</span>
             <span class="dot"></span>
             <span class="time" *ngIf="r.createdAt as d">{{ d | date:'HH:mm' }} Uhr</span>
           </div>

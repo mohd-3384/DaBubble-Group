@@ -112,6 +112,8 @@ export class ChatComponent {
 
   currentUser: (UserDoc & { id: string }) | null = null;
 
+  private userNameMap = new Map<string, string>();
+
   private auth = inject(Auth);
   private thread = inject(ThreadState);
   @ViewChild('membersBtn') membersBtn!: ElementRef<HTMLElement>;
@@ -772,7 +774,6 @@ export class ChatComponent {
       startWith([] as MemberVM[])
     );
 
-
     // "Leute hinzufügen"-Modal
     this.addMemberSuggestions$ = combineLatest([
       this.addMemberInput$.pipe(startWith('')),
@@ -797,8 +798,10 @@ export class ChatComponent {
     const baseMessages$ = combineLatest([
       this.route.paramMap.pipe(map(p => p.get('id')!)),
       this.me$,
+      this.usersAll$,
     ]).pipe(
-      switchMap(([id, me]) => {
+      switchMap(([id, me, users]) => {
+        const userMap = new Map(users.map(u => [u.id, u]));
         const isDM = this.router.url.includes('/dm/');
         if (!isPlatformBrowser(this.platformId)) return of([] as MessageVm[]);
 
@@ -810,18 +813,21 @@ export class ChatComponent {
             collectionData(qRef, { idField: 'id' }) as Observable<any[]>
           ).pipe(
             map(rows =>
-              rows.map(m => ({
-                id: m.id,
-                text: m.text ?? '',
-                authorId: m.authorId ?? '',
-                authorName: m.authorName ?? 'Unbekannt',
-                authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
-                createdAt: toDateMaybe(m.createdAt),
-                replyCount: (m.replyCount ?? 0),
-                lastReplyAt: toDateMaybe(m.lastReplyAt),
-                reactions: m.reactions ?? {},
-                reactionBy: m.reactionBy ?? {},
-              } as MessageVm))
+              rows.map(m => {
+                const u = userMap.get(m.authorId ?? '');
+                return ({
+                  id: m.id,
+                  text: m.text ?? '',
+                  authorId: m.authorId ?? '',
+                  authorName: u?.name ?? m.authorName ?? 'Unbekannt',
+                  authorAvatar: u?.avatarUrl ?? m.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+                  createdAt: toDateMaybe(m.createdAt),
+                  replyCount: (m.replyCount ?? 0),
+                  lastReplyAt: toDateMaybe(m.lastReplyAt),
+                  reactions: m.reactions ?? {},
+                  reactionBy: m.reactionBy ?? {},
+                } as MessageVm);
+              })
             ),
             startWith([] as MessageVm[])
           );
@@ -1070,6 +1076,10 @@ export class ChatComponent {
       .subscribe((u) => {
         this.currentUser = u;
       });
+
+    this.usersAll$.subscribe(users => {
+      this.userNameMap = new Map(users.map(u => [u.id, u.name]));
+    });
   }
 
   /** ---------- Composer / Emoji ---------- */
@@ -1160,7 +1170,7 @@ export class ChatComponent {
         }
 
         tx.update(ref, {
-          [`reactionBy.${key}.${uid}`]: displayName,
+          [`reactionBy.${key}.${uid}`]: true,
           [`reactions.${key}`]: increment(1),
         });
       });
@@ -1544,16 +1554,14 @@ export class ChatComponent {
 
   reactionNames(m: MessageVm, emoji: string): string[] {
     const by = ((m as any)?.reactionBy?.[emoji] || {}) as Record<string, any>;
-
     const myUid = this.currentUser?.id ?? this.auth.currentUser?.uid ?? '';
 
-    const names = Object.entries(by)
-      .map(([uid, v]) => {
+    const names = Object.keys(by)
+      .filter(uid => !!by[uid])
+      .map(uid => {
         if (myUid && uid === myUid) return 'Du';
-
-        return typeof v === 'string' && v.trim() ? v : 'Unbekannt';
-      })
-      .filter(Boolean);
+        return this.userNameMap.get(uid) ?? 'Unbekannt';
+      });
 
     return names.length ? names : ['Unbekannt'];
   }

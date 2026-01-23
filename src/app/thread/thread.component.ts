@@ -436,7 +436,7 @@ export class ThreadComponent {
         }
 
         tx.update(ref, {
-          [`reactionBy.${key}.${uid}`]: displayName,
+          [`reactionBy.${key}.${uid}`]: true,
           [`reactions.${key}`]: increment(1),
         });
       });
@@ -466,12 +466,12 @@ export class ThreadComponent {
 
     const myUid = this.currentUserId ?? '';
 
-    const names = Object.entries(by)
-      .map(([uid, v]) => {
+    const names = Object.keys(by)
+      .filter((uid) => !!by[uid])
+      .map((uid) => {
         if (myUid && uid === myUid) return 'Du';
-        return typeof v === 'string' && v.trim() ? v : 'Unbekannt';
-      })
-      .filter(Boolean);
+        return this.users.find((u) => u.id === uid)?.name ?? 'Unbekannt';
+      });
 
     return names.length ? names : ['Unbekannt'];
   }
@@ -493,4 +493,15 @@ export class ThreadComponent {
     const s = String(x ?? '');
     return s === '[object Object]' ? '' : s;
   }
+
+  userName(uid?: string | null): string {
+    if (!uid) return 'Unbekannt';
+    return this.users.find(u => u.id === uid)?.name ?? 'Unbekannt';
+  }
+
+  userAvatar(uid?: string | null): string {
+    if (!uid) return '/public/images/avatars/avatar-default.svg';
+    return this.users.find(u => u.id === uid)?.avatarUrl ?? '/public/images/avatars/avatar-default.svg';
+  }
+
 }

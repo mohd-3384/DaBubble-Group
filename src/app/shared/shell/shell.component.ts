@@ -55,6 +55,8 @@ export class ShellComponent {
   private auth = inject(Auth);
   private presence = inject(PresenceService);
 
+  users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }) as Observable<MentionUser[]>;
+
   // ---- Mentions: alle User ----
   usersAllForMentions$: Observable<MentionUser[]> = authState(this.auth).pipe(
     switchMap(user => {
