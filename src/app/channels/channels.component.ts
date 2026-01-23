@@ -13,6 +13,9 @@ import { ChannelService } from '../services/channel.service';
 import { FormsModule } from '@angular/forms';
 import { ChannelDoc, UserDoc } from '../interfaces/allInterfaces.interface';
 import { Auth, authState } from '@angular/fire/auth';
+import { ThreadState } from '../services/thread.state';
+import { NavigationStart } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-channels',
@@ -32,6 +35,7 @@ import { Auth, authState } from '@angular/fire/auth';
   styleUrl: './channels.component.scss',
 })
 export class ChannelsComponent {
+  private thread = inject(ThreadState);
   private usersSvc = inject(UserService);
   private chanSvc = inject(ChannelService);
 
@@ -68,6 +72,10 @@ export class ChannelsComponent {
     this.channels$ = this.chanSvc.channels$();
 
     authState(this.auth).pipe(take(1)).subscribe(u => this.meId = u?.uid ?? null);
+
+    this.router.events
+      .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart))
+      .subscribe(() => this.thread.close());
   }
 
   /** Modal öffnen */
@@ -116,17 +124,4 @@ export class ChannelsComponent {
   startNewMessage() {
     this.router.navigate(['/new']);
   }
-
-  // async addChannel() {
-  //   const raw = prompt('Neuer Channel-Name (ohne #, z. B. "entwicklerteam")');
-  //   if (!raw) return;
-
-  //   const id = raw.trim().toLowerCase().replace(/\s+/g, '-');
-  //   // TODO: aus Auth holen
-  //   const me = { id: 'uid_guest', name: 'Guest', avatar: '/public/images/avatars/avatar-default.svg' };
-
-  //   await this.chanSvc.createChannel(id);
-  //   await this.chanSvc.addMeAsMember(id, 'owner');
-  //   await this.chanSvc.postWelcome(id);
-  // }
 }

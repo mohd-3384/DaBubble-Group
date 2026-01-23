@@ -2,14 +2,15 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Auth, authState } from '@angular/fire/auth';
 import {
   Firestore,
+  doc,
+  onSnapshot,
+  Unsubscribe,
   collection,
   query,
   orderBy,
-  onSnapshot,
-  Unsubscribe,
 } from '@angular/fire/firestore';
-import { Message, Reaction, ReplyDoc, ThreadVM } from '../interfaces/allInterfaces.interface';
 
+import { Message, ReplyDoc, ThreadVM } from '../interfaces/allInterfaces.interface';
 
 @Injectable({ providedIn: 'root' })
 export class ThreadState {
@@ -20,6 +21,7 @@ export class ThreadState {
   vm = this._vm.asReadonly();
 
   private unsubscribeReplies: Unsubscribe | null = null;
+  private unsubscribeRoot: Unsubscribe | null = null;
 
   constructor() {
     // ✅ Wenn ausgeloggt -> alle Listener stoppen (sonst Permission Error)
@@ -33,8 +35,12 @@ export class ThreadState {
     header?: ThreadVM['header'];
     root: Message;
   }) {
-    this.stopRepliesListener();
+    this.stopAllListeners();
 
+    const rootId = opts.root?.id;
+    if (!rootId) return;
+
+    // VM sofort setzen (optimistisch)
     this._vm.set({
       open: true,
       channelId: opts.channelId,
@@ -43,21 +49,56 @@ export class ThreadState {
       replies: [],
     });
 
-    const messageId = opts.root?.id;
-    if (!messageId) return;
+    // ✅ 1) ROOT-LISTENER -> damit Thread oben live die Chat-Reactions/Edits sieht
+    const rootRef = doc(this.fs, `channels/${opts.channelId}/messages/${rootId}`);
 
-    const repliesRef = collection(
-      this.fs,
-      `channels/${opts.channelId}/messages/${messageId}/replies`
+    this.unsubscribeRoot = onSnapshot(
+      rootRef,
+      (snap) => {
+        if (!snap.exists()) return;
+
+        const raw: any = snap.data();
+
+        const v = this._vm();
+        if (!v.open) return;
+
+        // Root-Message im Thread live aktualisieren
+        const nextRoot: Message = {
+          id: rootId,
+          author: {
+            id: raw?.authorId ?? v.root?.author?.id ?? '',
+            name: raw?.authorName ?? v.root?.author?.name ?? 'Unbekannt',
+            avatarUrl:
+              raw?.authorAvatar ??
+              v.root?.author?.avatarUrl ??
+              '/public/images/avatars/avatar-default.svg',
+          },
+          text: raw?.text ?? v.root?.text ?? '',
+          createdAt: this.toDateOrString(raw?.createdAt ?? v.root?.createdAt),
+          reactions: this.ensureReactionsMap(raw?.reactions),
+          reactionBy: this.ensureReactionBy(raw?.reactionBy),
+        };
+
+        this._vm.set({ ...v, root: nextRoot });
+      },
+      (err) => {
+        console.error('[ThreadState] Root listener error:', err);
+        this.close();
+      }
     );
 
+    // ✅ 2) REPLIES-LISTENER
+    const repliesRef = collection(
+      this.fs,
+      `channels/${opts.channelId}/messages/${rootId}/replies`
+    );
     const q = query(repliesRef, orderBy('createdAt', 'asc'));
 
     this.unsubscribeReplies = onSnapshot(
       q,
       (snap) => {
         const replies: Message[] = snap.docs.map((d) => {
-          const raw = d.data() as ReplyDoc;
+          const raw = d.data() as ReplyDoc & any;
 
           return {
             id: d.id,
@@ -65,23 +106,21 @@ export class ThreadState {
               id: raw.authorId ?? '',
               name: raw.authorName ?? 'Unbekannt',
               avatarUrl:
-                raw.authorAvatar ??
-                '/public/images/avatars/avatar-default.svg',
+                raw.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
             },
             text: raw.text ?? '',
             createdAt: this.toDateOrString(raw.createdAt),
-            reactions: this.mapReactions(raw.reactions),
+            reactions: this.ensureReactionsMap(raw.reactions),
+            reactionBy: this.ensureReactionBy(raw.reactionBy),
           };
         });
 
-        // ✅ falls zwischenzeitlich geschlossen wurde
         const v = this._vm();
         if (!v.open) return;
 
         this._vm.set({ ...v, replies });
       },
       (err) => {
-        // ✅ Permission Errors beim Logout abfangen und clean schließen
         console.error('[ThreadState] Replies listener error:', err);
         this.close();
       }
@@ -89,14 +128,18 @@ export class ThreadState {
   }
 
   close() {
-    this.stopRepliesListener();
+    this.stopAllListeners();
     this._vm.set({ open: false, replies: [] });
   }
 
-  private stopRepliesListener() {
+  private stopAllListeners() {
     if (this.unsubscribeReplies) {
       this.unsubscribeReplies();
       this.unsubscribeReplies = null;
+    }
+    if (this.unsubscribeRoot) {
+      this.unsubscribeRoot();
+      this.unsubscribeRoot = null;
     }
   }
 
@@ -107,17 +150,44 @@ export class ThreadState {
     return ts ?? '';
   }
 
-  private mapReactions(reactions: any): Reaction[] | undefined {
-    if (!reactions) return undefined;
+  private ensureReactionsMap(raw: any): Record<string, number> {
+    if (!raw) return {};
 
-    if (typeof reactions === 'object' && !Array.isArray(reactions)) {
-      return Object.entries(reactions).map(([emoji, count]) => ({
-        emoji,
-        count: Number(count ?? 0),
-      }));
+    if (Array.isArray(raw)) {
+      const out: Record<string, number> = {};
+      for (const it of raw) {
+        const emoji = this.emojiToString((it as any)?.emoji);
+        const count = Number((it as any)?.count ?? 0);
+        if (emoji && Number.isFinite(count) && count > 0) out[emoji] = count;
+      }
+      return out;
     }
 
-    if (Array.isArray(reactions)) return reactions as Reaction[];
-    return undefined;
+    if (typeof raw === 'object') {
+      const out: Record<string, number> = {};
+      for (const [k, v] of Object.entries(raw)) {
+        const emoji = this.emojiToString(k);
+        const count = Number(v ?? 0);
+        if (emoji && Number.isFinite(count) && count > 0) out[emoji] = count;
+      }
+      return out;
+    }
+
+    return {};
+  }
+
+  private ensureReactionBy(raw: any): Record<string, Record<string, boolean>> {
+    if (!raw || typeof raw !== 'object') return {};
+    return raw as Record<string, Record<string, boolean>>;
+  }
+
+  private emojiToString(x: any): string {
+    if (typeof x === 'string') return x;
+
+    const native = x?.native ?? x?.emoji?.native ?? x?.emoji?.colons;
+    if (typeof native === 'string') return native;
+
+    const s = String(x ?? '');
+    return s === '[object Object]' ? '' : s;
   }
 }

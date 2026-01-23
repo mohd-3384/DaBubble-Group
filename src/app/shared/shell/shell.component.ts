@@ -63,7 +63,7 @@ export class ShellComponent {
       return collectionData(collection(this.fs, 'users'), { idField: 'id' }).pipe(
         map((rows: any[]) =>
           (rows || []).map(u => ({
-            id: u.id,
+            id: u?.uid ?? u?.id,
             name: u?.name ?? u?.displayName ?? 'Unbekannt',
             avatarUrl: u?.avatarUrl,
           }))
@@ -95,7 +95,7 @@ export class ShellComponent {
     startWith(this.route.snapshot.paramMap.get('id'))
   );
 
-  private channelId: string | null = null;
+  channelId: string | null = null;
 
   @Input() currentUserId?: string | null = null;
 
@@ -199,6 +199,7 @@ export class ShellComponent {
         authorAvatar,
         createdAt: serverTimestamp(),
         reactions: {},
+        reactionBy: {},
       });
 
       const parentRef = doc(this.fs, `channels/${channelId}/messages/${messageId}`);
@@ -224,8 +225,6 @@ export class ShellComponent {
     const channelId = this.channelId;
     if (!channelId) return;
 
-    // Root oder Reply? Root liegt in channels/{channelId}/messages/{rootId}
-    // Replies liegen in channels/{channelId}/messages/{rootId}/replies/{replyId}
     const rootId = vm.root.id;
 
     try {

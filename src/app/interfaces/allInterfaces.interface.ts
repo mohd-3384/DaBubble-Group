@@ -91,12 +91,24 @@ export interface Reaction {
   count: number;
 }
 
+export type ReactionVm = { emoji: string; count: number; reactedByMe: boolean };
+
+export type ReactionsMap = Record<string, number>;
+export type ReactionArrayItem = { emoji: string; count: number };
+
 export interface Message {
   id: string;
   author: UserMeta;
   text: string;
   createdAt: Date | string;
-  reactions?: Reaction[];
+  reactions?: Record<string, number> | any;
+  reactionBy?: Record<string, Record<string, boolean>>;
+}
+
+export interface UserMeta {
+  id: string;
+  name: string;
+  avatarUrl?: string;
 }
 
 export interface ThreadVM {
