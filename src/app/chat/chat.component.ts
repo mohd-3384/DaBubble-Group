@@ -32,7 +32,7 @@ import {
   runTransaction
 } from '@angular/fire/firestore';
 import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
-import { map, switchMap, startWith, take, catchError } from 'rxjs/operators';
+import { map, switchMap, startWith, take, catchError, filter } from 'rxjs/operators';
 import {
   ChannelDoc,
   DayGroup,
@@ -1080,6 +1080,55 @@ export class ChatComponent {
     this.usersAll$.subscribe(users => {
       this.userNameMap = new Map(users.map(u => [u.id, u.name]));
     });
+
+    // Handle threadId from route (Mobile Thread Navigation)
+    this.route.paramMap.pipe(
+      switchMap(params => {
+        const threadId = params.get('threadId');
+        const id = params.get('id');
+
+        if (!threadId || !id) {
+          return of(null);
+        }
+
+        // Load message from thread route
+        const msgRef = doc(this.fs, `channels/${id}/messages/${threadId}`);
+        return runInInjectionContext(this.env, () => docData(msgRef)).pipe(
+          map((msg: any) => ({
+            id: msg?.id || threadId,
+            text: msg?.text ?? '',
+            authorId: msg?.authorId ?? '',
+            authorName: msg?.authorName ?? 'Unbekannt',
+            authorAvatar: msg?.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+            createdAt: toDateMaybe(msg?.createdAt),
+            replyCount: msg?.replyCount ?? 0,
+            lastReplyAt: toDateMaybe(msg?.lastReplyAt),
+            title: 'Thread',
+            channel: id,
+          })),
+          startWith(null)
+        );
+      }),
+      filter(msg => !!msg)
+    ).subscribe((msg: any) => {
+      if (msg) {
+        // Auto-open thread if navigated to thread route
+        this.thread.openThread({
+          channelId: this.route.snapshot.paramMap.get('id')!,
+          header: { title: 'Thread', channel: `#${msg.channel}` },
+          root: {
+            id: msg.id,
+            author: {
+              id: msg.authorId,
+              name: msg.authorName,
+              avatarUrl: msg.authorAvatar,
+            },
+            text: msg.text,
+            createdAt: msg.createdAt ?? new Date(),
+          },
+        });
+      }
+    });
   }
 
   /** ---------- Composer / Emoji ---------- */
@@ -1228,7 +1277,7 @@ export class ChatComponent {
     const channelId = this.route.snapshot.paramMap.get('id');
     if (!channelId) return;
 
-    this.thread.openThread({
+    const threadData = {
       channelId,
       header: { title: 'Thread', channel: vm.title },
       root: {
@@ -1241,7 +1290,14 @@ export class ChatComponent {
         text: m.text,
         createdAt: m.createdAt ?? new Date(),
       },
-    });
+    };
+
+    this.thread.openThread(threadData);
+
+    // Navigiere zu Thread-Route auf Tablet/Mobile
+    if (window.innerWidth <= 1024) {
+      this.router.navigate(['/channel', channelId, 'thread', m.id]);
+    }
   }
 
   private openToSuggestWithAt() {

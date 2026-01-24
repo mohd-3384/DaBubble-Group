@@ -1,8 +1,8 @@
 <app-header></app-header>
 
 <div c class="shell" [class.shell--mobile-chat]="mobileView === 'chat'"
-  [class.shell--mobile-list]="mobileView === 'list'" [class.shell--workspace-collapsed]="workspaceCollapsed"
-  [class.shell--thread-open]="vm().open">
+  [class.shell--mobile-list]="mobileView === 'list'" [class.shell--mobile-thread]="mobileView === 'thread'"
+  [class.shell--workspace-collapsed]="workspaceCollapsed" [class.shell--thread-open]="vm().open">
   <button class="workspace-toggle" type="button" (click)="toggleWorkspace()">
     <span class="workspace-toggle-icon"></span>
     <span class="workspace-toggle-label">
@@ -18,7 +18,15 @@
   </main>
 
   <aside class="shell__right" [class.is-open]="vm().open" aria-label="Thread">
-    <ng-container *ngIf="vm().open">
+    <!-- Desktop: nur wenn Thread offen ist -->
+    <ng-container *ngIf="vm().open && mobileView !== 'thread'">
+      <app-thread [currentUserId]="currentUser?.id ?? null" [channelId]="channelId!" [header]="vm().header!"
+        [rootMessage]="vm().root!" [replies]="vm().replies" [users]="usersAllForMentions" (send)="onSend($event)"
+        (edit)="onEditThreadMessage($event)" (close)="onClose()">
+      </app-thread>
+    </ng-container>
+    <!-- Mobile: immer wenn im Thread-Modus -->
+    <ng-container *ngIf="mobileView === 'thread' && vm().open">
       <app-thread [currentUserId]="currentUser?.id ?? null" [channelId]="channelId!" [header]="vm().header!"
         [rootMessage]="vm().root!" [replies]="vm().replies" [users]="usersAllForMentions" (send)="onSend($event)"
         (edit)="onEditThreadMessage($event)" (close)="onClose()">

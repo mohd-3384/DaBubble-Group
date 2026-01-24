@@ -23,6 +23,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'channels',
+        component: ShellComponent,
+      },
+      {
         path: 'new',
         loadComponent: () => import('./chat/chat.component').then(m => m.ChatComponent),
       },
@@ -31,10 +35,14 @@ export const routes: Routes = [
         loadComponent: () => import('./chat/chat.component').then(m => m.ChatComponent),
       },
       {
+        path: 'channel/:id/thread/:threadId',
+        loadComponent: () => import('./chat/chat.component').then(m => m.ChatComponent),
+      },
+      {
         path: 'dm/:id',
         loadComponent: () => import('./chat/chat.component').then(m => m.ChatComponent),
       },
-      { path: '', pathMatch: 'full', redirectTo: 'channel/Frontend' },
+      { path: '', pathMatch: 'full', redirectTo: 'channels' },
     ],
   },
 

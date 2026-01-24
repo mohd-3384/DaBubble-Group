@@ -186,13 +186,34 @@ app-header {
 
 /* TABLET + MOBILE: einspaltig, Channels volle Breite */
 @media (max-width: 1024px) {
+  :host {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  app-header {
+    flex: 0 0 auto;
+  }
+
   .shell {
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
-    padding: 0;
-    gap: 0;
+    padding: 0 !important;
+    gap: 0 !important;
     overflow: hidden;
+    height: 100%;
+    width: 100%;
+  }
+
+  .shell__left,
+  .shell__center,
+  .shell__right {
+    border-radius: 0 !important;
   }
 
   .shell__left,
@@ -200,7 +221,6 @@ app-header {
     width: 100%;
     flex: 1 1 auto;
     min-height: 0;
-    border-radius: 0;
   }
 
   .shell__left {
@@ -230,6 +250,28 @@ app-header {
 
   .shell.shell--mobile-list .shell__center {
     display: none;
+  }
+
+  /* Thread im Vollbild-Modus */
+  .shell.shell--mobile-thread .shell__left {
+    display: none;
+  }
+
+  .shell.shell--mobile-thread .shell__center {
+    display: none;
+  }
+
+  .shell.shell--mobile-thread .shell__right {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    width: 100vw !important;
+    height: 100% !important;
+    flex-basis: auto !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    background: var(--surface-bg) !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
   }
 
   .workspace-toggle {

@@ -1,6 +1,6 @@
 import { ViewChild, Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, NavigationStart } from '@angular/router';
+import { Router, NavigationStart, ActivatedRoute } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -47,12 +47,17 @@ export class HeaderComponent {
   private fs = inject(Firestore);
   private auth = inject(Auth);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private host = inject(ElementRef<HTMLElement>);
 
   @ViewChild('searchInput', { static: false })
   searchInput?: ElementRef<HTMLInputElement>;
 
   private readonly DEFAULT_AVATAR = '/public/images/avatars/avatar-default.svg';
+
+  /** ---------- MOBILE CHAT OPEN STATE ---------- */
+  isChatOpen = false;
+  private currentChannelId: string | null = null;
 
   /** ---------- USER (Firestore users/{uid}) ---------- */
   private guestUser: HeaderUser = {
@@ -87,27 +92,44 @@ export class HeaderComponent {
     startWith(this.guestUser)
   );
 
-  /** ---------- MOBILE CHAT OPEN STATE ---------- */
-  isChatOpen = false;
-
   constructor() {
+    // Beobachte Routen-Änderungen
     this.router.events
       .pipe()
       .subscribe((event) => {
         if (event instanceof NavigationStart) {
           const url = event.url;
+          // Check if we're in a chat route (channel, dm, new) or thread route
           const isChat =
             url.startsWith('/channel/') ||
             url.startsWith('/dm/') ||
             url.startsWith('/new');
           this.isChatOpen = isChat;
+
+          // Extrahiere channelId aus URL
+          const channelMatch = url.match(/\/channel\/([^/]+)/);
+          this.currentChannelId = channelMatch ? channelMatch[1] : null;
         }
       });
   }
 
   goBack() {
-    this.isChatOpen = false;
-    this.router.navigate(['/']);
+    const currentUrl = this.router.url;
+
+    // Wenn wir in einem Thread sind → Browser Back (sicher, da wir vom Chat hier herkamen)
+    if (currentUrl.match(/\/channel\/[^/]+\/thread\//)) {
+      window.history.back();
+      return;
+    }
+
+    // Wenn wir im Chat sind (Channel oder DM, aber nicht Thread) → zu Channels-Liste Vollbild
+    if (currentUrl.startsWith('/channel/') || currentUrl.startsWith('/dm/')) {
+      this.router.navigate(['/channels']);
+      return;
+    }
+
+    // Fallback
+    this.router.navigate(['/channels']);
   }
 
   /** ---------- PROFILE ---------- */

@@ -101,7 +101,7 @@ export class ShellComponent {
 
   @Input() currentUserId?: string | null = null;
 
-  mobileView: 'list' | 'chat' = 'list';
+  mobileView: 'list' | 'chat' | 'thread' = 'list';
 
   constructor(
     private router: Router
@@ -111,13 +111,24 @@ export class ShellComponent {
       .subscribe((e) => {
         const url = e.url;
 
-        // Chat-Routen (anpassen an deine echten Routen)
-        const isChat =
-          url.startsWith('/channel/') ||
-          url.startsWith('/dm/') ||
-          url.startsWith('/new');
+        // Thread-Routen (z.B. /channel/:id/thread/:threadId)
+        const isThread =
+          url.match(/\/channel\/[^/]+\/thread\//i);
 
-        this.mobileView = isChat ? 'chat' : 'list';
+        if (isThread) {
+          this.mobileView = 'thread';
+        } else {
+          // Chat-Routen (anpassen an deine echten Routen)
+          const isChat =
+            url.startsWith('/channel/') ||
+            url.startsWith('/dm/') ||
+            url.startsWith('/new');
+
+          // Channels-Liste Vollbild Route
+          const isChannelsList = url === '/channels' || url === '/channels/';
+
+          this.mobileView = isChannelsList ? 'list' : (isChat ? 'chat' : 'list');
+        }
       });
 
     this.presence.init();
@@ -233,6 +244,11 @@ export class ShellComponent {
 
   onClose() {
     this.thread.close();
+
+    // Bei Mobile/Tablet Navigation zurück zum Channel
+    if (window.innerWidth <= 1024 && this.channelId) {
+      this.router.navigate(['/channel', this.channelId]);
+    }
   }
 
   async onEditThreadMessage(ev: { messageId: string; text: string }) {
