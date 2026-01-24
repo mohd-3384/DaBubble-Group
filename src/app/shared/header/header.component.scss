@@ -22,6 +22,70 @@
   .logo-text {
     max-height: 24px;
   }
+
+  &.img-wrapper--chat-open {
+    padding-left: 16px;
+    gap: 12px;
+    min-width: 0;
+
+    .back-button {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      background-color: transparent;
+      background-image: url('/public/images/arrow_to_left.svg');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 24px 24px;
+
+      transition:
+        background-color var(--transition15),
+        transform var(--transition15),
+        background-image var(--transition15);
+
+      &:hover {
+        background-image: url('/public/images/arrow_to_left_hover.svg');
+        background-color: var(--background-color);
+        transform: translateX(-1px);
+      }
+
+      &:active {
+        transform: translateX(-1px) scale(0.98);
+      }
+
+      img {
+        display: none;
+      }
+    }
+
+    .ws-brand-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1 1 auto;
+
+      .ws-logo-header {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        object-fit: contain;
+      }
+
+      .ws-title-header {
+        font-size: 18px;
+        font-weight: 700;
+        font-family: Nunito, sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+    }
+  }
 }
 
 /* Search */
@@ -97,7 +161,7 @@
   gap: 12px;
   padding: 12px 12px;
   border-radius: 14px;
-  transition: var(--transition15) 150ms ease;
+  transition: var(--transition15);
 
   &:hover {
     background: var(--background-color);
@@ -151,7 +215,7 @@
   cursor: pointer;
   padding: 8px 10px;
   border-radius: 16px;
-  transition: background var(--transition15) ease;
+  transition: background var(--transition15);
 
   &:hover {
     color: var(--primary-color);
@@ -192,7 +256,7 @@
   width: 32px;
   height: 32px;
   content: url('/public/images/channel-info-arrow-down.svg');
-  transition: transform var(--transition15) ease;
+  transition: transform var(--transition15);
 }
 
 .profile-trigger:hover .arrow-down,

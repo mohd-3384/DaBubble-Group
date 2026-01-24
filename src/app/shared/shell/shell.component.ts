@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, ActivatedRoute, ParamMap } from '@angular/router';
+import { RouterOutlet, ActivatedRoute, ParamMap, Router, NavigationStart } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 import { ChannelsComponent } from '../../channels/channels.component';
 import { ThreadComponent } from '../../thread/thread.component';
@@ -21,7 +21,7 @@ import {
 
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { UserDoc } from '../../interfaces/allInterfaces.interface';
 import { PresenceService } from '../../services/presence.service';
 
@@ -101,20 +101,35 @@ export class ShellComponent {
 
   @Input() currentUserId?: string | null = null;
 
-  constructor() {
+  mobileView: 'list' | 'chat' = 'list';
+
+  constructor(
+    private router: Router
+  ) {
+    this.router.events
+      .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart))
+      .subscribe((e) => {
+        const url = e.url;
+
+        // Chat-Routen (anpassen an deine echten Routen)
+        const isChat =
+          url.startsWith('/channel/') ||
+          url.startsWith('/dm/') ||
+          url.startsWith('/new');
+
+        this.mobileView = isChat ? 'chat' : 'list';
+      });
+
     this.presence.init();
 
-    // sichere Klasse statt :has
     effect(() => {
       this.shellThreadOpen = !!this.vm().open;
     });
-    // Mentions-Liste
+
     this.usersAllForMentions$.subscribe(list => (this.usersAllForMentions = list));
 
-    // channelId live merken
     this.channelId$.subscribe(id => (this.channelId = id));
 
-    // UserDoc laden (wie in Chat)
     authState(this.auth).pipe(
       switchMap(user => {
         if (!user) return of(null);
@@ -241,5 +256,4 @@ export class ShellComponent {
       console.error('[Thread] Fehler beim Speichern der Edit:', e);
     }
   }
-
 }

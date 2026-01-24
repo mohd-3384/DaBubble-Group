@@ -1,6 +1,6 @@
-import { ViewChild, Component, ElementRef, HostListener, inject } from '@angular/core';
+import { ViewChild, Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -86,6 +86,29 @@ export class HeaderComponent {
     }),
     startWith(this.guestUser)
   );
+
+  /** ---------- MOBILE CHAT OPEN STATE ---------- */
+  isChatOpen = false;
+
+  constructor() {
+    this.router.events
+      .pipe()
+      .subscribe((event) => {
+        if (event instanceof NavigationStart) {
+          const url = event.url;
+          const isChat =
+            url.startsWith('/channel/') ||
+            url.startsWith('/dm/') ||
+            url.startsWith('/new');
+          this.isChatOpen = isChat;
+        }
+      });
+  }
+
+  goBack() {
+    this.isChatOpen = false;
+    this.router.navigate(['/']);
+  }
 
   /** ---------- PROFILE ---------- */
   profileOpen = false;

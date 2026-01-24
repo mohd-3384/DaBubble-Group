@@ -1,4 +1,4 @@
-import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, Output, EventEmitter, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,15 +7,16 @@ import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Router } from '@angular/router';
-import { Observable, take } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, Observable, of, take } from 'rxjs';
 import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
 import { FormsModule } from '@angular/forms';
-import { ChannelDoc, UserDoc } from '../interfaces/allInterfaces.interface';
+import { ChannelDoc, UserDoc, WsSearchResult } from '../interfaces/allInterfaces.interface';
 import { Auth, authState } from '@angular/fire/auth';
 import { ThreadState } from '../services/thread.state';
 import { NavigationStart } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
+import { collection, collectionData, Firestore, getDocs, limit, orderBy, query } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-channels',
@@ -39,6 +40,8 @@ export class ChannelsComponent {
   private usersSvc = inject(UserService);
   private chanSvc = inject(ChannelService);
 
+  private fs = inject(Firestore);
+
   users$!: Observable<UserDoc[]>;
   channels$!: Observable<ChannelDoc[]>;
 
@@ -54,6 +57,15 @@ export class ChannelsComponent {
   createChannelOpen = false;
   newChannelName = '';
   newChannelDescription = '';
+
+  @ViewChild('wsSearchInput', { static: false })
+  wsSearchInput?: ElementRef<HTMLInputElement>;
+
+  private wsSearch$ = new BehaviorSubject<string>('');
+  wsSearchOpen = false;
+  wsActiveIndex = -1;
+  private wsLatestResults: WsSearchResult[] = [];
+  wsSearchTerm = '';
 
   toggleWorkspace() {
     this.workspaceCollapsed.update((v) => {
@@ -123,5 +135,148 @@ export class ChannelsComponent {
 
   startNewMessage() {
     this.router.navigate(['/new']);
+  }
+
+  setWsSearch(v: string) {
+    this.wsSearchTerm = v;
+    const term = (v || '').trim().toLowerCase();
+    this.wsSearchOpen = !!term;
+    this.wsActiveIndex = -1;
+    this.wsSearch$.next(term);
+  }
+
+  openWsSearch() {
+    const t = this.wsSearch$.value;
+    this.wsSearchOpen = !!t;
+  }
+
+  clearWsSearch() {
+    this.wsSearchTerm = '';
+    this.wsSearch$.next('');
+    this.wsSearchOpen = false;
+    this.wsActiveIndex = -1;
+    queueMicrotask(() => this.wsSearchInput?.nativeElement?.focus());
+  }
+
+  closeWsSearch() {
+    this.wsSearchOpen = false;
+    this.wsActiveIndex = -1;
+  }
+
+  wsResults$: Observable<WsSearchResult[]> = combineLatest([
+    authState(this.auth),
+    this.wsSearch$.pipe(debounceTime(120), distinctUntilChanged()),
+  ]).pipe(
+    switchMap(([u, term]) => {
+      if (!u || !term) {
+        this.wsLatestResults = [];
+        return of([] as WsSearchResult[]);
+      }
+
+      const channels$ = collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
+        map((rows: any[]) =>
+          (rows || [])
+            .filter((c) => String(c.id || '').toLowerCase().includes(term))
+            .slice(0, 6)
+            .map((c) => ({ kind: 'channel', id: String(c.id) } as WsSearchResult))
+        ),
+        catchError(() => of([] as WsSearchResult[]))
+      );
+
+      const users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }).pipe(
+        map((rows: any[]) =>
+          (rows || [])
+            .filter((x) => String(x?.name ?? '').toLowerCase().includes(term))
+            .slice(0, 6)
+            .map((x) => ({
+              kind: 'user',
+              id: String(x.id),
+              name: String(x.name ?? 'Unbekannt'),
+              avatarUrl: (x.avatarUrl as string | undefined),
+            }) as WsSearchResult)
+        ),
+        catchError(() => of([] as WsSearchResult[]))
+      );
+
+      const messages$ = from(this.searchChannelMessages(term)).pipe(
+        catchError(() => of([] as WsSearchResult[]))
+      );
+
+      return combineLatest([channels$, users$, messages$]).pipe(
+        map(([c, uu, m]) => {
+          const merged = [...c, ...uu, ...m].slice(0, 10);
+          this.wsLatestResults = merged;
+          return merged;
+        }),
+        catchError(() => of([] as WsSearchResult[]))
+      );
+    }),
+    startWith([] as WsSearchResult[]),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+  private async searchChannelMessages(term: string): Promise<WsSearchResult[]> {
+    try {
+      const chSnap = await getDocs(query(collection(this.fs, 'channels'), limit(20)));
+      const channelIds = chSnap.docs.map((d) => d.id);
+
+      const hits: WsSearchResult[] = [];
+      const t = term.toLowerCase();
+
+      for (const channelId of channelIds) {
+        if (hits.length >= 10) break;
+
+        const msgSnap = await getDocs(
+          query(collection(this.fs, `channels/${channelId}/messages`), orderBy('createdAt', 'desc'), limit(40))
+        );
+
+        for (const d of msgSnap.docs) {
+          const data: any = d.data();
+          const text = String(data?.text ?? '');
+          if (text && text.toLowerCase().includes(t)) {
+            hits.push({ kind: 'message', channelId, text });
+            if (hits.length >= 10) break;
+          }
+        }
+      }
+
+      return hits.slice(0, 10);
+    } catch {
+      return [];
+    }
+  }
+
+  onSelectWsResult(r: WsSearchResult) {
+    if (r.kind === 'channel') this.router.navigate(['/channel', r.id]);
+    if (r.kind === 'user') this.router.navigate(['/dm', r.id]);
+    if (r.kind === 'message') this.router.navigate(['/channel', r.channelId]);
+    this.clearWsSearch();
+  }
+
+  onWsSearchKeydown(ev: KeyboardEvent) {
+    if (!this.wsSearchOpen) return;
+
+    const results = this.wsLatestResults ?? [];
+    if (!results.length) return;
+
+    if (ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      this.wsActiveIndex = Math.min(results.length - 1, this.wsActiveIndex + 1);
+    } else if (ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      this.wsActiveIndex = Math.max(0, this.wsActiveIndex - 1);
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const picked = results[this.wsActiveIndex];
+      if (picked) this.onSelectWsResult(picked);
+    } else if (ev.key === 'Escape') {
+      ev.preventDefault();
+      this.closeWsSearch();
+    }
+  }
+
+  @HostListener('document:click')
+  onDocClick() {
+    this.closeWsSearch();
   }
 }

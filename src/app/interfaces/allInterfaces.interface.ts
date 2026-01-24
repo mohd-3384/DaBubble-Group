@@ -127,3 +127,8 @@ export type ReplyDoc = {
   createdAt?: any;
   reactions?: Record<string, number> | any;
 };
+
+export type WsSearchResult =
+  | { kind: 'channel'; id: string }
+  | { kind: 'user'; id: string; name: string; avatarUrl?: string }
+  | { kind: 'message'; channelId: string; text: string };

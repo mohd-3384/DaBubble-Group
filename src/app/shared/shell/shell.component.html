@@ -1,6 +1,8 @@
 <app-header></app-header>
 
-<div class="shell" [class.shell--workspace-collapsed]="workspaceCollapsed" [class.shell--thread-open]="vm().open">
+<div c class="shell" [class.shell--mobile-chat]="mobileView === 'chat'"
+  [class.shell--mobile-list]="mobileView === 'list'" [class.shell--workspace-collapsed]="workspaceCollapsed"
+  [class.shell--thread-open]="vm().open">
   <button class="workspace-toggle" type="button" (click)="toggleWorkspace()">
     <span class="workspace-toggle-icon"></span>
     <span class="workspace-toggle-label">

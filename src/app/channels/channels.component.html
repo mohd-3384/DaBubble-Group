@@ -4,14 +4,45 @@
 
     <!-- HEADER / BRAND -->
     <header class="ws-header">
-      <div class="ws-brand">
-        <img class="ws-logo" src="/public/images/devspace-logo.svg" alt="Devspace" />
-        <span class="ws-title">Devspace</span>
+      <!-- Desktop: Brand + Edit -->
+      <div class="ws-header__desktop">
+        <div class="ws-brand">
+          <img class="ws-logo" src="/public/images/devspace-logo.svg" alt="Devspace" />
+          <span class="ws-title">Devspace</span>
+        </div>
+
+        <button class="icon-swap edit" type="button" aria-label="Neue Nachricht" title="Neue Nachricht"
+          (click)="startNewMessage()"></button>
       </div>
 
-      <button class="icon-swap edit" type="button" aria-label="Neue Nachricht" title="Neue Nachricht"
-        (click)="startNewMessage()">
-      </button>
+      <!-- Tablet/Mobile: Search -->
+      <div class="ws-header__search" (click)="$event.stopPropagation()">
+        <input #wsSearchInput type="text" placeholder="Gehe zu..." [value]="wsSearchTerm"
+          (input)="setWsSearch($any($event.target).value)" (focus)="openWsSearch()"
+          (keydown)="onWsSearchKeydown($event)" />
+        <img src="/public/images/search.svg" class="ws-search-icon" alt="Search" />
+
+        <div class="ws-search-results" *ngIf="wsSearchOpen" (click)="$event.stopPropagation()">
+          <ng-container *ngIf="wsResults$ | async as results">
+            <ng-container *ngIf="results.length; else wsNoResults">
+              <button type="button" class="ws-search-item" *ngFor="let r of results; let i = index"
+                [class.active]="i === wsActiveIndex" (click)="onSelectWsResult(r)">
+                <span class="kind" *ngIf="r.kind === 'channel'">#</span>
+                <span class="kind" *ngIf="r.kind === 'user'">&#64;</span>
+                <span class="kind" *ngIf="r.kind === 'message'">💬</span>
+
+                <span class="label" *ngIf="r.kind === 'channel'">{{ r.id }}</span>
+                <span class="label" *ngIf="r.kind === 'user'">{{ r.name }}</span>
+                <span class="label message" *ngIf="r.kind === 'message'">{{ r.text }}</span>
+              </button>
+            </ng-container>
+
+            <ng-template #wsNoResults>
+              <div class="ws-search-empty">Keine Treffer</div>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
     </header>
 
     <!-- CHANNELS -->
@@ -137,4 +168,10 @@
       </div>
     </div>
   </div>
+
+  <!-- MOBILE FAB: Neue Nachricht -->
+  <button class="fab-new-message" type="button" aria-label="Neue Nachricht" title="Neue Nachricht"
+    (click)="startNewMessage()">
+  </button>
+
 </div>

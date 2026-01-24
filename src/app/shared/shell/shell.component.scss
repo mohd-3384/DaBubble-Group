@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   min-height: 0;
   overflow: hidden;
 }
@@ -45,7 +45,7 @@ app-header {
 .shell__left,
 .shell__center,
 .shell__right {
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 16px;
   min-height: 0;
 }
@@ -74,7 +74,7 @@ app-header {
   width: 0;
   opacity: 0;
   pointer-events: none;
-  transition: flex-basis 220ms ease, opacity 220ms ease;
+  transition: var(--transition20)
 }
 
 .shell__right.is-open {
@@ -99,7 +99,7 @@ app-header {
 .shell__center,
 .shell__right {
   scrollbar-width: none;
-  scrollbar-color: var(--accent-color) #fff;
+  scrollbar-color: var(--background-color);
   scrollbar-gutter: stable both-edges;
 }
 
@@ -134,7 +134,7 @@ app-header {
   gap: 8px;
   padding: 16px 10px;
   border-radius: 24px 0 0 24px;
-  background: #fff;
+  background: var(--surface-bg);
   border: none;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -182,4 +182,57 @@ app-header {
 
 .workspace-toggle-label {
   font-weight: 500;
+}
+
+/* TABLET + MOBILE: einspaltig, Channels volle Breite */
+@media (max-width: 1024px) {
+  .shell {
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .shell__left,
+  .shell__center {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 0;
+  }
+
+  .shell__left {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shell__center {
+    overflow: hidden;
+  }
+
+  .shell__right {
+    display: none;
+  }
+
+  .shell.shell--mobile-chat .shell__left {
+    display: none;
+  }
+
+  .shell.shell--mobile-chat .shell__center {
+    display: block;
+  }
+
+  .shell.shell--mobile-list .shell__left {
+    display: block;
+  }
+
+  .shell.shell--mobile-list .shell__center {
+    display: none;
+  }
+
+  .workspace-toggle {
+    display: none !important;
+  }
 }

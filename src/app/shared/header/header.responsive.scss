@@ -55,6 +55,21 @@
   }
 }
 
+@media (min-width: 1025px) {
+  .img-wrapper.img-wrapper--chat-open {
+    gap: 16px;
+    padding-left: 45px;
+
+    .back-button {
+      display: none;
+    }
+
+    .ws-brand-header {
+      display: none;
+    }
+  }
+}
+
 /* TABLET (<= 1024) */
 @media (max-width: 1024px) {
   .header-wrapper {
@@ -62,16 +77,29 @@
   }
 
   .img-wrapper {
-    padding-left: 16px;
-    height: 56px;
+    grid-area: brand;
+    padding-left: 0;
     gap: 10px;
-
-    .logo-text {
-      max-height: 18px;
-    }
+    height: auto;
 
     .logo-bubble {
-      max-height: 42px;
+      height: 36px;
+    }
+
+    .logo-text {
+      max-height: 14px;
+    }
+
+    /* ✅ richtig verschachtelt */
+    &.img-wrapper--chat-open {
+      padding-left: 0;
+      gap: 12px;
+      min-width: 0;
+
+      .ws-title-header {
+        font-size: 18px;
+        font-weight: 800;
+      }
     }
   }
 
@@ -137,6 +165,76 @@
     .logo-text {
       max-height: 14px;
     }
+
+    /* Chat Open: Back Button + Workspace Logo */
+    .img-wrapper.img-wrapper--chat-open {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-left: 0;
+      min-width: 0; // wichtig für ellipsis
+
+      /* Back Button: background-image statt opacity */
+      .back-button {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+
+        border: 0;
+        border-radius: 999px;
+        cursor: pointer;
+        background-color: transparent;
+
+        background-image: url('/public/images/arrow_to_left.svg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 22px 22px;
+
+        transition: background-color var(--transition15), transform var(--transition15),
+          background-image var(--transition15);
+
+        &:hover {
+          background-image: url('/public/images/arrow_to_left_hover.svg');
+          background-color: var(--background-color);
+          transform: translateX(-1px);
+        }
+
+        &:active {
+          transform: translateX(-1px) scale(0.98);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--primary-color);
+          outline-offset: 2px;
+          background-color: var(--background-color);
+        }
+      }
+
+      /* ws-brand im Header (Tablet/Mobile) */
+      .ws-brand-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .ws-logo-header {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        object-fit: contain;
+      }
+
+      .ws-title-header {
+        font-size: 18px; // etwas kräftiger, passt besser zu Header
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+    }
   }
 
   .profile-area {
@@ -195,7 +293,7 @@
     transform: translateY(120%);
     opacity: 0;
     animation: sheetIn 420ms cubic-bezier(.2, .8, .2, 1) forwards;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.20);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
   }
 
   @keyframes sheetIn {
@@ -219,7 +317,7 @@
     font-weight: 600;
     text-align: left;
     padding: 0 14px;
-    transition: transform 180ms ease, background 180ms ease;
+    transition: var(--transition20);
   }
 
   .menu-btn:hover {
@@ -253,7 +351,7 @@
   }
 
   .ui-overlay {
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.2);
   }
 
   .ui-modal.ui-modal--right {
