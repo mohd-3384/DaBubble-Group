@@ -109,30 +109,27 @@ export class ShellComponent {
   constructor(
     private router: Router
   ) {
+    const updateMobileView = (url: string) => {
+      const isThread = url.match(/\/(channel|dm)\/[^/]+\/thread\//i);
+
+      if (isThread) {
+        this.mobileView = 'thread';
+        return;
+      }
+
+      const isChat = url.startsWith('/channel/') || url.startsWith('/dm/') || url.startsWith('/new');
+      const isChannelsList = url === '/channels' || url === '/channels/';
+
+      this.mobileView = isChannelsList ? 'list' : (isChat ? 'chat' : 'list');
+    };
+
+    // Erste Setzung basierend auf der aktuellen URL (wichtig für direkte Aufrufe /new auf Mobile)
+    updateMobileView(this.router.url);
+
+    // Laufende Navigationen verfolgen
     this.router.events
       .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart))
-      .subscribe((e) => {
-        const url = e.url;
-
-        // Thread-Routen (z.B. /channel/:id/thread/:threadId oder /dm/:id/thread/:threadId)
-        const isThread =
-          url.match(/\/(channel|dm)\/[^/]+\/thread\//i);
-
-        if (isThread) {
-          this.mobileView = 'thread';
-        } else {
-          // Chat-Routen (anpassen an deine echten Routen)
-          const isChat =
-            url.startsWith('/channel/') ||
-            url.startsWith('/dm/') ||
-            url.startsWith('/new');
-
-          // Channels-Liste Vollbild Route
-          const isChannelsList = url === '/channels' || url === '/channels/';
-
-          this.mobileView = isChannelsList ? 'list' : (isChat ? 'chat' : 'list');
-        }
-      });
+      .subscribe((e) => updateMobileView(e.url));
 
     this.presence.init();
 

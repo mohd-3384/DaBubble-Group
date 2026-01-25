@@ -19,6 +19,12 @@
   --surface-radius: 20px;
   --surface-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
   --text-shadow: 0 0 1px #535EF1;
+  --shadow-modal: 0 18px 40px rgba(15, 23, 42, 0.18);
+  --shadow-popover: 0 0 12px rgba(0, 0, 0, 0.2);
+  --font-nunito: 'Nunito', sans-serif;
+  --font-base: 16px;
+  --font-md: 15px;
+  --font-sm: 14px;
 }
 
 ::selection {
@@ -42,6 +48,41 @@ body {
   overflow: hidden;
   background-color: var(--background-color);
   font-family: 'Nunito', sans-serif;
+  font-size: clamp(var(--font-sm), 1.5vw, var(--font-base));
+}
+
+/* Globale mobile Tweaks: reduzierte Typo und engeres Spacing */
+@media (max-width: 1024px) {
+  body {
+    font-size: clamp(var(--font-sm), 1.6vw, var(--font-md));
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: var(--font-sm);
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 0.9rem;
+  }
+
+  .shell,
+  app-thread,
+  app-chat,
+  app-channels {
+    --surface-radius: 16px;
+  }
 }
 
 /* nunito-200 - latin */
