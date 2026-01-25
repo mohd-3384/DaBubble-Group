@@ -18,23 +18,7 @@ import { Auth, authState, signOut } from '@angular/fire/auth';
 import { Observable, BehaviorSubject, combineLatest, from, of } from 'rxjs';
 import { map, switchMap, startWith, distinctUntilChanged, debounceTime } from 'rxjs/operators';
 import { catchError, shareReplay } from 'rxjs/operators';
-import { UserDoc } from '../../interfaces/allInterfaces.interface';
-
-type SearchResult =
-  | { kind: 'channel'; id: string }
-  | { kind: 'user'; id: string; name: string; avatarUrl?: string }
-  | { kind: 'message'; channelId: string; text: string };
-
-type HeaderUser = {
-  id: string;
-  name: string;
-  email: string;
-  status: 'active' | 'away';
-  avatarUrl: string;
-  online: boolean;
-};
-
-type ProfileView = 'view' | 'edit';
+import { HeaderUser, ProfileView, SearchResult, UserDoc } from '../../interfaces/allInterfaces.interface';
 
 @Component({
   selector: 'app-header',
@@ -58,6 +42,12 @@ export class HeaderComponent {
   /** ---------- MOBILE CHAT OPEN STATE ---------- */
   isChatOpen = false;
   private currentChannelId: string | null = null;
+
+  isDesktop = window.innerWidth >= 1025;
+  @HostListener('window:resize')
+  onResize() {
+    this.isDesktop = window.innerWidth >= 1025;
+  }
 
   /** ---------- USER (Firestore users/{uid}) ---------- */
   private guestUser: HeaderUser = {
@@ -117,7 +107,7 @@ export class HeaderComponent {
     const currentUrl = this.router.url;
 
     // Wenn wir in einem Thread sind → Browser Back (sicher, da wir vom Chat hier herkamen)
-    if (currentUrl.match(/\/channel\/[^/]+\/thread\//)) {
+    if (currentUrl.match(/\/(channel|dm)\/[^/]+\/thread\//)) {
       window.history.back();
       return;
     }
@@ -263,9 +253,14 @@ export class HeaderComponent {
       const channels$ = collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
         map((rows: any[]) =>
           (rows || [])
-            .filter((c) => String(c.id || '').toLowerCase().includes(term))
+            .map((c) => {
+              const docId = String(c.id ?? '');
+              const name = String(c?.name ?? '').trim();
+              return { docId, name };
+            })
+            .filter((c) => c.name.toLowerCase().includes(term))
             .slice(0, 6)
-            .map((c) => ({ kind: 'channel', id: String(c.id) } as SearchResult))
+            .map((c) => ({ kind: 'channel', id: c.docId, name: c.name } as SearchResult))
         ),
         catchError(() => of([] as SearchResult[]))
       );

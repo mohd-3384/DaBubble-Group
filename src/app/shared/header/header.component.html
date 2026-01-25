@@ -2,17 +2,19 @@
   <!-- Logo -->
   <div class="img-wrapper" [class.img-wrapper--chat-open]="isChatOpen">
     <!-- Normal Logo (Desktop/Tablet ohne Chat) -->
-    <ng-container *ngIf="!isChatOpen">
+    <!-- Normal Logo (Desktop immer, außerdem wenn Chat nicht offen) -->
+    <ng-container *ngIf="!isChatOpen || isDesktop">
       <img src="/public/images/dabubble-logo.svg" class="logo-bubble" alt="DaBubble" />
       <img src="/public/images/Logo name.svg" class="logo-text" alt="DaBubble" />
     </ng-container>
 
-    <!-- Chat Open: Back Button + Workspace Logo -->
-    <ng-container *ngIf="isChatOpen">
+    <!-- Chat Open: Back Button + Workspace Logo (nur Mobile/Tablet) -->
+    <ng-container *ngIf="isChatOpen && !isDesktop">
       <button type="button" class="back-button" aria-label="Zurück zu Channels" (click)="goBack()">
         <img src="/public/images/arrow_to_left.svg" class="back-icon back-icon-normal" alt="" />
         <img src="/public/images/arrow_to_left_hover.svg" class="back-icon back-icon-hover" alt="" />
       </button>
+
       <div class="ws-brand-header">
         <img class="ws-logo-header" src="/public/images/devspace-logo.svg" alt="Devspace" />
         <span class="ws-title-header">Devspace</span>
@@ -35,7 +37,7 @@
             <span class="kind" *ngIf="r.kind === 'user'">&#64;</span>
             <span class="kind" *ngIf="r.kind === 'message'">💬</span>
 
-            <span class="label" *ngIf="r.kind === 'channel'">{{ r.id }}</span>
+            <span class="label" *ngIf="r.kind === 'channel'">{{ r.name }}</span>
             <span class="label" *ngIf="r.kind === 'user'">{{ r.name }}</span>
             <span class="label message" *ngIf="r.kind === 'message'">{{ r.text }}</span>
           </button>

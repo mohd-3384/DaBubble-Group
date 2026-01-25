@@ -8,6 +8,7 @@ import {
   collection,
   query,
   orderBy,
+  getDoc,
 } from '@angular/fire/firestore';
 
 import { Message, ReplyDoc, ThreadVM } from '../interfaces/allInterfaces.interface';
@@ -34,7 +35,10 @@ export class ThreadState {
     channelId: string;
     header?: ThreadVM['header'];
     root: Message;
+    isDM?: boolean;
   }) {
+    const isDM = opts.isDM ?? false;
+    // console.log('[ThreadState] openThread called with:', { channelId: opts.channelId, rootId: opts.root?.id, isDM });
     this.stopAllListeners();
 
     const rootId = opts.root?.id;
@@ -47,17 +51,25 @@ export class ThreadState {
       header: opts.header,
       root: opts.root,
       replies: [],
+      isDM: isDM,
     });
 
     // ✅ 1) ROOT-LISTENER -> damit Thread oben live die Chat-Reactions/Edits sieht
-    const rootRef = doc(this.fs, `channels/${opts.channelId}/messages/${rootId}`);
+    const rootRef = isDM
+      ? doc(this.fs, `conversations/${opts.channelId}/messages/${rootId}`)
+      : doc(this.fs, `channels/${opts.channelId}/messages/${rootId}`);
 
     this.unsubscribeRoot = onSnapshot(
       rootRef,
       (snap) => {
-        if (!snap.exists()) return;
+        if (!snap.exists()) {
+          console.warn('[ThreadState] Root doc does not exist');
+          return;
+        }
 
         const raw: any = snap.data();
+        console.log('[ThreadState] Root Listener Raw Data:', raw);
+        console.log('[ThreadState] Text field value:', raw?.text);
 
         const v = this._vm();
         if (!v.open) return;
@@ -79,6 +91,7 @@ export class ThreadState {
           reactionBy: this.ensureReactionBy(raw?.reactionBy),
         };
 
+        console.log('[ThreadState] NextRoot:', nextRoot);
         this._vm.set({ ...v, root: nextRoot });
       },
       (err) => {
@@ -88,10 +101,9 @@ export class ThreadState {
     );
 
     // ✅ 2) REPLIES-LISTENER
-    const repliesRef = collection(
-      this.fs,
-      `channels/${opts.channelId}/messages/${rootId}/replies`
-    );
+    const repliesRef = isDM
+      ? collection(this.fs, `conversations/${opts.channelId}/messages/${rootId}/replies`)
+      : collection(this.fs, `channels/${opts.channelId}/messages/${rootId}/replies`);
     const q = query(repliesRef, orderBy('createdAt', 'asc'));
 
     this.unsubscribeReplies = onSnapshot(
@@ -114,6 +126,8 @@ export class ThreadState {
             reactionBy: this.ensureReactionBy(raw.reactionBy),
           };
         });
+
+        console.log('[ThreadState] Replies Listener Update:', { count: replies.length, replies });
 
         const v = this._vm();
         if (!v.open) return;
@@ -189,5 +203,42 @@ export class ThreadState {
 
     const s = String(x ?? '');
     return s === '[object Object]' ? '' : s;
+  }
+
+  // ✅ Neu laden wenn die Root-Message bearbeitet wurde
+  async refreshRootMessage() {
+    const v = this._vm();
+    if (!v.open || !v.root?.id) return;
+
+    try {
+      const rootRef = v.isDM
+        ? doc(this.fs, `conversations/${v.channelId}/messages/${v.root.id}`)
+        : doc(this.fs, `channels/${v.channelId}/messages/${v.root.id}`);
+      const snap = await getDoc(rootRef);
+
+      if (!snap.exists()) return;
+
+      const raw: any = snap.data();
+
+      const nextRoot: Message = {
+        id: v.root.id,
+        author: {
+          id: raw?.authorId ?? v.root?.author?.id ?? '',
+          name: raw?.authorName ?? v.root?.author?.name ?? 'Unbekannt',
+          avatarUrl:
+            raw?.authorAvatar ??
+            v.root?.author?.avatarUrl ??
+            '/public/images/avatars/avatar-default.svg',
+        },
+        text: raw?.text ?? v.root?.text ?? '',
+        createdAt: this.toDateOrString(raw?.createdAt ?? v.root?.createdAt),
+        reactions: this.ensureReactionsMap(raw?.reactions),
+        reactionBy: this.ensureReactionBy(raw?.reactionBy),
+      };
+
+      this._vm.set({ ...v, root: nextRoot });
+    } catch (err) {
+      console.error('[ThreadState] Error refreshing root message:', err);
+    }
   }
 }

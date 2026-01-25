@@ -352,7 +352,8 @@
               <div *ngIf="channelNameEdit" class="channel-info__field-pill channel-info__field-pill--edit">
                 <div class="channel-input-wrap channel-input-wrap--info">
                   <span class="channel-hash">#</span>
-                  <input class="channel-input" type="text" [(ngModel)]="editChannelName" autocomplete="off" />
+                  <input class="channel-input" type="text" [(ngModel)]="editChannelName"
+                    [ngModelOptions]="{standalone:true}" autocomplete="off" />
                 </div>
               </div>
             </section>

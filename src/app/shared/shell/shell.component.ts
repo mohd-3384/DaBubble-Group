@@ -5,6 +5,7 @@ import { HeaderComponent } from '../header/header.component';
 import { ChannelsComponent } from '../../channels/channels.component';
 import { ThreadComponent } from '../../thread/thread.component';
 import { ThreadState } from '../../services/thread.state';
+import { ChatRefreshService } from '../../services/chat-refresh.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 import {
@@ -15,6 +16,7 @@ import {
   doc,
   docData,
   updateDoc,
+  setDoc,
   increment,
   serverTimestamp,
 } from '@angular/fire/firestore';
@@ -48,6 +50,7 @@ type MentionUser = { id: string; name: string; avatarUrl?: string };
 })
 export class ShellComponent {
   private thread = inject(ThreadState);
+  private chatRefresh = inject(ChatRefreshService);
   vm = computed(() => this.thread.vm());
 
   private fs = inject(Firestore);
@@ -111,9 +114,9 @@ export class ShellComponent {
       .subscribe((e) => {
         const url = e.url;
 
-        // Thread-Routen (z.B. /channel/:id/thread/:threadId)
+        // Thread-Routen (z.B. /channel/:id/thread/:threadId oder /dm/:id/thread/:threadId)
         const isThread =
-          url.match(/\/channel\/[^/]+\/thread\//i);
+          url.match(/\/(channel|dm)\/[^/]+\/thread\//i);
 
         if (isThread) {
           this.mobileView = 'thread';
@@ -172,6 +175,10 @@ export class ShellComponent {
     this.workspaceCollapsed = collapsed;
   }
 
+  private makeConvId(a: string, b: string): string {
+    return a < b ? `${a}_${b}` : `${b}_${a}`;
+  }
+
   // SEND: schreibt in Firestore + updated parent message + updated UI
   async onSend(text: string) {
     const msg = (text || '').trim();
@@ -183,13 +190,14 @@ export class ShellComponent {
       return;
     }
 
-    const channelId = this.channelId;
+    const channelId = vm.channelId;
     if (!channelId) {
-      console.warn('[Thread] Kein channelId gefunden (Route param :id). Prüfe deine Route /channels/:id');
+      console.warn('[Thread] Kein channelId gefunden. Prüfe deine Thread-VM');
       return;
     }
 
     const messageId = vm.root.id;
+    const isDM = vm.isDM ?? false;
 
     const authUser = this.auth.currentUser;
     if (!authUser) {
@@ -215,10 +223,22 @@ export class ShellComponent {
       this.currentUser?.avatarUrl ?? '/public/images/avatars/avatar1.svg';
 
     try {
-      const repliesRef = collection(
-        this.fs,
-        `channels/${channelId}/messages/${messageId}/replies`
-      );
+      let repliesRef, parentRef;
+
+      if (isDM) {
+        // ✅ channelId ist bereits die convId (aus ThreadState)
+        repliesRef = collection(
+          this.fs,
+          `conversations/${channelId}/messages/${messageId}/replies`
+        );
+        parentRef = doc(this.fs, `conversations/${channelId}/messages/${messageId}`);
+      } else {
+        repliesRef = collection(
+          this.fs,
+          `channels/${channelId}/messages/${messageId}/replies`
+        );
+        parentRef = doc(this.fs, `channels/${channelId}/messages/${messageId}`);
+      }
 
       await addDoc(repliesRef, {
         text: msg,
@@ -229,11 +249,20 @@ export class ShellComponent {
         reactions: {},
         reactionBy: {},
       });
-
-      const parentRef = doc(this.fs, `channels/${channelId}/messages/${messageId}`);
       await updateDoc(parentRef, {
         replyCount: increment(1),
         lastReplyAt: serverTimestamp(),
+      }).catch(async (err) => {
+        // Falls das Feld nicht existiert, initialisiere es
+        if (err.code === 'not-found') {
+          console.warn('[Thread] Parent-Dokument nicht gefunden, aktualisiere trotzdem...', { channelId, messageId });
+          await setDoc(parentRef, {
+            replyCount: 1,
+            lastReplyAt: serverTimestamp(),
+          }, { merge: true });
+        } else {
+          throw err;
+        }
       });
 
       console.log('[Thread] Reply gespeichert:', { channelId, messageId, msg });
@@ -245,9 +274,9 @@ export class ShellComponent {
   onClose() {
     this.thread.close();
 
-    // Bei Mobile/Tablet Navigation zurück zum Channel
-    if (window.innerWidth <= 1024 && this.channelId) {
-      this.router.navigate(['/channel', this.channelId]);
+    // Mobile View zurück zum Chat
+    if (window.innerWidth <= 1024) {
+      this.mobileView = 'chat';
     }
   }
 
@@ -259,13 +288,35 @@ export class ShellComponent {
     if (!channelId) return;
 
     const rootId = vm.root.id;
+    const isDM = this.router.url.includes('/dm/');
 
     try {
       if (ev.messageId === rootId) {
-        const ref = doc(this.fs, `channels/${channelId}/messages/${rootId}`);
+        let ref;
+
+        if (isDM) {
+          const convId = this.makeConvId(this.auth.currentUser!.uid, channelId);
+          ref = doc(this.fs, `conversations/${convId}/messages/${rootId}`);
+        } else {
+          ref = doc(this.fs, `channels/${channelId}/messages/${rootId}`);
+        }
+
+        console.log('[Thread] Edit Root Message:', { channelId, rootId, isDM, newText: ev.text });
         await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
+        console.log('[Thread] Root Message Saved Successfully');
+
+        // ✅ Refresh Chat Messages
+        this.chatRefresh.refresh();
       } else {
-        const ref = doc(this.fs, `channels/${channelId}/messages/${rootId}/replies/${ev.messageId}`);
+        let ref;
+
+        if (isDM) {
+          const convId = this.makeConvId(this.auth.currentUser!.uid, channelId);
+          ref = doc(this.fs, `conversations/${convId}/messages/${rootId}/replies/${ev.messageId}`);
+        } else {
+          ref = doc(this.fs, `channels/${channelId}/messages/${rootId}/replies/${ev.messageId}`);
+        }
+
         await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
       }
     } catch (e) {

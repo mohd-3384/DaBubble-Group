@@ -7,6 +7,7 @@ export interface Vm {
 
 export interface ChannelDoc {
   id?: string;
+  name?: string;
   createdBy?: string;
   createdAt?: any;
   memberCount?: number;
@@ -117,6 +118,7 @@ export interface ThreadVM {
   root?: Message;
   replies: Message[];
   channelId?: string;
+  isDM?: boolean;
 }
 
 export type ReplyDoc = {
@@ -129,6 +131,22 @@ export type ReplyDoc = {
 };
 
 export type WsSearchResult =
-  | { kind: 'channel'; id: string }
+  | { kind: 'channel'; id: string; name: string }
   | { kind: 'user'; id: string; name: string; avatarUrl?: string }
   | { kind: 'message'; channelId: string; text: string };
+
+export type SearchResult =
+  | { kind: 'channel'; id: string; name: string }
+  | { kind: 'user'; id: string; name: string; avatarUrl?: string }
+  | { kind: 'message'; channelId: string; text: string };
+
+export type HeaderUser = {
+  id: string;
+  name: string;
+  email: string;
+  status: 'active' | 'away';
+  avatarUrl: string;
+  online: boolean;
+};
+
+export type ProfileView = 'view' | 'edit';

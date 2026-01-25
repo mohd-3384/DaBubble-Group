@@ -20,17 +20,17 @@
   <aside class="shell__right" [class.is-open]="vm().open" aria-label="Thread">
     <!-- Desktop: nur wenn Thread offen ist -->
     <ng-container *ngIf="vm().open && mobileView !== 'thread'">
-      <app-thread [currentUserId]="currentUser?.id ?? null" [channelId]="channelId!" [header]="vm().header!"
-        [rootMessage]="vm().root!" [replies]="vm().replies" [users]="usersAllForMentions" (send)="onSend($event)"
-        (edit)="onEditThreadMessage($event)" (close)="onClose()">
+      <app-thread [currentUserId]="currentUser?.id ?? null" [channelId]="vm().channelId!" [header]="vm().header!"
+        [rootMessage]="vm().root!" [replies]="vm().replies" [users]="usersAllForMentions" [isDM]="vm().isDM || false"
+        (send)="onSend($event)" (edit)="onEditThreadMessage($event)" (close)="onClose()">
       </app-thread>
     </ng-container>
     <!-- Mobile: immer wenn im Thread-Modus -->
     <ng-container *ngIf="mobileView === 'thread' && vm().open">
-      <app-thread [currentUserId]="currentUser?.id ?? null" [channelId]="channelId!" [header]="vm().header!"
-        [rootMessage]="vm().root!" [replies]="vm().replies" [users]="usersAllForMentions" (send)="onSend($event)"
-        (edit)="onEditThreadMessage($event)" (close)="onClose()">
-      </app-thread>
+      <app-thread [header]="vm().header!" [rootMessage]="vm().root!" [replies]="vm().replies"
+        [users]="usersAllForMentions" [currentUserId]="currentUser?.id || null" [channelId]="vm().channelId!"
+        [isDM]="vm().isDM || false" (send)="onSend($event)" (edit)="onEditThreadMessage($event)"
+        (close)="onClose()"></app-thread>
     </ng-container>
   </aside>
 </div>

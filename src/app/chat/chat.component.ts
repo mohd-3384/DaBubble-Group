@@ -49,6 +49,7 @@ import { ThreadState } from '../services/thread.state';
 import { Auth, authState } from '@angular/fire/auth';
 import { AuthReadyService } from '../services/auth-ready.service';
 import { ChannelService } from '../services/channel.service';
+import { ChatRefreshService } from '../services/chat-refresh.service';
 
 function toDateMaybe(ts: any): Date | null {
   if (!ts) return null;
@@ -89,6 +90,7 @@ export class ChatComponent {
   private fs = inject(Firestore);
   private env = inject(EnvironmentInjector);
   private platformId = inject(PLATFORM_ID);
+  private chatRefresh = inject(ChatRefreshService);
   private guestUser: UserDoc & { id: string } = {
     id: 'guest',
     name: 'Guest',
@@ -186,12 +188,28 @@ export class ChatComponent {
     const btn = ev.currentTarget as HTMLElement;
     const rect = btn.getBoundingClientRect();
 
-    const popW = 320;
+    const popW = 320;  // Breite deines Popovers (oder min-width)
     const offset = 8;
 
     const viewportW = window.innerWidth || document.documentElement.clientWidth;
-    const left = Math.max(16, Math.min(rect.right - popW, viewportW - popW - 16));
-    const top = rect.bottom + offset;
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+
+    // ✅ Top: direkt unter dem Button
+    let top = rect.bottom + offset - 4;
+
+    // ✅ Left: linke Kante vom Button
+    let left = rect.left;
+
+    // ✅ Im Viewport halten (rechts nicht rauslaufen)
+    left = Math.min(left, viewportW - popW - 16);
+    left = Math.max(16, left);
+
+    // optional: wenn unten kein Platz, nach oben klappen
+    const estimatedH = 70; // grob (dein Popover ist klein)
+    if (top + estimatedH > viewportH - 10) {
+      top = rect.top - estimatedH - offset;
+      top = Math.max(10, top);
+    }
 
     this.editMenuForId = m.id;
     this.editMenuPos = { top, left };
@@ -293,6 +311,10 @@ export class ChatComponent {
       }
 
       this.cancelEdit();
+
+      // ✅ Close thread wenn eine Message bearbeitet wurde (NACH erfolgreichem Speichern)
+      console.log('[Chat] Schließe Thread nach Message-Edit');
+      this.thread.close();
     } catch (err) {
       console.error('[Chat] Fehler beim Editieren der Message:', err);
     }
@@ -301,64 +323,14 @@ export class ChatComponent {
   private me$ = authState(this.auth).pipe(startWith(this.auth.currentUser));
   private chanSvc = inject(ChannelService);
 
-  private async renameChannel(oldId: string, newIdRaw: string) {
+  private async updateChannelName(channelId: string, newNameRaw: string) {
     await this.authReady.requireUser();
-    const newId = newIdRaw.trim();
-    if (!newId) return;
+    const newName = (newNameRaw || '').trim();
+    if (!newName) return;
 
-    if (newId === oldId) return;
-
-    const oldRef = doc(this.fs, `channels/${oldId}`);
-    const newRef = doc(this.fs, `channels/${newId}`);
-
-    // 1) prüfen, ob alter existiert
-    const oldSnap = await getDoc(oldRef);
-    if (!oldSnap.exists()) {
-      console.warn('Alter Channel existiert nicht:', oldId);
-      return;
-    }
-
-    // 2) prüfen, ob neuer schon existiert
-    const newSnap = await getDoc(newRef);
-    if (newSnap.exists()) {
-      console.warn('Neuer Channel existiert schon:', newId);
-      return;
-    }
-
-    const data = oldSnap.data();
-
-    // 3) neues Channel-Dokument anlegen (ohne neues Feld!)
-    await setDoc(newRef, {
-      ...data,
+    await updateDoc(doc(this.fs, `channels/${channelId}`), {
+      name: newName,
     });
-
-    // 4) Subcollections kopieren (members + messages)
-    // members
-    const oldMembers = await getDocs(collection(this.fs, `channels/${oldId}/members`));
-    for (const m of oldMembers.docs) {
-      await setDoc(doc(this.fs, `channels/${newId}/members/${m.id}`), m.data(), { merge: true });
-    }
-
-    // messages (kann groß werden!)
-    const oldMessages = await getDocs(collection(this.fs, `channels/${oldId}/messages`));
-    for (const msg of oldMessages.docs) {
-      await setDoc(doc(this.fs, `channels/${newId}/messages/${msg.id}`), msg.data(), { merge: true });
-    }
-
-    // 5) altes löschen (erst subcollections, dann doc)
-    // messages löschen
-    for (const msg of oldMessages.docs) {
-      await deleteDoc(doc(this.fs, `channels/${oldId}/messages/${msg.id}`));
-    }
-    // members löschen
-    for (const m of oldMembers.docs) {
-      await deleteDoc(doc(this.fs, `channels/${oldId}/members/${m.id}`));
-    }
-
-    await deleteDoc(oldRef);
-
-    // 6) UI zur neuen Route
-    this.router.navigate(['/channel', newId]);
   }
 
   async onLeaveChannel() {
@@ -376,12 +348,20 @@ export class ChatComponent {
   }
 
   openChannelInfoModal() {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.editChannelName = id;
-    this.editChannelDesc = this.channelTopic || '';
-
     this.channelNameEdit = false;
     this.channelDescEdit = false;
+
+    this.channelDoc$
+      .pipe(
+        filter((ch): ch is ChannelDoc => !!ch),
+        take(1)
+      )
+      .subscribe((ch) => {
+        this.editChannelName = String(ch.name ?? '').trim();
+        this.editChannelDesc = String(ch.topic ?? '').trim();
+        this.channelTopic = String(ch.topic ?? '');
+      });
+
     this.channelInfoOpen = true;
   }
 
@@ -392,38 +372,59 @@ export class ChatComponent {
   }
 
   async toggleChannelNameEdit() {
+    // ENTER edit mode
     if (!this.channelNameEdit) {
+      this.channelDoc$
+        .pipe(
+          filter((ch): ch is ChannelDoc => !!ch),
+          take(1)
+        )
+        .subscribe((ch) => {
+          this.editChannelName = String(ch.name ?? '').trim();
+        });
+
       this.channelNameEdit = true;
       return;
     }
 
+    // SAVE
     try {
       await this.authReady.requireUser();
-      const oldId = this.route.snapshot.paramMap.get('id') ?? '';
-      if (!oldId) return;
+      const channelId = this.route.snapshot.paramMap.get('id') ?? '';
+      if (!channelId) return;
 
-      await this.renameChannel(oldId, this.editChannelName);
+      await this.updateChannelName(channelId, this.editChannelName);
       this.channelNameEdit = false;
     } catch (e) {
-      console.error('Rename fehlgeschlagen:', e);
+      console.error('Channel-Name speichern fehlgeschlagen:', e);
     }
   }
 
   async toggleChannelDescEdit() {
+    // ENTER edit mode
     if (!this.channelDescEdit) {
+      this.channelDoc$
+        .pipe(
+          filter((ch): ch is ChannelDoc => !!ch),
+          take(1)
+        )
+        .subscribe((ch) => {
+          this.editChannelDesc = String(ch.topic ?? '').trim();
+        });
+
       this.channelDescEdit = true;
       return;
     }
 
+    // SAVE
     try {
       await this.authReady.requireUser();
-
       const channelId = this.route.snapshot.paramMap.get('id') ?? '';
       if (!channelId) return;
 
       await setDoc(
         doc(this.fs, `channels/${channelId}`),
-        { topic: this.editChannelDesc.trim() },
+        { topic: (this.editChannelDesc || '').trim() },
         { merge: true }
       );
 
@@ -576,7 +577,7 @@ export class ChatComponent {
   trackMsg = (_: number, m: MessageVm) => m.id;
   trackMember = (_: number, m: MemberVM) => m.uid;
 
-  channelsAll$!: Observable<{ id: string }[]>;
+  channelsAll$!: Observable<{ id: string; name: string }[]>;
   usersAll$!: Observable<UserMini[]>;
   suggestions$!: Observable<SuggestItem[]>;
   composeTarget: SuggestItem | null = null;
@@ -594,6 +595,21 @@ export class ChatComponent {
 
   private makeConvId(a: string, b: string): string {
     return a < b ? `${a}_${b}` : `${b}_${a}`;
+  }
+
+  private async ensureConversation(convId: string, meUid: string, otherUid: string) {
+    const convRef = doc(this.fs, `conversations/${convId}`);
+    const snap = await getDoc(convRef);
+
+    if (snap.exists()) return; // schon da
+
+    await setDoc(convRef, {
+      createdAt: serverTimestamp(),
+      participants: {
+        [meUid]: otherUid,
+        [otherUid]: meUid,
+      },
+    });
   }
 
   // call this from (input) in HTML
@@ -677,7 +693,15 @@ export class ChatComponent {
         }
 
         if (!isDM) {
-          return of<Vm>({ kind: 'channel', title: `# ${id}` });
+          // Lade Channel-Dokument um name Feld zu bekommen
+          const chRef = doc(this.fs, `channels/${id}`);
+          return runInInjectionContext(this.env, () => docData(chRef)).pipe(
+            map((ch: any): Vm => ({
+              kind: 'channel',
+              title: `# ${ch?.name ?? id}` // Verwende name, fallback auf id
+            })),
+            startWith({ kind: 'channel', title: `# ${id}` } as Vm)
+          );
         }
 
         const uref = doc(this.fs, `users/${id}`);
@@ -799,6 +823,7 @@ export class ChatComponent {
       this.route.paramMap.pipe(map(p => p.get('id')!)),
       this.me$,
       this.usersAll$,
+      this.chatRefresh.refreshTrigger$,
     ]).pipe(
       switchMap(([id, me, users]) => {
         const userMap = new Map(users.map(u => [u.id, u]));
@@ -971,10 +996,13 @@ export class ChatComponent {
     ).pipe(
       map((rows: any[]) =>
         (rows || [])
-          .map((r: any) => ({ id: String(r?.id || '') }))
-          .filter((x) => !!x.id)
+          .map((r: any) => ({
+            id: String(r?.id || ''),
+            name: String(r?.name ?? '').trim(),
+          }))
+          .filter((x) => !!x.id && !!x.name)
       ),
-      startWith([])
+      startWith([] as { id: string; name: string }[])
     );
 
     // suggestions$ nutzt dieselben usersAll$
@@ -996,13 +1024,13 @@ export class ChatComponent {
         // #channel → nur Channels filtern
         if (q.startsWith('#')) {
           return channels
-            .filter(c => this.normalize(c.id).includes(term))
+            .filter(c => this.normalize(c.name).includes(term))
             .slice(0, 8)
             .map<SuggestItem>(c => ({
               kind: 'channel',
               id: c.id,
-              label: `# ${c.id}`,
-              value: `#${c.id}`,
+              label: `# ${c.name}`,
+              value: `#${c.name}`,
             }));
         }
 
@@ -1022,13 +1050,13 @@ export class ChatComponent {
 
         // sonst: Channels + User gemischt, beide nach term filtern
         const channelMatches = channels
-          .filter(c => this.normalize(c.id).includes(term))
+          .filter(c => this.normalize(c.name).includes(term))
           .slice(0, 4)
           .map<SuggestItem>(c => ({
             kind: 'channel',
             id: c.id,
-            label: `# ${c.id}`,
-            value: `#${c.id}`,
+            label: `# ${c.name}`,
+            value: `#${c.name}`,
           }));
 
         const userMatches = users
@@ -1082,52 +1110,61 @@ export class ChatComponent {
     });
 
     // Handle threadId from route (Mobile Thread Navigation)
-    this.route.paramMap.pipe(
-      switchMap(params => {
+    combineLatest([this.route.paramMap, this.vm$, authState(this.auth)]).pipe(
+      switchMap(([params, vm, authUser]) => {
         const threadId = params.get('threadId');
         const id = params.get('id');
 
-        if (!threadId || !id) {
-          return of(null);
+        if (!threadId || !id) return of(null);
+
+        const isDM = this.router.url.includes('/dm/');
+        let msgRef;
+
+        if (isDM && authUser) {
+          const convId = this.makeConvId(authUser.uid, id);
+          msgRef = doc(this.fs, `conversations/${convId}/messages/${threadId}`);
+        } else {
+          msgRef = doc(this.fs, `channels/${id}/messages/${threadId}`);
         }
 
-        // Load message from thread route
-        const msgRef = doc(this.fs, `channels/${id}/messages/${threadId}`);
         return runInInjectionContext(this.env, () => docData(msgRef)).pipe(
-          map((msg: any) => ({
-            id: msg?.id || threadId,
-            text: msg?.text ?? '',
-            authorId: msg?.authorId ?? '',
-            authorName: msg?.authorName ?? 'Unbekannt',
-            authorAvatar: msg?.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
-            createdAt: toDateMaybe(msg?.createdAt),
-            replyCount: msg?.replyCount ?? 0,
-            lastReplyAt: toDateMaybe(msg?.lastReplyAt),
-            title: 'Thread',
-            channel: id,
-          })),
+          map((raw: any) => {
+            if (!raw) return null;
+
+            return {
+              vm,
+              msg: {
+                id: threadId,
+                text: raw?.text ?? '',
+                authorId: raw?.authorId ?? '',
+                authorName: raw?.authorName ?? 'Unbekannt',
+                authorAvatar: raw?.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+                createdAt: toDateMaybe(raw?.createdAt) ?? new Date(),
+              },
+              channelId: isDM && authUser ? this.makeConvId(authUser.uid, id) : id,
+              isDM,
+            };
+          }),
           startWith(null)
         );
       }),
-      filter(msg => !!msg)
-    ).subscribe((msg: any) => {
-      if (msg) {
-        // Auto-open thread if navigated to thread route
-        this.thread.openThread({
-          channelId: this.route.snapshot.paramMap.get('id')!,
-          header: { title: 'Thread', channel: `#${msg.channel}` },
-          root: {
-            id: msg.id,
-            author: {
-              id: msg.authorId,
-              name: msg.authorName,
-              avatarUrl: msg.authorAvatar,
-            },
-            text: msg.text,
-            createdAt: msg.createdAt ?? new Date(),
+      filter((x): x is { vm: Vm; msg: any; channelId: string; isDM: boolean } => !!x)
+    ).subscribe(({ vm, msg, channelId, isDM }) => {
+      this.thread.openThread({
+        channelId,
+        header: { title: 'Thread', channel: vm.title },
+        root: {
+          id: msg.id,
+          author: {
+            id: msg.authorId,
+            name: msg.authorName,
+            avatarUrl: msg.authorAvatar,
           },
-        });
-      }
+          text: msg.text,
+          createdAt: msg.createdAt,
+        },
+        isDM,
+      });
     });
   }
 
@@ -1273,13 +1310,25 @@ export class ChatComponent {
     return `Nachricht an ${who}`;
   }
 
-  openThread(m: any, vm: any) {
-    const channelId = this.route.snapshot.paramMap.get('id');
-    if (!channelId) return;
+  async openThread(m: any, vm: any) {
+    const routeId = this.route.snapshot.paramMap.get('id');
+    if (!routeId) return;
+
+    const isDM = this.router.url.includes('/dm/');
+
+    let threadChannelId = routeId; // default: ChannelId
+
+    if (isDM) {
+      const me = await this.authReady.requireUser();
+      threadChannelId = this.makeConvId(me.uid, routeId); // convId
+    }
 
     const threadData = {
-      channelId,
-      header: { title: 'Thread', channel: vm.title },
+      channelId: threadChannelId, // ✅ bei DM jetzt convId
+      header: {
+        title: 'Thread',
+        channel: vm.kind === 'dm' ? vm.title : vm.title, // vm.title ist bei Channel schon "# <name>"
+      },
       root: {
         id: m.id,
         author: {
@@ -1290,13 +1339,18 @@ export class ChatComponent {
         text: m.text,
         createdAt: m.createdAt ?? new Date(),
       },
+      isDM,
     };
 
     this.thread.openThread(threadData);
 
-    // Navigiere zu Thread-Route auf Tablet/Mobile
+    // Mobile Thread Route für Channels und DMs
     if (window.innerWidth <= 1024) {
-      this.router.navigate(['/channel', channelId, 'thread', m.id]);
+      if (isDM) {
+        this.router.navigate(['/dm', routeId, 'thread', m.id]);
+      } else {
+        this.router.navigate(['/channel', routeId, 'thread', m.id]);
+      }
     }
   }
 
@@ -1433,7 +1487,7 @@ export class ChatComponent {
       'Unbekannt';
 
     const authorAvatar =
-      u?.avatarUrl ?? '/public/images/avatars/avatar1.svg';
+      u?.avatarUrl ?? '/public/images/avatars/avatar-default.svg.svg';
 
     try {
       if (!isDM) {
@@ -1451,6 +1505,21 @@ export class ChatComponent {
         const otherUserId = id;
         const convId = this.makeConvId(authorId, otherUserId);
 
+        // ✅ Conversation doc erst beim ersten Senden anlegen
+        const convRef = doc(this.fs, `conversations/${convId}`);
+        await setDoc(
+          convRef,
+          {
+            createdAt: serverTimestamp(),
+            participants: {
+              [authorId]: otherUserId,
+              [otherUserId]: authorId,
+            },
+          },
+          { merge: true }
+        );
+
+        // Mit addDoc schreiben (auto-generated ID)
         const coll = collection(this.fs, `conversations/${convId}/messages`);
         await addDoc(coll, {
           text: msg,
@@ -1527,7 +1596,11 @@ export class ChatComponent {
         const otherUserId = target.id;
         const convId = this.makeConvId(authorId, otherUserId);
 
+        // ✅ Conversation-Doc sicher anlegen
+        await this.ensureConversation(convId, authorId, otherUserId);
+
         if (text) {
+          // Mit addDoc schreiben (auto-generated ID)
           const coll = collection(this.fs, `conversations/${convId}/messages`);
           await addDoc(coll, {
             text,

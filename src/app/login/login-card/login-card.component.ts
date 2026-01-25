@@ -62,53 +62,53 @@ export class LoginCardComponent {
   }
 
   async loginWithGoogle() {
-  this.authErrorCode = null;
+    this.authErrorCode = null;
 
-  const provider = new GoogleAuthProvider();
+    const provider = new GoogleAuthProvider();
 
-  try {
-    const result = await signInWithPopup(this.auth, provider);
-    const user = result.user;
+    try {
+      const result = await signInWithPopup(this.auth, provider);
+      const user = result.user;
 
-    // User-Dokument sicherstellen / aktualisieren
-    await this.userSvc.ensureUserDoc({
-      name: user.displayName || 'Google-Nutzer',
-      email: user.email || '',
-      role: 'member',
-      status: 'active',
-    });
+      // User-Dokument sicherstellen / aktualisieren
+      await this.userSvc.ensureUserDoc({
+        name: user.displayName || 'Google-Nutzer',
+        email: user.email || '',
+        role: 'member',
+        status: 'active',
+      });
 
-    console.log('Google-Login erfolgreich:', user.uid);
+      console.log('Google-Login erfolgreich:', user.uid);
 
-    // Weiterleitung
-    await this.router.navigate(['/channel', 'Entwicklerteam']);
+      // Weiterleitung
+      await this.router.navigate(['/channel', 'Entwicklerteam']);
 
-  } catch (err: any) {
-    console.error('Google-Login fehlgeschlagen:', err);
+    } catch (err: any) {
+      console.error('Google-Login fehlgeschlagen:', err);
 
-    let message = 'Google-Anmeldung fehlgeschlagen';
+      let message = 'Google-Anmeldung fehlgeschlagen';
 
-    switch (err.code) {
-      case 'auth/popup-closed-by-user':
-        message = 'Das Anmeldefenster wurde geschlossen.';
-        break;
-      case 'auth/popup-blocked':
-        message = 'Popup wurde vom Browser blockiert. Bitte Popups für diese Seite erlauben.';
-        break;
-      case 'auth/account-exists-with-different-credential':
-        message = 'Diese E-Mail ist bereits mit einer anderen Methode registriert.';
-        break;
-      case 'auth/operation-not-allowed':
-        message = 'Google-Anmeldung ist im Firebase-Projekt nicht aktiviert.';
-        break;
-      default:
-        message = err.message || 'Etwas ist schiefgelaufen. Bitte versuche es erneut.';
+      switch (err.code) {
+        case 'auth/popup-closed-by-user':
+          message = 'Das Anmeldefenster wurde geschlossen.';
+          break;
+        case 'auth/popup-blocked':
+          message = 'Popup wurde vom Browser blockiert. Bitte Popups für diese Seite erlauben.';
+          break;
+        case 'auth/account-exists-with-different-credential':
+          message = 'Diese E-Mail ist bereits mit einer anderen Methode registriert.';
+          break;
+        case 'auth/operation-not-allowed':
+          message = 'Google-Anmeldung ist im Firebase-Projekt nicht aktiviert.';
+          break;
+        default:
+          message = err.message || 'Etwas ist schiefgelaufen. Bitte versuche es erneut.';
+      }
+
+      this.authErrorCode = err.code ?? 'unknown';
+      alert(message); // später → Snackbar / Toast ersetzen
     }
-
-    this.authErrorCode = err.code ?? 'unknown';
-    alert(message); // später → Snackbar / Toast ersetzen
   }
-}
 
   /** Gäste-Login: IMMER derselbe Account => IMMER dieselbe UID => nur 1 users/{uid} möglich */
   async loginAsGuest() {

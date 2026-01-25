@@ -19,11 +19,17 @@ export class ChannelService {
   private fs = inject(Firestore);
   private authReady = inject(AuthReadyService);
 
-  /** Channel anlegen – Creator ist IMMER der eingeloggte User */
-  async createChannel(id: string, topic: string = ''): Promise<void> {
+  /** Channel anlegen – mit auto-generierter ID und name Feld */
+  async createChannel(name: string, topic: string = ''): Promise<string> {
     const user = await this.authReady.requireUser();
 
-    await setDoc(doc(this.fs, `channels/${id}`), {
+    // Auto-ID von Firestore generieren
+    const channelsRef = collection(this.fs, 'channels');
+    const docRef = doc(channelsRef);
+    const channelId = docRef.id;
+
+    await setDoc(docRef, {
+      name, // Speichere den Display-Namen
       createdBy: user.uid,
       createdAt: serverTimestamp(),
       memberCount: 0,
@@ -33,6 +39,8 @@ export class ChannelService {
       lastReplyAt: null,
       topic,
     });
+
+    return channelId; // Gebe die generierte ID zurück
   }
 
   /**
@@ -97,7 +105,7 @@ export class ChannelService {
     return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(
       map((list) =>
         [...list].sort((a: any, b: any) =>
-          String(a.id).localeCompare(String(b.id), 'de', { sensitivity: 'base' })
+          String(a.name ?? '').localeCompare(String(b.name ?? ''), 'de', { sensitivity: 'base' })
         )
       )
     );

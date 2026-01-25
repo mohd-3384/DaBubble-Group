@@ -31,7 +31,7 @@
                 <span class="kind" *ngIf="r.kind === 'user'">&#64;</span>
                 <span class="kind" *ngIf="r.kind === 'message'">💬</span>
 
-                <span class="label" *ngIf="r.kind === 'channel'">{{ r.id }}</span>
+                <span class="label" *ngIf="r.kind === 'channel'">{{ r.name }}</span>
                 <span class="label" *ngIf="r.kind === 'user'">{{ r.name }}</span>
                 <span class="label message" *ngIf="r.kind === 'message'">{{ r.text }}</span>
               </button>
@@ -64,7 +64,7 @@
         <mat-nav-list *ngIf="!collapsedChannels()">
           <a mat-list-item *ngFor="let c of (channels$ | async); trackBy: trackByCid" [routerLink]="['/channel', c.id]"
             routerLinkActive="active">
-            <div matLine># {{ c.id }}</div>
+            <div matLine># {{ c.name || c.id }}</div>
             <span class="spacer"></span>
           </a>
 

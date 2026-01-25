@@ -4,14 +4,19 @@ import {
   Input,
   Output,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   HostListener,
   ElementRef,
+  EnvironmentInjector,
+  runInInjectionContext,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { Message, ReactionVm } from '../interfaces/allInterfaces.interface';
 import { deleteField, doc, Firestore, increment, runTransaction, updateDoc } from '@angular/fire/firestore';
+import { inject } from '@angular/core';
+import { ChatRefreshService } from '../services/chat-refresh.service';
 
 type MentionUser = { id: string; name: string; avatarUrl?: string };
 
@@ -24,7 +29,12 @@ type MentionUser = { id: string; name: string; avatarUrl?: string };
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThreadComponent {
-  constructor(private host: ElementRef<HTMLElement>, private fs: Firestore) { }
+  constructor(
+    private host: ElementRef<HTMLElement>,
+    private fs: Firestore,
+    private chatRefresh: ChatRefreshService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   @Input() header: { title: string; channel?: string } = { title: 'Thread' };
   @Input({ required: true }) rootMessage!: Message;
@@ -32,6 +42,7 @@ export class ThreadComponent {
   @Input() users: MentionUser[] = [];
   @Input() currentUserId: string | null = null;
   @Input({ required: true }) channelId!: string;
+  @Input() isDM: boolean = false;
 
   @Output() send = new EventEmitter<string>();
   @Output() close = new EventEmitter<void>();
@@ -58,6 +69,8 @@ export class ThreadComponent {
   hoveredRowId: string | null = null;
   private popoverHoverForId: string | null = null;
   private leaveTimer: any = null;
+
+  private env = inject(EnvironmentInjector);
 
   trackReaction = (_: number, it: ReactionVm) => it.emoji;
   trackReply = (_: number, r: Message) => r.id;
@@ -166,7 +179,7 @@ export class ThreadComponent {
     if (this.messageEmojiForId === id) this.messageEmojiForId = null;
   }
 
-  saveEdit(m: Message) {
+  async saveEdit(m: Message) {
     if (!this.isOwnMessage(m)) return;
 
     const next = (this.editDraft || '').trim();
@@ -175,8 +188,50 @@ export class ThreadComponent {
       return;
     }
 
-    this.edit.emit({ messageId: m.id, text: next });
-    this.cancelEdit(m);
+    try {
+      // ✅ Support für DMs und Channels
+      const isDM = this.isDM;
+      const isRoot = m.id === this.rootMessage.id;
+
+      let ref;
+      if (isDM) {
+        const convId = this.channelId;
+        ref = isRoot
+          ? doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}`)
+          : doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}/replies/${m.id}`);
+      } else {
+        ref = isRoot
+          ? doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}`)
+          : doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}/replies/${m.id}`);
+      }
+
+      await updateDoc(ref, {
+        text: next,
+        editedAt: new Date(),
+      });
+
+      // Update local state
+      m.text = next;
+      (m as any).editedAt = new Date();
+
+      // Refresh Chat to update UI
+      this.chatRefresh.refreshReactions();
+
+      console.log('[Thread] Message updated successfully:', m.id);
+    } catch (err) {
+      console.error('[Thread] Failed to save edit:', err);
+    }
+
+    // ✅ Edit-Box komplett schließen
+    this.editingMessageId = null;
+    this.editDraft = '';
+    this.editEmojiForId = null;
+    this.hoveredRowId = null;
+    this.popoverHoverForId = null;
+    this.editMenuForId = null;
+
+    // ✅ Change Detection manuell triggern
+    this.cdr.markForCheck();
   }
 
   // ---------------------------
@@ -404,42 +459,64 @@ export class ThreadComponent {
     const emoji = this.emojiToString(emojiInput);
     if (!emoji) return;
 
-    const ref =
-      ctx === 'root'
+    console.log('[THREAD REACTION]', {
+      channelId: this.channelId,
+      isDM_guess: this.channelId.includes('_'),
+      rootId: this.rootMessage?.id,
+      msgId: m?.id,
+      ctx,
+      uid,
+      emoji
+    });
+
+    // ✅ Support für DMs und Channels
+    const isDM = this.isDM;
+
+    let ref;
+    if (isDM) {
+      const convId = this.channelId;
+      ref = ctx === 'root'
+        ? doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}`)
+        : doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}/replies/${m.id}`);
+    } else {
+      ref = ctx === 'root'
         ? doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}`)
         : doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}/replies/${m.id}`);
+    }
+    console.log('[THREAD REACTION] target ref path:', ref.path);
 
     try {
-      await runTransaction(this.fs, async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists()) return;
+      await runInInjectionContext(this.env, () =>
+        runTransaction(this.fs, async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists()) return;
 
-        const data = snap.data() as any;
-        const key = String(emoji);
+          const data = snap.data() as any;
+          const key = String(emoji);
 
-        const already = !!data?.reactionBy?.[key]?.[uid];
-        const currentCount = Number(data?.reactions?.[key] ?? 0);
+          const already = !!data?.reactionBy?.[key]?.[uid];
+          const currentCount = Number(data?.reactions?.[key] ?? 0);
 
-        const displayName =
-          (this.users.find(u => u.id === uid)?.name ?? '').trim() || 'Unbekannt';
+          if (already) {
+            const updatePayload: any = {
+              [`reactionBy.${key}.${uid}`]: deleteField(),
+            };
 
-        if (already) {
-          const updatePayload: any = {
-            [`reactionBy.${key}.${uid}`]: deleteField(),
-          };
+            if (currentCount <= 1) updatePayload[`reactions.${key}`] = deleteField();
+            else updatePayload[`reactions.${key}`] = increment(-1);
 
-          if (currentCount <= 1) updatePayload[`reactions.${key}`] = deleteField();
-          else updatePayload[`reactions.${key}`] = increment(-1);
+            tx.update(ref, updatePayload);
+            return;
+          }
 
-          tx.update(ref, updatePayload);
-          return;
-        }
+          tx.update(ref, {
+            [`reactionBy.${key}.${uid}`]: true,
+            [`reactions.${key}`]: increment(1),
+          });
+        })
+      );
 
-        tx.update(ref, {
-          [`reactionBy.${key}.${uid}`]: true,
-          [`reactions.${key}`]: increment(1),
-        });
-      });
+      this.chatRefresh.refreshReactions();
     } catch (err) {
       console.error('[Thread] Reaction update failed:', err);
     }

@@ -107,12 +107,12 @@ export class ChannelsComponent {
     const raw = (this.newChannelName || '').trim();
     if (!raw) return;
 
-    const id = raw.toLowerCase().replace(/\s+/g, '-');
     const topic = (this.newChannelDescription || '').trim();
 
     try {
-      await this.chanSvc.createChannel(id, topic);
-      await this.chanSvc.addMeAsMember(id, 'owner');
+      // createChannel gibt jetzt die generierte ID zurück
+      const channelId = await this.chanSvc.createChannel(raw, topic);
+      await this.chanSvc.addMeAsMember(channelId, 'owner');
 
       // Formular leeren & Modal schließen
       this.newChannelName = '';
@@ -120,7 +120,7 @@ export class ChannelsComponent {
       this.closeCreateChannelModal();
 
       // gleich in den neuen Channel springen
-      this.router.navigate(['/channel', id]);
+      this.router.navigate(['/channel', channelId]);
     } catch (e) {
       console.error('[ChannelModal] create failed:', e);
     }
@@ -173,14 +173,20 @@ export class ChannelsComponent {
         return of([] as WsSearchResult[]);
       }
 
+      type WsChannelResult = Extract<WsSearchResult, { kind: 'channel' }>;
+
       const channels$ = collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
         map((rows: any[]) =>
           (rows || [])
-            .filter((c) => String(c.id || '').toLowerCase().includes(term))
+            .map((c): WsChannelResult => ({
+              kind: 'channel',
+              id: String(c.id),
+              name: String(c?.name ?? c.id),
+            }))
+            .filter((c) => c.name.toLowerCase().includes(term))
             .slice(0, 6)
-            .map((c) => ({ kind: 'channel', id: String(c.id) } as WsSearchResult))
         ),
-        catchError(() => of([] as WsSearchResult[]))
+        catchError(() => of([] as WsChannelResult[]))
       );
 
       const users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }).pipe(
