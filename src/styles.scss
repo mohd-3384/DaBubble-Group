@@ -512,6 +512,19 @@ body {
     padding: 12px;
   }
 
+  .ui-modal--add-members {
+    align-items: flex-end !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
+  }
+
+  .ui-modal--add-members .ui-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 4999;
+  }
+
   .ui-modal--right {
     align-items: center !important;
     justify-content: center !important;

@@ -96,6 +96,10 @@
   }
 }
 
+.mitglieder-channel {
+  display: none;
+}
+
 /* ===========================
     Mitgliederbereich rechts
    =========================== */
@@ -200,6 +204,10 @@ $muted: #6c7280;
 }
 
 @media (max-width: 768px) {
+  .user-profile__panel {
+    margin: 0 8px;
+  }
+
   .chat-header {
     min-height: 68px;
     padding: 14px 16px;
@@ -242,18 +250,7 @@ $muted: #6c7280;
   }
 
   .avatars {
-    padding: 4px 8px;
-
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-width: 1.5px;
-      margin-left: -6px;
-    }
-
-    .count {
-      font-size: 16px;
-    }
+    display: none;
   }
 
   .header-pill .title,
@@ -735,10 +732,153 @@ $muted: #6c7280;
   z-index: 99999;
 }
 
-@media (max-width: 520px) {
+/* Lokale Scrollbar-Stile für Modale (Emoji-Picker-Design) */
+.ui-modal,
+.ui-modal__body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-color);
+}
+
+.ui-modal::-webkit-scrollbar,
+.ui-modal__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ui-modal::-webkit-scrollbar-thumb,
+.ui-modal__body::-webkit-scrollbar-thumb {
+  background: var(--background-color);
+  border-radius: 999px;
+}
+
+.ui-modal::-webkit-scrollbar-track,
+.ui-modal__body::-webkit-scrollbar-track {
+  background: var(--surface-bg);
+}
+
+/* Desktop: Mobile-Version ausblenden, Desktop-Overlay ausblenden wenn nicht spezifisch benötigt */
+@media (min-width: 769px) {
+  .add-members__panel--mobile {
+    display: none !important;
+  }
+
+  .ui-overlay--add-members-mobile {
+    display: none !important;
+  }
+
+  .ui-overlay--add-members-desktop {
+    display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  .ui-modal {
+    padding: 0;
+  }
+
   .emoji-popover--composer {
     left: 0;
     transform: none;
+  }
+
+  /* Desktop-Version von add-members ausblenden in Mobile */
+  .ui-overlay--add-members-desktop,
+  .ui-modal--add-members {
+    display: none !important;
+  }
+
+  /* Spezielles Overlay für add-members über channel-info in Mobile */
+  .ui-overlay--add-members-mobile {
+    z-index: 23000 !important;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  /* Mobile-Version von add-members anzeigen */
+  .add-members__panel--mobile {
+    display: block !important;
+  }
+
+  .channel-info__panel {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .channel-info__header {
+    padding: 16px 16px;
+    flex: 0 0 auto;
+    box-shadow: 0 2px 10px #0000001c;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    z-index: 10;
+    background-color: var(--surface-bg);
+  }
+
+  .channel-info__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 80px 12px 32px 12px;
+    min-height: 0;
+    margin-top: 0;
+  }
+
+  .channel-info__footer {
+    flex: 0 0 auto;
+    padding: 16px 12px;
+  }
+
+  .mitglieder-channel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 12px;
+    border: 1px solid var(--secondary-color);
+    border-radius: 20px;
+    background: var(--surface-bg);
+    margin-top: 0;
+  }
+
+  .members-modal__header {
+    padding: 0;
+    margin-bottom: 12px;
+
+    .ui-modal__close {
+      display: none;
+    }
+  }
+
+  .members-modal__title {
+    font-size: 18px;
+  }
+
+  .members-modal__list {
+    max-height: 300px;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .members-modal__item {
+    gap: 10px;
+    padding: 8px 8px;
+  }
+
+  .members-modal__add-btn {
+    padding: 10px 12px;
+    font-size: 14px;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .members-modal__add-icon {
+    width: 24px;
+    height: 24px;
+    background-size: 14px 14px;
   }
 }
 
@@ -935,6 +1075,23 @@ $muted: #6c7280;
   height: 66vh;
   max-height: 80vh;
   border-radius: 0 30px 30px;
+  /* Scrollbar (wie in styles.scss Emoji-Picker) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-color) var(--surface-bg);
+}
+
+/* Chrome/Edge/Safari Scrollbar für Channel-Info Panel */
+.channel-info__panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.channel-info__panel::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 999px;
+}
+
+.channel-info__panel::-webkit-scrollbar-track {
+  background: var(--surface-bg);
 }
 
 .channel-info__header {
@@ -964,6 +1121,7 @@ $muted: #6c7280;
   border-radius: 24px;
   border: 1px solid var(--secondary-color);
   padding: 18px 20px 20px;
+  margin-top: 16px;
 
   &.channel-info__card--edit {
     border-color: transparent;
@@ -1429,11 +1587,7 @@ $muted: #6c7280;
 
 @media (max-width: 768px) {
   .members-modal__panel {
-    width: min(320px, 94vw);
-    padding: 16px 16px 14px;
-    border-radius: 18px 0 18px 18px;
-    gap: 10px;
-    max-height: 70vh;
+    display: none;
   }
 
   .members-modal__title {
@@ -1469,6 +1623,10 @@ $muted: #6c7280;
   .members-modal__name {
     font-size: 14px;
     line-height: 1.3;
+  }
+
+  .channel-info__header .ui-modal__close {
+    margin: 0 24px !important;
   }
 }
 
@@ -1701,12 +1859,21 @@ $muted: #6c7280;
 
 @media (max-width: 768px) {
 
+  .channel-info__panel {
+    overflow-y: auto;
+  }
+
   .members-modal__panel--anchored,
   .add-members__panel--anchored {
-    width: auto;
-    max-width: none;
-    right: 12px;
-    transform: none;
+    position: fixed !important;
+    margin: 0;
+    width: 100vw !important;
+    max-width: none !important;
+    right: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    top: auto !important;
+    bottom: 0 !important;
   }
 
   .members-modal__panel {
@@ -1715,12 +1882,23 @@ $muted: #6c7280;
   }
 
   .add-members__panel {
-    width: auto;
-    max-width: none;
-    padding: 16px 16px 18px;
-    border-radius: 18px 0 18px 18px;
-    gap: 14px;
-    left: 8px !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: auto;
+    max-height: 80vh;
+    padding: 0 0 40px 0;
+    border-radius: 20px 20px 0 0 !important;
+    gap: 16px;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    position: fixed !important;
+    animation: slideUp 0.3s ease-out forwards;
+    z-index: 25000 !important;
+
+    div {
+      padding: 10px 16px;
+    }
   }
 
   .add-members__title {
@@ -2145,5 +2323,28 @@ $muted: #6c7280;
     &:hover {
       background-image: url('/public/images/add-reaction-hover.svg');
     }
+  }
+}
+
+/* ===========================
+    Slide-Up Animation für Mobile
+   =========================== */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(100%);
   }
 }

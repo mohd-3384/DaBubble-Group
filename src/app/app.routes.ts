@@ -27,8 +27,6 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [authGuard],
     children: [
-      { path: 'channels', pathMatch: 'full', redirectTo: 'new' },
-
       {
         path: 'new',
         loadComponent: () =>
@@ -55,8 +53,15 @@ export const routes: Routes = [
           import('./chat/chat.component').then((m) => m.ChatComponent),
       },
 
+      // Channels-Liste Route (zeigt nur Sidebar in Mobile, Chat-Bereich leer in Desktop)
+      {
+        path: 'channels',
+        loadComponent: () =>
+          import('./chat/chat.component').then((m) => m.ChatComponent),
+      },
+
       // Default im eingeloggten Bereich
-      { path: '', pathMatch: 'full', redirectTo: 'channels' },
+      { path: '', pathMatch: 'full', redirectTo: 'new' },
     ],
   },
 

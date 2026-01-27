@@ -326,79 +326,104 @@
     <div class="ui-modal" *ngIf="channelInfoOpen" (click)="closeChannelInfoModal()">
       <div class="ui-modal__panel channel-info__panel" (click)="$event.stopPropagation()">
 
-        <div>
-          <div class="ui-modal__header channel-info__header">
-            <div class="channel-info__title">
-              <span class="channel-info__name">{{ vm.title }}</span>
+        <div class="ui-modal__header channel-info__header">
+          <div class="channel-info__title">
+            <span class="channel-info__name">{{ vm.title }}</span>
+          </div>
+          <button type="button" class="ui-modal__close" (click)="closeChannelInfoModal()">×</button>
+        </div>
+
+        <div class="ui-modal__body channel-info__body">
+
+          <section class="channel-info__card" [class.channel-info__card--edit]="channelNameEdit">
+            <div class="channel-info__card-header">
+              <span class="channel-info__label">Channel-Name</span>
+
+              <button type="button" class="channel-info__edit-btn" (click)="toggleChannelNameEdit()">
+                {{ channelNameEdit ? 'Speichern' : 'Bearbeiten' }}
+              </button>
             </div>
-            <button type="button" class="ui-modal__close" (click)="closeChannelInfoModal()">×</button>
-          </div>
 
-          <div class="ui-modal__body channel-info__body">
+            <div *ngIf="!channelNameEdit" class="channel-info__field-pill">
+              <span class="channel-info__field-text">{{ vm.title }}</span>
+            </div>
 
-            <section class="channel-info__card" [class.channel-info__card--edit]="channelNameEdit">
-              <div class="channel-info__card-header">
-                <span class="channel-info__label">Channel-Name</span>
-
-                <button type="button" class="channel-info__edit-btn" (click)="toggleChannelNameEdit()">
-                  {{ channelNameEdit ? 'Speichern' : 'Bearbeiten' }}
-                </button>
+            <div *ngIf="channelNameEdit" class="channel-info__field-pill channel-info__field-pill--edit">
+              <div class="channel-input-wrap channel-input-wrap--info">
+                <span class="channel-hash">#</span>
+                <input class="channel-input" type="text" [(ngModel)]="editChannelName"
+                  [ngModelOptions]="{standalone:true}" autocomplete="off" />
               </div>
+            </div>
+          </section>
 
-              <div *ngIf="!channelNameEdit" class="channel-info__field-pill">
-                <span class="channel-info__field-text">{{ vm.title }}</span>
-              </div>
+          <section class="channel-info__card" [class.channel-info__card--edit]="channelDescEdit">
+            <div class="channel-info__card-header">
+              <span class="channel-info__label">Beschreibung</span>
 
-              <div *ngIf="channelNameEdit" class="channel-info__field-pill channel-info__field-pill--edit">
-                <div class="channel-input-wrap channel-input-wrap--info">
-                  <span class="channel-hash">#</span>
-                  <input class="channel-input" type="text" [(ngModel)]="editChannelName"
-                    [ngModelOptions]="{standalone:true}" autocomplete="off" />
-                </div>
-              </div>
-            </section>
+              <button type="button" class="channel-info__edit-btn" (click)="toggleChannelDescEdit()">
+                {{ channelDescEdit ? 'Speichern' : 'Bearbeiten' }}
+              </button>
+            </div>
 
-            <section class="channel-info__card" [class.channel-info__card--edit]="channelDescEdit">
-              <div class="channel-info__card-header">
-                <span class="channel-info__label">Beschreibung</span>
+            <div class="channel-info__desc-box">
+              <ng-container *ngIf="!channelDescEdit; else descEditTpl">
+                <p class="channel-info__desc-text" *ngIf="channelTopic; else noTopicTpl">
+                  {{ channelTopic }}
+                </p>
 
-                <button type="button" class="channel-info__edit-btn" (click)="toggleChannelDescEdit()">
-                  {{ channelDescEdit ? 'Speichern' : 'Bearbeiten' }}
-                </button>
-              </div>
-
-              <div class="channel-info__desc-box">
-                <ng-container *ngIf="!channelDescEdit; else descEditTpl">
-                  <p class="channel-info__desc-text" *ngIf="channelTopic; else noTopicTpl">
-                    {{ channelTopic }}
+                <ng-template #noTopicTpl>
+                  <p class="channel-info__desc-text channel-info__desc-text--empty">
+                    Noch keine Beschreibung hinzugefügt.
                   </p>
-
-                  <ng-template #noTopicTpl>
-                    <p class="channel-info__desc-text channel-info__desc-text--empty">
-                      Noch keine Beschreibung hinzugefügt.
-                    </p>
-                  </ng-template>
-                </ng-container>
-
-                <ng-template #descEditTpl>
-                  <div class="channel-input-wrap channel-input-wrap--info channel-input-wrap--textarea">
-                    <textarea class="channel-textarea channel-info__textarea" maxlength="100"
-                      placeholder="Dein Text hier" [(ngModel)]="editChannelDesc"></textarea>
-                  </div>
                 </ng-template>
+              </ng-container>
 
-                <div class="channel-info__divider"></div>
+              <ng-template #descEditTpl>
+                <div class="channel-input-wrap channel-input-wrap--info channel-input-wrap--textarea">
+                  <textarea class="channel-textarea channel-info__textarea" maxlength="100" placeholder="Dein Text hier"
+                    [(ngModel)]="editChannelDesc"></textarea>
+                </div>
+              </ng-template>
 
-                <div class="channel-info__meta">
-                  <div class="channel-info__meta-label">Erstellt von</div>
-                  <div class="channel-info__creator">
-                    {{ (channelCreator$ | async)?.name || 'Unbekannt' }}
-                  </div>
+              <div class="channel-info__divider"></div>
+
+              <div class="channel-info__meta">
+                <div class="channel-info__meta-label">Erstellt von</div>
+                <div class="channel-info__creator">
+                  {{ (channelCreator$ | async)?.name || 'Unbekannt' }}
                 </div>
               </div>
-            </section>
+            </div>
+          </section>
 
-          </div>
+          <section class="mitglieder-channel" *ngIf="members$ | async as members">
+            <div class="members-modal__header">
+              <h3 class="members-modal__title">Mitglieder</h3>
+              <button type="button" class="ui-modal__close" (click)="closeChannelInfoModal()">×</button>
+            </div>
+
+            <div class="members-modal__list">
+              <button type="button" class="members-modal__item" *ngFor="let m of members; trackBy: trackMember"
+                (click)="onMemberClick(m.uid)">
+                <div class="members-modal__avatar-wrap">
+                  <img class="members-modal__avatar" [src]="m.avatarUrl" [alt]="m.name" />
+                  <div class="members-modal__status-dot" [class.members-modal__status-dot--active]="m.online"></div>
+                </div>
+
+                <div class="members-modal__info">
+                  <div class="members-modal__name">
+                    {{ m.name }}
+                    <ng-container *ngIf="m.uid === currentUser?.id">(Du)</ng-container>
+                  </div>
+                </div>
+              </button>
+              <button type="button" class="members-modal__add-btn" (click)="openAddMembersModal()">
+                <span class="members-modal__add-icon"></span>
+                <span>Mitglieder hinzufügen</span>
+              </button>
+            </div>
+          </section>
         </div>
 
         <div class="channel-info__footer">
@@ -501,7 +526,12 @@
   </ng-container>
 
   <!-- ADD-MEMBERS MODAL -->
-  <div class="ui-overlay" *ngIf="addMembersOpen" (click)="closeAddMembersModal()"></div>
+  <!-- Zusätzliches Overlay speziell für Mobile: über channel-info, unter add-members -->
+  <div class="ui-overlay ui-overlay--add-members-mobile" *ngIf="channelInfoOpen && addMembersOpen"
+    (click)="closeAddMembersModal()"></div>
+
+  <!-- Desktop: Panel innerhalb ui-modal -->
+  <div class="ui-overlay ui-overlay--add-members-desktop" *ngIf="addMembersOpen" (click)="closeAddMembersModal()"></div>
 
   <div class="ui-modal ui-modal--add-members" *ngIf="addMembersOpen" (click)="closeAddMembersModal()">
     <div class="ui-modal__panel add-members__panel add-members__panel--anchored" (click)="$event.stopPropagation()"
@@ -552,5 +582,50 @@
       </div>
 
     </div>
+  </div>
+
+  <!-- Mobile: Panel direkt ohne ui-modal Wrapper -->
+  <div class="add-members__panel add-members__panel--mobile" *ngIf="addMembersOpen" (click)="$event.stopPropagation()">
+
+    <div class="add-members__header">
+      <h3 class="add-members__title">Leute hinzufügen</h3>
+      <button type="button" class="ui-modal__close" (click)="closeAddMembersModal()">×</button>
+    </div>
+
+    <div class="add-members__channel">
+      <span class="add-members__hash">#</span>
+      <span class="add-members__channel-name">{{ vm.title.replace('# ', '') }}</span>
+    </div>
+
+    <div class="add-members__body">
+      <div class="add-members__input-wrap" (click)="$event.stopPropagation()">
+        <input type="text" class="add-members__input" placeholder="Name eingeben" [(ngModel)]="addMemberInput"
+          (ngModelChange)="onAddMemberInput($event)" />
+
+        <ng-container *ngIf="addMemberSuggestions$ | async as sugg">
+          <div class="add-members__suggest" *ngIf="addMemberInput.trim() && showAddMemberSuggest">
+            <button type="button" class="add-members__suggest-item" *ngFor="let u of sugg" (click)="selectAddMember(u)">
+              <div class="add-members__suggest-avatar-wrap">
+                <img class="add-members__suggest-avatar" [src]="u.avatarUrl" [alt]="u.name" />
+                <span class="add-members__suggest-dot" [class.add-members__suggest-dot--active]="u.online"></span>
+              </div>
+              <span class="add-members__suggest-name">{{ u.name }}</span>
+            </button>
+
+            <div *ngIf="sugg.length === 0" class="add-members__suggest-empty">
+              Keine passenden Personen
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="add-members__footer">
+        <button type="button" class="add-members__submit-btn" [disabled]="!addMemberSelected"
+          (click)="submitAddMember()">
+          Hinzufügen
+        </button>
+      </div>
+    </div>
+
   </div>
 </ng-container>

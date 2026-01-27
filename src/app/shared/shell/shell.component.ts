@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, ActivatedRoute, ParamMap, Router, NavigationStart } from '@angular/router';
+import { RouterOutlet, ActivatedRoute, ParamMap, Router, NavigationStart, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 import { ChannelsComponent } from '../../channels/channels.component';
 import { ThreadComponent } from '../../thread/thread.component';
@@ -128,8 +128,15 @@ export class ShellComponent {
 
     // Laufende Navigationen verfolgen
     this.router.events
-      .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart))
-      .subscribe((e) => updateMobileView(e.url));
+      .pipe(filter((e): e is NavigationStart | NavigationEnd =>
+        e instanceof NavigationStart || e instanceof NavigationEnd))
+      .subscribe((e) => {
+        if (e instanceof NavigationEnd) {
+          updateMobileView(e.urlAfterRedirects || e.url);
+        } else {
+          updateMobileView(e.url);
+        }
+      });
 
     this.presence.init();
 

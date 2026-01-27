@@ -1,6 +1,6 @@
 import { ViewChild, Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, NavigationStart, ActivatedRoute } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, ActivatedRoute } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -41,6 +41,7 @@ export class HeaderComponent {
 
   /** ---------- MOBILE CHAT OPEN STATE ---------- */
   isChatOpen = false;
+  isNewMessageRoute = false;
   private currentChannelId: string | null = null;
 
   isDesktop = window.innerWidth >= 1025;
@@ -87,14 +88,20 @@ export class HeaderComponent {
     this.router.events
       .pipe()
       .subscribe((event) => {
-        if (event instanceof NavigationStart) {
-          const url = event.url;
+        if (event instanceof NavigationStart || event instanceof NavigationEnd) {
+          const url = event instanceof NavigationEnd
+            ? (event.urlAfterRedirects || event.url)
+            : event.url;
+
           // Check if we're in a chat route (channel, dm, new) or thread route
           const isChat =
             url.startsWith('/channel/') ||
             url.startsWith('/dm/') ||
             url.startsWith('/new');
           this.isChatOpen = isChat;
+
+          // Check if we're in the new message route
+          this.isNewMessageRoute = url.startsWith('/new');
 
           // Extrahiere channelId aus URL
           const channelMatch = url.match(/\/channel\/([^/]+)/);
@@ -108,6 +115,12 @@ export class HeaderComponent {
 
     // Wenn wir in einem Thread sind → Browser Back (sicher, da wir vom Chat hier herkamen)
     if (currentUrl.match(/\/(channel|dm)\/[^/]+\/thread\//)) {
+      window.history.back();
+      return;
+    }
+
+    // Wenn wir in "Neue Nachricht" sind → Browser Back zur vorherigen Seite
+    if (currentUrl.startsWith('/new')) {
       window.history.back();
       return;
     }
