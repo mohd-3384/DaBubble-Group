@@ -339,7 +339,8 @@
             <div class="channel-info__card-header">
               <span class="channel-info__label">Channel-Name</span>
 
-              <button type="button" class="channel-info__edit-btn" (click)="toggleChannelNameEdit()">
+              <button type="button" class="channel-info__edit-btn"
+                [attr.data-action]="channelNameEdit ? 'save' : 'edit'" (click)="toggleChannelNameEdit()">
                 {{ channelNameEdit ? 'Speichern' : 'Bearbeiten' }}
               </button>
             </div>
@@ -361,7 +362,8 @@
             <div class="channel-info__card-header">
               <span class="channel-info__label">Beschreibung</span>
 
-              <button type="button" class="channel-info__edit-btn" (click)="toggleChannelDescEdit()">
+              <button type="button" class="channel-info__edit-btn"
+                [attr.data-action]="channelDescEdit ? 'save' : 'edit'" (click)="toggleChannelDescEdit()">
                 {{ channelDescEdit ? 'Speichern' : 'Bearbeiten' }}
               </button>
             </div>

@@ -374,14 +374,17 @@ export class ChatComponent {
   async toggleChannelNameEdit() {
     // ENTER edit mode
     if (!this.channelNameEdit) {
-      this.channelDoc$
-        .pipe(
-          filter((ch): ch is ChannelDoc => !!ch),
-          take(1)
-        )
-        .subscribe((ch) => {
-          this.editChannelName = String(ch.name ?? '').trim();
-        });
+      // Sicherstellen, dass editChannelName den aktuellen Wert hat
+      if (!this.editChannelName) {
+        this.channelDoc$
+          .pipe(
+            filter((ch): ch is ChannelDoc => !!ch),
+            take(1)
+          )
+          .subscribe((ch) => {
+            this.editChannelName = String(ch.name ?? '').trim();
+          });
+      }
 
       this.channelNameEdit = true;
       return;
@@ -403,14 +406,17 @@ export class ChatComponent {
   async toggleChannelDescEdit() {
     // ENTER edit mode
     if (!this.channelDescEdit) {
-      this.channelDoc$
-        .pipe(
-          filter((ch): ch is ChannelDoc => !!ch),
-          take(1)
-        )
-        .subscribe((ch) => {
-          this.editChannelDesc = String(ch.topic ?? '').trim();
-        });
+      // Sicherstellen, dass editChannelDesc den aktuellen Wert hat
+      if (!this.editChannelDesc) {
+        this.channelDoc$
+          .pipe(
+            filter((ch): ch is ChannelDoc => !!ch),
+            take(1)
+          )
+          .subscribe((ch) => {
+            this.editChannelDesc = String(ch.topic ?? '').trim();
+          });
+      }
 
       this.channelDescEdit = true;
       return;
