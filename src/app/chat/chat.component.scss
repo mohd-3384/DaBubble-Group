@@ -1998,7 +1998,13 @@ $muted: #6c7280;
   }
 }
 
+@media (max-width: 356px) {
 
+  .replies,
+  .last-reply {
+    font-size: 12px;
+  }
+}
 
 
 
