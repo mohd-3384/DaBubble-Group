@@ -755,6 +755,12 @@ $muted: #6c7280;
   background: var(--surface-bg);
 }
 
+/* Overlay für Add-Members über Channel-Info mit höherem z-index */
+.ui-overlay--add-members-over-info {
+  z-index: 22000 !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+}
+
 /* Desktop: Mobile-Version ausblenden, Desktop-Overlay ausblenden wenn nicht spezifisch benötigt */
 @media (min-width: 769px) {
   .add-members__panel--mobile {
@@ -1916,7 +1922,7 @@ $muted: #6c7280;
   .add-members__panel {
     width: 100vw !important;
     max-width: none !important;
-    height: auto;
+    height: 46vh;
     max-height: 80vh;
     padding: 0 0 40px 0;
     border-radius: 20px 20px 0 0 !important;
@@ -2198,14 +2204,6 @@ $muted: #6c7280;
 .message-row.is-editing .message-actions {
   display: none !important;
 }
-
-
-
-
-
-
-
-
 
 /* Reactions (unter der Bubble) */
 .reactions-row {

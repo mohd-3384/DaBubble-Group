@@ -1757,4 +1757,15 @@ export class ChatComponent {
       this.composerEmojiPos = { top: finalTop, left };
     });
   }
+
+  onComposerKeydown(event: KeyboardEvent, vm?: Vm) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (vm) {
+        this.send(vm);
+      } else {
+        this.sendFromCompose();
+      }
+    }
+  }
 }

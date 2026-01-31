@@ -238,7 +238,8 @@
 
   <!-- Composer -->
   <div class="composer composer--sticky" (mousedown)="closeMessageUiFromComposer()">
-    <textarea class="composer-input" rows="3" placeholder="Antworten…" [(ngModel)]="draft"></textarea>
+    <textarea class="composer-input" rows="3" placeholder="Antworten…" [(ngModel)]="draft"
+      (keydown)="onComposerKeydown($event)"></textarea>
 
     <div class="composer-actions">
       <div class="actions-left">

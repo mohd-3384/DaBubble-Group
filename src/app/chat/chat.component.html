@@ -80,7 +80,8 @@
     <div class="compose-spacer"></div>
 
     <div class="composer">
-      <textarea class="composer-input" rows="3" placeholder="Starte eine neue Nachricht" [(ngModel)]="draft"></textarea>
+      <textarea class="composer-input" rows="3" placeholder="Starte eine neue Nachricht" [(ngModel)]="draft"
+        (keydown)="onComposerKeydown($event)"></textarea>
 
       <div class="composer-actions">
         <div class="actions-left">
@@ -264,7 +265,8 @@
 
       <!-- COMPOSER FEST UNTEN -->
       <div class="composer composer--sticky">
-        <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"></textarea>
+        <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"
+          (keydown)="onComposerKeydown($event, vm)"></textarea>
 
         <div class="composer-actions">
           <div class="actions-left">
@@ -528,12 +530,12 @@
   </ng-container>
 
   <!-- ADD-MEMBERS MODAL -->
-  <!-- Zusätzliches Overlay speziell für Mobile: über channel-info, unter add-members -->
-  <div class="ui-overlay ui-overlay--add-members-mobile" *ngIf="channelInfoOpen && addMembersOpen"
-    (click)="closeAddMembersModal()"></div>
+  <!-- Overlay wenn vom Header-Button geöffnet (niedriger z-index) -->
+  <div class="ui-overlay" *ngIf="addMembersOpen && !channelInfoOpen" (click)="closeAddMembersModal()"></div>
 
-  <!-- Desktop: Panel innerhalb ui-modal -->
-  <div class="ui-overlay ui-overlay--add-members-desktop" *ngIf="addMembersOpen" (click)="closeAddMembersModal()"></div>
+  <!-- Overlay wenn vom Channel-Info geöffnet (höherer z-index, über Channel-Info) -->
+  <div class="ui-overlay ui-overlay--add-members-over-info" *ngIf="addMembersOpen && channelInfoOpen"
+    (click)="closeAddMembersModal()"></div>
 
   <div class="ui-modal ui-modal--add-members" *ngIf="addMembersOpen" (click)="closeAddMembersModal()">
     <div class="ui-modal__panel add-members__panel add-members__panel--anchored" (click)="$event.stopPropagation()"

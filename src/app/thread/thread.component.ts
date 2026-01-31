@@ -581,4 +581,11 @@ export class ThreadComponent {
     return this.users.find(u => u.id === uid)?.avatarUrl ?? '/public/images/avatars/avatar-default.svg';
   }
 
+  onComposerKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.onSendClick();
+    }
+  }
+
 }
