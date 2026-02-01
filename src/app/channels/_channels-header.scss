@@ -1,0 +1,114 @@
+/* ===========================
+    Header (Devspace + Icons)
+   =========================== */
+.ws-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+  margin-left: -16px;
+  flex: 0 0 auto;
+}
+
+.ws-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.ws-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.ws-logo {
+  width: 46px;
+}
+
+.icon-swap {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: filter var(--transition15);
+}
+
+.icon-swap:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.icon-swap.edit {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  background-size: 38px 38px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url('/public/images/edit_square.svg');
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition20);
+}
+
+.icon-swap.edit:hover {
+  background-image: url('/public/images/edit_square_hover.svg');
+  background-color: var(--background-color);
+  transform: scale(1.05);
+}
+
+.icon-swap.add {
+  background-image: url('/public/images/add.svg');
+}
+
+.icon-swap.add:hover,
+.icon-swap.add:active {
+  background-image: url('/public/images/add-hover.svg');
+}
+
+.ws-header__search {
+  display: none;
+  position: relative;
+  align-items: center;
+  width: 100%;
+  height: 56px;
+
+  input {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius9999);
+    border: 1px solid var(--accent-color);
+    padding: 0 56px 0 18px;
+    font-size: 16px;
+    font-family: Nunito, sans-serif;
+    outline: none;
+    background: var(--surface-bg);
+  }
+
+  .ws-search-icon {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 22px;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+}
+
+.ws-header__desktop {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}

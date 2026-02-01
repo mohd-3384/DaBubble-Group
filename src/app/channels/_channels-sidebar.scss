@@ -1,0 +1,92 @@
+/* ===========================
+    Workspace Sidebar
+   =========================== */
+.workspace-wrapper {
+    position: relative;
+    height: 100%;
+}
+
+.workspace-panel {
+    height: 100%;
+    width: 280px;
+    transition: width 0.2s ease, padding 0.2s ease;
+    overflow: hidden;
+    background: var(--surface-bg);
+    border-radius: 24px 0 0 24px;
+    padding-left: 40px;
+    box-sizing: border-box;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ws-sections {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
+.workspace-wrapper.is-collapsed .workspace-panel {
+    display: none;
+}
+
+.workspace-wrapper.is-collapsed .workspace-handle {
+    left: 0;
+}
+
+.handle-icon {
+    width: 24px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px 24px;
+    margin-bottom: 8px;
+}
+
+.workspace-wrapper:not(.is-collapsed) .handle-icon {
+    background-image: url('/public/images/workspace-hide.svg');
+}
+
+.workspace-wrapper:not(.is-collapsed) .workspace-handle:hover .handle-icon {
+    background-image: url('/public/images/workspace-hide-hover.svg');
+}
+
+.workspace-wrapper.is-collapsed .handle-icon {
+    background-image: url('/public/images/workspace-show.svg');
+}
+
+.workspace-wrapper.is-collapsed .workspace-handle:hover .handle-icon {
+    background-image: url('/public/images/workspace-show-hover.svg');
+}
+
+.handle-text {
+    letter-spacing: 0.02em;
+}
+
+/* ===== Scrollbar ===== */
+/* Firefox */
+.ws-sections {
+    scrollbar-width: thin;
+    scrollbar-color: var(--background-color) transparent;
+    scrollbar-gutter: stable;
+}
+
+/* Chrome/Edge/Safari */
+.ws-sections::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ws-sections::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ws-sections::-webkit-scrollbar-thumb {
+    background: var(--background-color);
+    border-radius: var(--border-radius9999);
+}
+
+.ws-sections::-webkit-scrollbar-thumb:hover {
+    background: var(--background-color);
+}

@@ -1,0 +1,125 @@
+/* ===========================
+    Responsive Styles
+   =========================== */
+
+/* Tablet Breakpoint */
+@media (max-width: 768px) {
+    .ws-header {
+        padding: 10px 6px;
+        gap: 8px;
+    }
+
+    .ws-brand {
+        gap: 10px;
+    }
+
+    .ws-title {
+        font-size: 20px;
+    }
+
+    .ws-logo {
+        width: 38px;
+    }
+
+    .icon-swap {
+        width: 26px;
+        height: 26px;
+        background-size: 18px 18px;
+    }
+
+    .icon-swap.edit {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        min-height: 34px;
+        background-size: 30px 30px;
+    }
+
+    .section-header {
+        padding: 6px 2px;
+
+        .arrow {
+            width: 14px;
+            height: 14px;
+        }
+
+        .section-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .title {
+            font-size: 18px;
+        }
+
+        .icon-swap.add {
+            width: 28px;
+            height: 28px;
+            background-size: 18px 18px;
+        }
+    }
+}
+
+/* Mobile/Tablet FAB and Search */
+.fab-new-message {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .ws-sections {
+        padding: 0 24px;
+    }
+
+    .ws-header {
+        padding: 12px 16px;
+        margin-left: 0;
+    }
+
+    .workspace-panel {
+        max-height: calc(100vh - 90px);
+        width: 100%;
+        padding-left: 0;
+        border-radius: 0;
+    }
+
+    .ws-header__desktop {
+        display: none !important;
+    }
+
+    .ws-header__search {
+        display: flex;
+    }
+
+    .fab-new-message {
+        display: inline-flex;
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 5000;
+        width: 56px;
+        height: 56px;
+        border: 0;
+        border-radius: 50%;
+        cursor: pointer;
+
+        background-color: var(--primary-color);
+        background-image: url('/public/images/edit_square-white.svg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 26px 26px;
+
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+        transition: var(--transition15);
+    }
+
+    .fab-new-message:hover,
+    .fab-new-message:active {
+        background-color: var(--btn-hover-violett);
+        transform: scale(1.05);
+    }
+
+    .fab-new-message:focus-visible {
+        outline: 2px solid var(--btn-hover-violett);
+        outline-offset: 3px;
+    }
+}

@@ -1,0 +1,78 @@
+/* ===========================
+    Listen / Hover-Design
+   =========================== */
+a.mat-mdc-list-item {
+  margin: 4px 0;
+  border-radius: 24px;
+  transition:
+    background-color var(--transition15),
+    color var(--transition15),
+    transform var(--transition15);
+}
+
+a.mat-mdc-list-item .mdc-list-item__primary-text,
+a.mat-mdc-list-item div[matLine],
+a.mat-mdc-list-item span {
+  transition: color var(--transition15);
+}
+
+a.mat-mdc-list-item:not(.active):hover {
+  background-color: var(--background-color) !important;
+  color: var(--primary-color) !important;
+  transform: translateX(2px);
+}
+
+a.mat-mdc-list-item:not(.active):hover .mdc-list-item__primary-text,
+a.mat-mdc-list-item:not(.active):hover div[matLine],
+a.mat-mdc-list-item:not(.active):hover span {
+  color: var(--primary-color) !important;
+}
+
+a.mat-mdc-list-item.active,
+a.mat-mdc-list-item.active:hover {
+  background-color: var(--background-color) !important;
+  color: var(--primary-color) !important;
+  border-radius: 24px;
+}
+
+a.mat-mdc-list-item.active .mdc-list-item__primary-text,
+a.mat-mdc-list-item.active div[matLine],
+a.mat-mdc-list-item.active span {
+  color: var(--primary-color) !important;
+  font-weight: 600;
+}
+
+/* ==================================
+    Online/Offline-Dot (über Avatar)
+   ================================== */
+.avatar {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+.dot {
+  position: absolute;
+  bottom: 0;
+  left: 42px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--background-offline);
+  border: 2px solid var(--surface-bg);
+}
+
+.dot--online {
+  background: var(--background-online);
+}

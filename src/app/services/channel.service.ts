@@ -14,22 +14,28 @@ import { Observable, map } from 'rxjs';
 import { ChannelDoc } from '../interfaces/allInterfaces.interface';
 import { AuthReadyService } from './auth-ready.service';
 
+/**
+ * Service for managing channels (creation, membership, messages)
+ */
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
   private fs = inject(Firestore);
   private authReady = inject(AuthReadyService);
 
-  /** Channel anlegen – mit auto-generierter ID und name Feld */
+  /**
+   * Creates a new channel with auto-generated Firestore ID
+   * @param name - Display name of the channel
+   * @param topic - Optional topic/description of the channel
+   * @returns Promise resolving to the generated channel ID
+   */
   async createChannel(name: string, topic: string = ''): Promise<string> {
     const user = await this.authReady.requireUser();
-
-    // Auto-ID von Firestore generieren
     const channelsRef = collection(this.fs, 'channels');
     const docRef = doc(channelsRef);
     const channelId = docRef.id;
 
     await setDoc(docRef, {
-      name, // Speichere den Display-Namen
+      name,
       createdBy: user.uid,
       createdAt: serverTimestamp(),
       memberCount: 0,
@@ -40,12 +46,14 @@ export class ChannelService {
       topic,
     });
 
-    return channelId; // Gebe die generierte ID zurück
+    return channelId;
   }
 
   /**
-   * Aktuellen User als Member hinzufügen
-   * + memberCount nur hochzählen, wenn der Member-Datensatz vorher NICHT existierte
+   * Adds the current user as a member to a channel
+   * Increments memberCount only if the member document did not exist before
+   * @param channelId - ID of the channel to join
+   * @param role - Role of the member ('owner' or 'member')
    */
   async addMeAsMember(channelId: string, role: 'owner' | 'member' = 'member'): Promise<void> {
     const user = await this.authReady.requireUser();
@@ -66,7 +74,10 @@ export class ChannelService {
     });
   }
 
-  /** Welcome-Message (Bot) – authorId bleibt echter User (dein aktuelles Modell) */
+  /**
+   * Posts a welcome message to a channel from the bot
+   * @param channelId - ID of the channel to post welcome message
+   */
   async postWelcome(channelId: string): Promise<void> {
     const user = await this.authReady.requireUser();
 
@@ -83,6 +94,10 @@ export class ChannelService {
     });
   }
 
+  /**
+   * Removes the current user from a channel and decrements member count
+   * @param channelId - ID of the channel to leave
+   */
   async leaveChannel(channelId: string): Promise<void> {
     const user = await this.authReady.requireUser();
 
@@ -100,6 +115,10 @@ export class ChannelService {
     });
   }
 
+  /**
+   * Returns an observable stream of all channels, sorted alphabetically by name
+   * @returns Observable of channel documents array sorted by name
+   */
   channels$(): Observable<ChannelDoc[]> {
     const ref = collection(this.fs, 'channels');
     return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(

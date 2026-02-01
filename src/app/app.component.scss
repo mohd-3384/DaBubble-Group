@@ -11,7 +11,7 @@ section {
     app-chat,
     app-thread {
       flex: 1;
-      background-color: white;
+      background-color: var(--surface-bg);
       border-radius: 30px;
     }
   }

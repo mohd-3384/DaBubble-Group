@@ -1,0 +1,187 @@
+/* ===========================
+    Profile Menu & Trigger
+   =========================== */
+.profile-area {
+    flex: 0 0 auto;
+    margin-right: 20px;
+    right: 20px;
+}
+
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 70px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 16px;
+    transition: background var(--transition15);
+
+    &:hover {
+        color: var(--primary-color);
+    }
+}
+
+.name-text {
+    font-weight: 700;
+    font-size: 32px;
+    font-family: Nunito, sans-serif;
+}
+
+.avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.profile-img {
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+}
+
+.online-status-dot {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--background-online);
+    border: 2px solid var(--surface-bg);
+}
+
+.arrow-down {
+    width: 32px;
+    height: 32px;
+    content: url('/public/images/channel-info-arrow-down.svg');
+    transition: transform var(--transition15);
+}
+
+.profile-trigger:hover .arrow-down,
+.profile-trigger:focus-visible .arrow-down {
+    content: url('/public/images/channel-info-arrow-down-hover.svg');
+}
+
+.profile-area .profile-trigger .arrow-down {
+    transform: rotate(0deg);
+}
+
+.profile-area .profile-trigger[aria-expanded='true'] .arrow-down {
+    transform: rotate(180deg);
+}
+
+.profile-menu {
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 2600;
+    width: 200px;
+    background: var(--surface-bg);
+    border-radius: 24px 0 24px 24px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-right: 16px;
+}
+
+.menu-btn {
+    width: 100%;
+    border: 0;
+    cursor: pointer;
+    padding: 12px 14px;
+    border-radius: var(--border-radius9999);
+    background: var(--surface-bg);
+    font-size: 24px;
+    text-align: center;
+    transition: var(--transition15);
+
+    &:hover {
+        background: var(--background-color);
+        color: var(--primary-color);
+        transform: scale(1.05);
+    }
+}
+
+.profile-edit__content {
+    padding: 0 26px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.profile-edit__label {
+    display: grid;
+    gap: 10px;
+}
+
+.profile-edit__label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.profile-edit__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+    }
+}
+
+.profile-edit__input {
+    height: 54px;
+    border-radius: var(--border-radius9999);
+    border: 1.5px solid var(--primary-color);
+    padding: 0 18px;
+    font-size: 18px;
+    outline: none;
+    background: var(--surface-bg);
+}
+
+.profile-edit__actions {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 8px;
+}
+
+.profile-edit__btn {
+    border-radius: var(--border-radius9999);
+    padding: 12px 26px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition15);
+    border: 1.5px solid transparent;
+
+    &.outline {
+        background: transparent;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+
+        &:hover {
+            background-color: var(--primary-color);
+            color: var(--surface-bg);
+            border-color: var(--surface-bg);
+        }
+    }
+
+    &.primary {
+        background: var(--primary-color);
+        color: var(--surface-bg);
+
+        &:hover {
+            background-color: var(--btn-hover-violett);
+        }
+    }
+}

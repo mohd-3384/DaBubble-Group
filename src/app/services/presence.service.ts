@@ -3,6 +3,10 @@ import { Auth, authState } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, updateDoc, serverTimestamp, getDoc } from '@angular/fire/firestore';
 import { Subscription } from 'rxjs';
 
+/**
+ * Service for managing user presence status (online/offline, last seen)
+ * Handles browser events like beforeunload and visibility changes
+ */
 @Injectable({ providedIn: 'root' })
 export class PresenceService {
   private auth = inject(Auth);
@@ -14,11 +18,14 @@ export class PresenceService {
 
   private readonly GUEST_EMAIL = 'guest@dabubble.de';
 
+  /**
+   * Initializes presence tracking by subscribing to auth state changes
+   * Sets up event handlers for browser unload and visibility changes
+   */
   init() {
     if (this.sub) return; // init nur 1x
 
     this.sub = authState(this.auth).subscribe(async (user) => {
-      // ✅ Logout -> Handler entfernen, keine Firestore Calls mehr
       if (!user) {
         this.cleanupHandlers();
         return;
@@ -26,11 +33,8 @@ export class PresenceService {
 
       const isGuest = (user.email ?? '').toLowerCase() === this.GUEST_EMAIL;
       const ref = doc(this.fs, `users/${user.uid}`);
-
       const snap = await getDoc(ref);
-
       const fallbackName = isGuest ? 'Guest' : (user.displayName ?? user.email ?? 'User');
-
       const payload: any = {
         ...(snap.exists() ? {} : {
           uid: user.uid,
@@ -52,9 +56,12 @@ export class PresenceService {
     });
   }
 
+  /**
+   * Registers a beforeunload event handler to set user offline when browser closes
+   * @param uid - User ID to update presence for
+   */
   private registerUnloadHandler(uid: string) {
     this.unloadHandler = () => {
-      // ✅ nur wenn noch eingeloggt
       if (!this.auth.currentUser) return;
       this.setOnline(uid, false);
     };
@@ -63,6 +70,10 @@ export class PresenceService {
     window.addEventListener('beforeunload', this.unloadHandler as any);
   }
 
+  /**
+   * Registers a visibility change handler to update online status when tab becomes hidden/visible
+   * @param uid - User ID to update presence for
+   */
   private registerVisibilityHandler(uid: string) {
     this.visHandler = () => {
       if (!this.auth.currentUser) return;
@@ -74,6 +85,9 @@ export class PresenceService {
     document.addEventListener('visibilitychange', this.visHandler as any);
   }
 
+  /**
+   * Removes all registered event handlers
+   */
   private cleanupHandlers() {
     if (this.unloadHandler) {
       window.removeEventListener('beforeunload', this.unloadHandler as any);
@@ -85,8 +99,13 @@ export class PresenceService {
     }
   }
 
+  /**
+   * Updates the online status of a user in Firestore
+   * Tries updateDoc first, falls back to setDoc if the document doesn't exist
+   * @param uid - User ID to update
+   * @param online - True if user is online, false if offline
+   */
   async setOnline(uid: string, online: boolean) {
-    // ✅ harte Absicherung
     if (!this.auth.currentUser) return;
 
     const ref = doc(this.fs, `users/${uid}`);

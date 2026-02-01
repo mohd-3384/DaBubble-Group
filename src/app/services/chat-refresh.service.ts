@@ -1,17 +1,29 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
+/**
+ * Service for triggering UI refresh of chat messages and reactions
+ */
 @Injectable({ providedIn: 'root' })
 export class ChatRefreshService {
-    refreshTrigger$ = new BehaviorSubject<number>(0);
+  /**
+   * Observable trigger for general chat refresh
+   */
+  refreshTrigger$ = new BehaviorSubject<number>(0);
 
-    refresh() {
-        console.log('[ChatRefreshService] Triggering refresh');
-        this.refreshTrigger$.next(this.refreshTrigger$.value + 1);
-    }
+  /**
+   * Triggers a general chat refresh by incrementing the trigger counter
+   */
+  refresh() {
+    console.log('[ChatRefreshService] Triggering refresh');
+    this.refreshTrigger$.next(this.refreshTrigger$.value + 1);
+  }
 
-    refreshReactions() {
-        console.log('[ChatRefreshService] Refreshing reactions');
-        this.refresh();
-    }
+  /**
+   * Triggers a reactions-specific refresh
+   */
+  refreshReactions() {
+    console.log('[ChatRefreshService] Refreshing reactions');
+    this.refresh();
+  }
 }

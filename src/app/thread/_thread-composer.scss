@@ -1,0 +1,111 @@
+/* Composer */
+.composer {
+  margin: 0 16px 12px;
+  background: var(--surface-bg);
+  border: 1px solid var(--accent-color);
+  border-radius: 16px;
+  padding: 10px 12px;
+
+  &:hover {
+    border-color: var(--primary-color);
+  }
+
+  .composer-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    min-height: 56px;
+    font-size: 15px;
+
+    &::placeholder {
+      color: var(--placeholder-color);
+    }
+  }
+
+  .composer-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    .actions-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .emoji-wrapper,
+    .mention-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .emoji-icon {
+      background-image: url('/public/images/add-reaction.svg');
+
+      &:hover {
+        background-image: url('/public/images/add-reaction-hover.svg');
+      }
+    }
+
+    .at-icon {
+      background-image: url('/public/images/at-icon.svg');
+
+      &:hover {
+        background-image: url('/public/images/at-icon-hover.svg');
+      }
+    }
+
+    .send-btn {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 24px;
+      background-image: url('/public/images/send.svg');
+      cursor: pointer;
+      transition: all var(--transition20);
+
+      &:hover {
+        background-image: url('/public/images/send-hover.svg');
+        transform: scale(1.05);
+      }
+    }
+
+    .emoji-popover {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 0;
+      transform: translateX(-16px);
+      z-index: 2000;
+      background-color: var(--surface-bg);
+      border: 1px solid var(--background-color);
+      border-radius: 16px;
+      box-shadow: var(--shadow-modal);
+      overflow: hidden;
+      pointer-events: auto;
+    }
+  }
+}
+
+.emoji-icon {
+  background-image: url('/public/images/add-reaction.svg');
+
+  &:hover {
+    background-image: url('/public/images/add-reaction-hover.svg');
+  }
+}
+
+.composer--sticky {
+  flex: 0 0 auto;
+  position: sticky;
+  bottom: 0;
+  box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.04);
+  z-index: 1600;
+}

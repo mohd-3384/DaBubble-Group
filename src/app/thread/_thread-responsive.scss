@@ -1,0 +1,58 @@
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .thread-header {
+    min-height: 68px;
+    padding: 14px 16px;
+  }
+
+  .header-pill {
+    gap: 8px;
+
+    .title {
+      font-size: 22px;
+    }
+
+    .thread-channel {
+      font-size: 13px;
+    }
+  }
+
+  .icon-span {
+    width: 32px;
+    height: 32px;
+    background-size: 18px;
+  }
+
+  .close-btn {
+    width: 34px;
+    height: 34px;
+    background-size: 16px;
+  }
+
+  .message-row {
+    grid-template-columns: 42px 1fr;
+    gap: 12px;
+    padding: 6px 12px;
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+    }
+
+    .message-col {
+      .header {
+        gap: 8px;
+
+        .time {
+          font-size: 12px;
+        }
+      }
+
+      .bubble {
+        max-width: min(640px, 90%);
+        padding: 10px 14px;
+        font-size: 14px;
+      }
+    }
+  }
+}

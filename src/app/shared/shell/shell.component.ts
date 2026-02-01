@@ -7,28 +7,13 @@ import { ThreadComponent } from '../../thread/thread.component';
 import { ThreadState } from '../../services/thread.state';
 import { ChatRefreshService } from '../../services/chat-refresh.service';
 import { trigger, transition, style, animate } from '@angular/animations';
-
-import {
-  Firestore,
-  collection,
-  collectionData,
-  addDoc,
-  doc,
-  docData,
-  updateDoc,
-  setDoc,
-  increment,
-  serverTimestamp,
-} from '@angular/fire/firestore';
-
+import { Firestore, collection, collectionData, addDoc, doc, docData, updateDoc, setDoc, increment, serverTimestamp, } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
-import { UserDoc } from '../../interfaces/allInterfaces.interface';
+import { MentionUser, UserDoc } from '../../interfaces/allInterfaces.interface';
 import { PresenceService } from '../../services/presence.service';
 
-
-type MentionUser = { id: string; name: string; avatarUrl?: string };
 
 @Component({
   selector: 'app-shell',
@@ -60,7 +45,6 @@ export class ShellComponent {
 
   users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }) as Observable<MentionUser[]>;
 
-  // ---- Mentions: alle User ----
   usersAllForMentions$: Observable<MentionUser[]> = authState(this.auth).pipe(
     switchMap(user => {
       if (!user) return of([] as MentionUser[]);
@@ -84,10 +68,8 @@ export class ShellComponent {
 
   usersAllForMentions: MentionUser[] = [];
 
-  // ---- Current user (für Guest/User author) ----
   currentUser: (UserDoc & { id: string }) | null = null;
 
-  // channelId aus der DEEPEST child route (router-outlet route)
   channelId$: Observable<string | null> = this.route.paramMap.pipe(
     switchMap(() => {
       let r: ActivatedRoute = this.route;
@@ -106,6 +88,12 @@ export class ShellComponent {
 
   mobileView: 'list' | 'chat' | 'thread' = 'list';
 
+  /**
+   * Initializes the shell component.
+   * Sets up mobile view handling, presence service, and subscribes to router events,
+   * user mentions, channel ID, and current user data.
+   * @param router - Angular router for navigation tracking
+   */
   constructor(
     private router: Router
   ) {
@@ -123,10 +111,8 @@ export class ShellComponent {
       this.mobileView = isChannelsList ? 'list' : (isChat ? 'chat' : 'list');
     };
 
-    // Erste Setzung basierend auf der aktuellen URL (wichtig für direkte Aufrufe /new auf Mobile)
     updateMobileView(this.router.url);
 
-    // Laufende Navigationen verfolgen
     this.router.events
       .pipe(filter((e): e is NavigationStart | NavigationEnd =>
         e instanceof NavigationStart || e instanceof NavigationEnd))
@@ -171,19 +157,38 @@ export class ShellComponent {
   workspaceCollapsed = false;
   shellThreadOpen = false;
 
+  /**
+   * Toggles the workspace sidebar collapsed state.
+   */
   toggleWorkspace() {
     this.workspaceCollapsed = !this.workspaceCollapsed;
   }
 
+  /**
+   * Handles workspace collapsed state changes from child components.
+   * @param collapsed - Whether the workspace should be collapsed
+   */
   onWorkspaceCollapsedChange(collapsed: boolean) {
     this.workspaceCollapsed = collapsed;
   }
 
+  /**
+   * Creates a deterministic conversation ID from two user IDs.
+   * Always returns IDs in alphabetical order to ensure consistency.
+   * @param a - First user ID
+   * @param b - Second user ID
+   * @returns Conversation ID in format "userId1_userId2"
+   */
   private makeConvId(a: string, b: string): string {
     return a < b ? `${a}_${b}` : `${b}_${a}`;
   }
 
-  // SEND: schreibt in Firestore + updated parent message + updated UI
+  /**
+   * Sends a thread reply message to Firestore.
+   * Updates the parent message's reply count and last reply timestamp.
+   * Supports both channel messages and direct messages.
+   * @param text - The reply text to send
+   */
   async onSend(text: string) {
     const msg = (text || '').trim();
     if (!msg) return;
@@ -230,7 +235,6 @@ export class ShellComponent {
       let repliesRef, parentRef;
 
       if (isDM) {
-        // ✅ channelId ist bereits die convId (aus ThreadState)
         repliesRef = collection(
           this.fs,
           `conversations/${channelId}/messages/${messageId}/replies`
@@ -257,9 +261,7 @@ export class ShellComponent {
         replyCount: increment(1),
         lastReplyAt: serverTimestamp(),
       }).catch(async (err) => {
-        // Falls das Feld nicht existiert, initialisiere es
         if (err.code === 'not-found') {
-          console.warn('[Thread] Parent-Dokument nicht gefunden, aktualisiere trotzdem...', { channelId, messageId });
           await setDoc(parentRef, {
             replyCount: 1,
             lastReplyAt: serverTimestamp(),
@@ -268,22 +270,29 @@ export class ShellComponent {
           throw err;
         }
       });
-
-      console.log('[Thread] Reply gespeichert:', { channelId, messageId, msg });
     } catch (err) {
       console.error('[Thread] Fehler beim Speichern der Reply:', err);
     }
   }
 
+  /**
+   * Closes the thread panel.
+   * On mobile devices, switches view back to chat.
+   */
   onClose() {
     this.thread.close();
 
-    // Mobile View zurück zum Chat
     if (window.innerWidth <= 1024) {
       this.mobileView = 'chat';
     }
   }
 
+  /**
+   * Edits a thread message (either root message or reply).
+   * Updates the message text and sets editedAt timestamp.
+   * Refreshes chat messages if editing the root message.
+   * @param ev - Event containing messageId and new text
+   */
   async onEditThreadMessage(ev: { messageId: string; text: string }) {
     const vm = this.thread.vm();
     if (!vm?.open || !vm.root?.id) return;
@@ -309,7 +318,6 @@ export class ShellComponent {
         await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
         console.log('[Thread] Root Message Saved Successfully');
 
-        // ✅ Refresh Chat Messages
         this.chatRefresh.refresh();
       } else {
         let ref;

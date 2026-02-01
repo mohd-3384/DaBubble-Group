@@ -1,0 +1,64 @@
+/* ===========================
+    Workspace Search
+   =========================== */
+.ws-search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 2500;
+    background: var(--surface-bg);
+    border-radius: 0 24px 24px 24px;
+    box-shadow: var(--boxShadow);
+    overflow: hidden;
+    padding: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.ws-search-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px;
+    border-radius: 14px;
+    transition: var(--transition15);
+
+    &:hover {
+        background: var(--background-color);
+        transform: translateX(2px);
+    }
+
+    &.active {
+        background: var(--background-color);
+    }
+
+    .kind {
+        width: 22px;
+        display: inline-flex;
+        justify-content: center;
+        font-weight: 800;
+        color: var(--primary-color);
+    }
+
+    .label {
+        text-align: left;
+        font-size: 15px;
+        font-family: Nunito, sans-serif;
+        color: #222;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.ws-search-empty {
+    padding: 12px 14px;
+    color: var(--placeholder-color);
+    font-size: 14px;
+    font-family: Nunito, sans-serif;
+}

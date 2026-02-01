@@ -1,0 +1,61 @@
+/* Own Message Styles */
+.messages-scroll .message-row.own {
+  grid-template-columns: 1fr 48px;
+  justify-items: end;
+  align-items: flex-start;
+
+  >.avatar {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  >.message-col {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+    margin-top: -64px;
+  }
+
+  >.message-col>.header {
+    justify-content: flex-end;
+    text-align: right;
+    width: 100%;
+  }
+
+  >.message-col>.bubble.bubble-light {
+    align-self: flex-end;
+    background: var(--primary-color) !important;
+    color: var(--surface-bg) !important;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 0;
+  }
+
+  >.message-col>.reactions-row {
+    justify-content: flex-end;
+  }
+
+  >.message-col>.message-actions {
+    right: auto !important;
+    left: 24px !important;
+    border-radius: 32px 32px 32px 0;
+    transform: translateX(-32px);
+  }
+
+  .messages-scroll .message-row.own:hover>.message-col>.message-actions,
+  .messages-scroll .message-row.own.is-active>.message-col>.message-actions {
+    transform: translateX(0);
+  }
+}
+
+.messages-scroll .message-row.own .msg-more-popover {
+  left: 60px;
+  top: 48px;
+  right: auto;
+}
+
+.messages-scroll .message-row.own.is-active>.message-col>.message-actions {
+  transform: translateX(0) !important;
+  transition: none !important;
+}

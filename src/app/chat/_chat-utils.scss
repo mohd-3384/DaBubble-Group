@@ -1,0 +1,17 @@
+/* Utility Classes and Common Elements */
+.icon-swap {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+  cursor: pointer;
+  transition: all var(--transition20);
+
+  &:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 2px;
+  }
+}

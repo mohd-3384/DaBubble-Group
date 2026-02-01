@@ -1,38 +1,47 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  HostListener,
-  ElementRef,
-  EnvironmentInjector,
-  runInInjectionContext,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { Message, ReactionVm } from '../interfaces/allInterfaces.interface';
-import { deleteField, doc, Firestore, increment, runTransaction, updateDoc } from '@angular/fire/firestore';
-import { inject } from '@angular/core';
-import { ChatRefreshService } from '../services/chat-refresh.service';
-
-type MentionUser = { id: string; name: string; avatarUrl?: string };
+import { MentionUser, Message, ReactionVm } from '../interfaces/allInterfaces.interface';
+import { ThreadActionsService } from '../services/thread-actions.service';
+import { ThreadUiStateHelper } from './thread-ui-state.helper';
+import { ThreadDisplayHelper } from './thread-display.helper';
+import { ThreadComposerHelper } from './thread-composer.helper';
+import { ThreadMessageHelper } from './thread-message.helper';
+import { ThreadEmojiHelper } from './thread-emoji.helper';
+import { ThreadHoverHelper } from './thread-hover.helper';
 
 @Component({
   selector: 'app-thread',
   standalone: true,
   imports: [CommonModule, FormsModule, PickerModule],
+  providers: [ThreadUiStateHelper, ThreadDisplayHelper, ThreadComposerHelper, ThreadMessageHelper, ThreadEmojiHelper, ThreadHoverHelper],
   templateUrl: './thread.component.html',
-  styleUrls: ['./thread.component.scss'],
+  styleUrl: './thread.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThreadComponent {
+  /**
+   * Creates an instance of ThreadComponent
+   * @param host - Reference to the host element
+   * @param threadActions - Service for handling thread actions
+   * @param ui - Helper for managing UI state
+   * @param display - Helper for display functions
+   * @param composer - Helper for composer functions
+   * @param message - Helper for message operations
+   * @param emoji - Helper for emoji pickers
+   * @param hover - Helper for hover states
+   * @param cdr - Change detector reference for manual change detection
+   */
   constructor(
     private host: ElementRef<HTMLElement>,
-    private fs: Firestore,
-    private chatRefresh: ChatRefreshService,
+    private threadActions: ThreadActionsService,
+    public ui: ThreadUiStateHelper,
+    public display: ThreadDisplayHelper,
+    public composer: ThreadComposerHelper,
+    public message: ThreadMessageHelper,
+    public emoji: ThreadEmojiHelper,
+    public hover: ThreadHoverHelper,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -48,544 +57,347 @@ export class ThreadComponent {
   @Output() close = new EventEmitter<void>();
   @Output() edit = new EventEmitter<{ messageId: string; text: string }>();
 
-  editingMessageId: string | null = null;
-  editDraft = '';
-
-  editMenuForId: string | null = null;
-
-  // Composer
-  draft = '';
-  showEmoji = false;
-  showUsers = false;
-
-  // Message reaction picker (Hover actions)
-  messageEmojiForId: string | null = null;
-  emojiPopoverPos = { top: 0, left: 0, placement: 'bottom' as 'top' | 'bottom' };
-
-  // ✅ Edit-box emoji picker
-  editEmojiForId: string | null = null;
-  editEmojiPopoverPos = { top: 0, left: 0, placement: 'bottom' as 'top' | 'bottom' };
-
-  hoveredRowId: string | null = null;
-  private popoverHoverForId: string | null = null;
-  private leaveTimer: any = null;
-
-  private env = inject(EnvironmentInjector);
-
   trackReaction = (_: number, it: ReactionVm) => it.emoji;
   trackReply = (_: number, r: Message) => r.id;
   trackUser = (_: number, u: MentionUser) => u.id;
 
-  // nur schließen wenn Klick außerhalb des Thread-Components
+  /**
+   * Handles document click events to close open popovers
+   * @param ev - The mouse event
+   */
   @HostListener('document:click', ['$event'])
   onDocumentClick(ev: MouseEvent) {
     const target = ev.target as Node | null;
     if (!target) return;
     if (this.host.nativeElement.contains(target)) return;
-    this.closePopovers();
+    this.ui.closePopovers();
   }
 
-  closePopovers() {
-    this.showEmoji = false;
-    this.showUsers = false;
-    this.messageEmojiForId = null;
-    this.editMenuForId = null;
-    this.editEmojiForId = null;
-    this.popoverHoverForId = null;
-    this.hoveredRowId = null;
-    if (this.leaveTimer) clearTimeout(this.leaveTimer);
-    this.leaveTimer = null;
-  }
-
+  /**
+   * Toggles the emoji picker visibility in the composer
+   * @param evt - Optional event to stop propagation
+   */
   toggleEmoji(evt?: Event) {
     evt?.stopPropagation();
-    this.showEmoji = !this.showEmoji;
-    if (this.showEmoji) this.showUsers = false;
+    this.ui.showEmoji = !this.ui.showEmoji;
+    if (this.ui.showEmoji) this.ui.showUsers = false;
   }
 
+  /**
+   * Toggles the user mention picker visibility in the composer
+   * @param evt - Optional event to stop propagation
+   */
   toggleUsers(evt?: Event) {
     evt?.stopPropagation();
-    this.showUsers = !this.showUsers;
-    if (this.showUsers) this.showEmoji = false;
+    this.ui.showUsers = !this.ui.showUsers;
+    if (this.ui.showUsers) this.ui.showEmoji = false;
   }
 
+  /**
+   * Inserts a user mention into the composer draft
+   * @param u - The user to mention
+   */
   insertMention(u: MentionUser) {
-    const mention = `@${u.name}`;
-    const base = this.draft || '';
-    const needsSpace = base.length > 0 && !/\s$/.test(base);
-    this.draft = base + (needsSpace ? ' ' : '') + mention + ' ';
-    this.showUsers = false;
+    this.composer.insertMention(u);
+    this.ui.showUsers = false;
   }
 
+  /**
+   * Handles send button click to submit a new reply
+   * @param evt - Optional event to stop propagation
+   */
   onSendClick(evt?: Event) {
     evt?.stopPropagation();
-    const text = (this.draft || '').trim();
+    const text = this.composer.getTrimmedDraft();
     if (!text) return;
 
     this.send.emit(text);
-    this.draft = '';
-    this.closePopovers();
+    this.composer.clearDraft();
+    this.ui.closePopovers();
   }
 
+  /**
+   * Checks if a message belongs to the current user
+   * @param m - The message to check
+   * @returns True if the message author matches current user ID
+   */
   isOwnMessage(m: { author?: { id?: string } } | null | undefined): boolean {
-    return !!this.currentUserId && String(m?.author?.id ?? '') === this.currentUserId;
+    return this.message.isOwnMessage(m, this.currentUserId);
   }
 
+  /**
+   * Toggles the edit menu for a message
+   * @param ev - The mouse event
+   * @param m - The message to edit
+   */
   toggleEditMenu(ev: MouseEvent, m: Message) {
-    ev.stopPropagation();
-    if (!this.isOwnMessage(m)) return;
-    if (this.editingMessageId === m.id) return;
-
-    const willOpen = this.editMenuForId !== m.id;
-    this.editMenuForId = willOpen ? m.id : null;
-
-    if (willOpen) this.messageEmojiForId = null;
-
-    this.showEmoji = false;
-    this.showUsers = false;
-
-    if (willOpen) this.hoveredRowId = m.id;
+    this.message.toggleEditMenu(ev, m, this.currentUserId);
   }
 
+  /**
+   * Starts editing a message
+   * @param m - The message to edit
+   */
   startEdit(m: Message) {
-    if (!this.isOwnMessage(m)) return;
-
-    this.editMenuForId = null;
-    this.messageEmojiForId = null;
-    this.showEmoji = false;
-    this.showUsers = false;
-    this.editEmojiForId = null;
-    this.editingMessageId = m.id;
-    this.editDraft = (m.text ?? '').toString();
+    this.message.startEdit(m, this.currentUserId);
   }
 
+  /**
+   * Cancels editing a message and resets edit state
+   * @param m - Optional message to cancel editing for
+   */
   cancelEdit(m?: Message) {
-    const id = m?.id ?? this.editingMessageId ?? null;
-    this.editingMessageId = null;
-    this.editDraft = '';
-
-    // ✅ edit picker schließen
-    this.editEmojiForId = null;
-
-    if (!id) return;
-
-    if (this.leaveTimer) clearTimeout(this.leaveTimer);
-    this.leaveTimer = null;
-
-    if (this.hoveredRowId === id) this.hoveredRowId = null;
-    if (this.popoverHoverForId === id) this.popoverHoverForId = null;
-
-    if (this.editMenuForId === id) this.editMenuForId = null;
-    if (this.messageEmojiForId === id) this.messageEmojiForId = null;
+    this.ui.cancelEdit(m?.id);
   }
 
+  /**
+   * Saves the edited message to Firestore
+   * @param m - The message being edited
+   */
   async saveEdit(m: Message) {
     if (!this.isOwnMessage(m)) return;
 
-    const next = (this.editDraft || '').trim();
+    const next = (this.ui.editDraft || '').trim();
     if (!next || next === (m.text ?? '').toString()) {
       this.cancelEdit(m);
       return;
     }
 
     try {
-      // ✅ Support für DMs und Channels
-      const isDM = this.isDM;
       const isRoot = m.id === this.rootMessage.id;
 
-      let ref;
-      if (isDM) {
-        const convId = this.channelId;
-        ref = isRoot
-          ? doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}`)
-          : doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}/replies/${m.id}`);
-      } else {
-        ref = isRoot
-          ? doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}`)
-          : doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}/replies/${m.id}`);
-      }
+      await this.threadActions.saveMessageEdit(
+        m.id,
+        this.rootMessage.id,
+        this.channelId,
+        next,
+        this.isDM,
+        isRoot
+      );
 
-      await updateDoc(ref, {
-        text: next,
-        editedAt: new Date(),
-      });
-
-      // Update local state
       m.text = next;
       (m as any).editedAt = new Date();
 
-      // Refresh Chat to update UI
-      this.chatRefresh.refreshReactions();
-
-      console.log('[Thread] Message updated successfully:', m.id);
     } catch (err) {
       console.error('[Thread] Failed to save edit:', err);
     }
 
-    // ✅ Edit-Box komplett schließen
-    this.editingMessageId = null;
-    this.editDraft = '';
-    this.editEmojiForId = null;
-    this.hoveredRowId = null;
-    this.popoverHoverForId = null;
-    this.editMenuForId = null;
-
-    // ✅ Change Detection manuell triggern
+    this.ui.editingMessageId = null;
+    this.ui.editDraft = '';
+    this.ui.editEmojiForId = null;
+    this.ui.hoveredRowId = null;
+    this.ui.popoverHoverForId = null;
+    this.ui.editMenuForId = null;
     this.cdr.markForCheck();
   }
 
-  // ---------------------------
-  // Hover/Active handling
-  // ---------------------------
+  /**
+   * Handles mouse enter on a message row
+   * @param id - The message ID
+   */
   onRowEnter(id: string) {
-    if (this.leaveTimer) clearTimeout(this.leaveTimer);
-    this.leaveTimer = null;
-    this.hoveredRowId = id;
+    this.hover.onRowEnter(id);
   }
 
+  /**
+   * Handles mouse leave on a message row
+   * @param id - The message ID
+   */
   onRowLeave(id: string) {
-    if (this.leaveTimer) clearTimeout(this.leaveTimer);
-    if (this.hoveredRowId === id) this.hoveredRowId = null;
-
-    this.leaveTimer = setTimeout(() => {
-      const popoverOpen = this.editMenuForId === id || this.messageEmojiForId === id;
-      const hoverPopover = this.popoverHoverForId === id;
-
-      if (popoverOpen || hoverPopover) return;
-
-      if (this.editMenuForId === id) this.editMenuForId = null;
-      if (this.messageEmojiForId === id) this.messageEmojiForId = null;
-    }, 100);
+    this.hover.onRowLeave(id);
   }
 
+  /**
+   * Handles mouse enter on a popover element
+   * @param id - The message ID
+   */
   onPopoverEnter(id: string) {
-    if (this.leaveTimer) clearTimeout(this.leaveTimer);
-    this.leaveTimer = null;
-    this.popoverHoverForId = id;
-    this.hoveredRowId = id;
+    this.hover.onPopoverEnter(id);
   }
 
+  /**
+   * Handles mouse leave on a popover element
+   * @param id - The message ID
+   */
   onPopoverLeave(id: string) {
-    if (this.popoverHoverForId === id) this.popoverHoverForId = null;
-    this.onRowLeave(id);
+    this.hover.onPopoverLeave(id);
   }
 
-  isRowActive(id: string) {
-    const popoverOpen = this.editMenuForId === id || this.messageEmojiForId === id;
-    const hoverRow = this.hoveredRowId === id;
-    const hoverPopover = this.popoverHoverForId === id;
-    return hoverRow || hoverPopover || popoverOpen;
-  }
-
-  // ---------------------------
-  // Emoji picker (per message reactions)
-  // ---------------------------
+  /**
+   * Toggles the emoji picker for adding reactions to a message
+   * @param ev - The mouse event
+   * @param messageId - The message ID to react to
+   */
   toggleMessageEmojiPicker(ev: MouseEvent, messageId: string) {
-    ev.stopPropagation();
-
-    if (this.messageEmojiForId === messageId) {
-      this.messageEmojiForId = null;
-      return;
-    }
-
-    // wenn reaction-picker aufgeht: edit-menu & edit-picker zu
-    this.editMenuForId = null;
-    this.editEmojiForId = null;
-
-    const btn = ev.currentTarget as HTMLElement;
-    const rect = btn.getBoundingClientRect();
-
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-
-    const pickerHeight = 360;
-    const pickerWidth = 360;
-    const offset = 8;
-
-    const roomBelow = viewportH - rect.bottom;
-    const placement: 'top' | 'bottom' = roomBelow > pickerHeight + offset ? 'bottom' : 'top';
-
-    const top = placement === 'bottom' ? rect.bottom + offset : rect.top - pickerHeight - offset;
-
-    let left = rect.left;
-    const maxLeft = viewportW - pickerWidth - 16;
-    if (left > maxLeft) left = Math.max(16, maxLeft);
-
-    this.messageEmojiForId = messageId;
-    this.emojiPopoverPos = { top, left, placement };
-
-    this.showEmoji = false;
-    this.showUsers = false;
-
-    this.hoveredRowId = messageId;
+    this.emoji.toggleMessageEmojiPicker(ev, messageId);
   }
 
-  // ---------------------------
-  // ✅ Emoji picker (Edit-Box -> Text einfügen)
-  // ---------------------------
+  /**
+   * Toggles the emoji picker for editing message text
+   * @param ev - The mouse event
+   * @param messageId - The message ID being edited
+   */
   toggleEditEmojiPicker(ev: MouseEvent, messageId: string) {
-    ev.stopPropagation();
-
-    // andere popovers zu
-    this.showEmoji = false;
-    this.showUsers = false;
-    this.messageEmojiForId = null;
-    this.editMenuForId = null;
-
-    if (this.editEmojiForId === messageId) {
-      this.editEmojiForId = null;
-      return;
-    }
-
-    const btn = ev.currentTarget as HTMLElement;
-    const rect = btn.getBoundingClientRect();
-
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-
-    const pickerHeight = 360;
-    const pickerWidth = 360;
-    const offset = 8;
-
-    const roomBelow = viewportH - rect.bottom;
-    const placement: 'top' | 'bottom' = roomBelow > pickerHeight + offset ? 'bottom' : 'top';
-
-    const top = placement === 'bottom' ? rect.bottom + offset : rect.top - pickerHeight - offset;
-
-    // lieber am Button ausrichten, aber clampen
-    let left = rect.left;
-    const maxLeft = viewportW - pickerWidth - 16;
-    if (left > maxLeft) left = Math.max(16, maxLeft);
-
-    this.editEmojiForId = messageId;
-    this.editEmojiPopoverPos = { top, left, placement };
-    this.hoveredRowId = messageId;
+    this.emoji.toggleEditEmojiPicker(ev, messageId);
   }
 
-  // Einfügen ins Edit-Textarea
+  /**
+   * Handles emoji selection for editing message text
+   * @param e - The emoji selection event
+   */
   onEditEmojiSelect(e: any) {
-    const emoji = this.emojiToString(e?.emoji?.native ?? e?.emoji ?? e);
-    if (!emoji) return;
-
-    const base = this.editDraft || '';
-    this.editDraft = base + emoji;
-
-    this.editEmojiForId = null;
+    this.emoji.onEditEmojiSelect(e);
   }
 
+  /**
+   * Handles emoji selection for the composer input
+   * @param e - The emoji selection event
+   */
   onComposerEmojiSelect(e: any) {
-    const emoji = this.emojiToString(e?.emoji?.native ?? e?.emoji ?? e);
+    const emoji = this.threadActions.emojiToString(e?.emoji?.native ?? e?.emoji ?? e);
     if (!emoji) return;
 
-    const base = this.draft || '';
-    this.draft = base + emoji;
-    this.showEmoji = false;
+    this.composer.addEmoji(emoji);
+    this.ui.showEmoji = false;
   }
 
-  closeMessageUiFromComposer() {
-    // schließt nur Message-bezogene UI (Actions/Popover)
-    this.editMenuForId = null;
-    this.messageEmojiForId = null;
-
-    // damit message-actions sofort verschwinden (isRowActive -> false)
-    this.popoverHoverForId = null;
-    this.hoveredRowId = null;
-
-    if (this.leaveTimer) clearTimeout(this.leaveTimer);
-    this.leaveTimer = null;
-  }
-
-  private findMessageById(id: string): Message {
-    if (this.rootMessage?.id === id) return this.rootMessage;
-    const reply = this.replies.find((r) => r.id === id);
-    if (!reply) throw new Error(`Message with id ${id} not found`);
-    return reply;
-  }
-
+  /**
+   * Handles emoji selection for message reactions
+   * @param e - The emoji selection event
+   */
   onEmojiSelect(e: any) {
-    const emoji = this.emojiToString(e?.emoji?.native ?? e?.emoji ?? e);
-    if (!emoji || !this.messageEmojiForId) return;
+    const emoji = this.threadActions.emojiToString(e?.emoji?.native ?? e?.emoji ?? e);
+    if (!emoji || !this.ui.messageEmojiForId) return;
 
-    const msg = this.findMessageById(this.messageEmojiForId);
+    const msg = this.message.findMessageById(this.ui.messageEmojiForId, this.rootMessage, this.replies);
     const ctx = msg.id === this.rootMessage.id ? 'root' : 'reply';
 
     this.toggleReaction(msg, emoji, ctx);
-    this.messageEmojiForId = null;
+    this.ui.messageEmojiForId = null;
   }
 
-  // ---------------------------
-  // Reactions (UI)
-  // ---------------------------
+  /**
+   * Gets reactions for a message in view model format
+   * @param m - The message
+   * @returns Array of reaction view models
+   */
   reactionsFor(m: Message): ReactionVm[] {
-    const raw = (m as any)?.reactions;
-
-    if (!raw || typeof raw !== 'object') return [];
-
-    const out: ReactionVm[] = [];
-    for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
-      const emoji = this.emojiToString(k);
-      const count = Number(v ?? 0);
-      if (!emoji || !Number.isFinite(count) || count <= 0) continue;
-
-      out.push({
-        emoji,
-        count,
-        reactedByMe: this.didUserReact(m, emoji),
-      });
-    }
-
-    return out.sort((a, b) => b.count - a.count);
+    return this.threadActions.getReactionsForMessage(m, this.currentUserId);
   }
 
+  /**
+   * Checks if the current user reacted to a message with a specific emoji
+   * @param m - The message
+   * @param emoji - The emoji to check
+   * @returns True if the user reacted
+   */
   didUserReact(m: Message, emoji: string): boolean {
-    if (!this.currentUserId) return false;
-    const by = (m as any)?.reactionBy?.[emoji] as Record<string, boolean> | undefined;
-    return !!by?.[this.currentUserId];
+    return this.threadActions.didUserReact(m, emoji, this.currentUserId);
   }
 
+  /**
+   * Gets the names of users who reacted with a specific emoji
+   * @param m - The message
+   * @param emoji - The emoji to check
+   * @returns Array of user names
+   */
   getReactedUserNames(m: Message, emoji: string): string[] {
-    const by = ((m as any)?.reactionBy?.[emoji] ?? {}) as Record<string, boolean>;
-    const ids = Object.keys(by).filter((uid) => by[uid]);
-    return ids.map((uid) => this.users.find((u) => u.id === uid)?.name ?? uid);
+    return this.display.getReactedUserNames(m, emoji, this.users);
   }
 
-  // ---------------------------
-  // Reactions (Firestore)
-  // ---------------------------
+  /**
+   * Toggles a reaction on a message
+   * @param m - The message
+   * @param emojiInput - The emoji to toggle
+   * @param ctx - Context ('root' or 'reply')
+   */
   async toggleReaction(m: Message, emojiInput: any, ctx: 'root' | 'reply') {
     const uid = this.currentUserId;
     if (!uid) return;
 
-    const emoji = this.emojiToString(emojiInput);
+    const emoji = this.threadActions.emojiToString(emojiInput);
     if (!emoji) return;
 
-    console.log('[THREAD REACTION]', {
-      channelId: this.channelId,
-      isDM_guess: this.channelId.includes('_'),
-      rootId: this.rootMessage?.id,
-      msgId: m?.id,
-      ctx,
-      uid,
-      emoji
-    });
-
-    // ✅ Support für DMs und Channels
-    const isDM = this.isDM;
-
-    let ref;
-    if (isDM) {
-      const convId = this.channelId;
-      ref = ctx === 'root'
-        ? doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}`)
-        : doc(this.fs, `conversations/${convId}/messages/${this.rootMessage.id}/replies/${m.id}`);
-    } else {
-      ref = ctx === 'root'
-        ? doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}`)
-        : doc(this.fs, `channels/${this.channelId}/messages/${this.rootMessage.id}/replies/${m.id}`);
-    }
-    console.log('[THREAD REACTION] target ref path:', ref.path);
-
     try {
-      await runInInjectionContext(this.env, () =>
-        runTransaction(this.fs, async (tx) => {
-          const snap = await tx.get(ref);
-          if (!snap.exists()) return;
-
-          const data = snap.data() as any;
-          const key = String(emoji);
-
-          const already = !!data?.reactionBy?.[key]?.[uid];
-          const currentCount = Number(data?.reactions?.[key] ?? 0);
-
-          if (already) {
-            const updatePayload: any = {
-              [`reactionBy.${key}.${uid}`]: deleteField(),
-            };
-
-            if (currentCount <= 1) updatePayload[`reactions.${key}`] = deleteField();
-            else updatePayload[`reactions.${key}`] = increment(-1);
-
-            tx.update(ref, updatePayload);
-            return;
-          }
-
-          tx.update(ref, {
-            [`reactionBy.${key}.${uid}`]: true,
-            [`reactions.${key}`]: increment(1),
-          });
-        })
+      await this.threadActions.toggleReaction(
+        m.id,
+        this.rootMessage.id,
+        this.channelId,
+        uid,
+        emoji,
+        this.isDM,
+        ctx === 'root'
       );
-
-      this.chatRefresh.refreshReactions();
     } catch (err) {
       console.error('[Thread] Reaction update failed:', err);
     }
   }
 
-  hoveredReaction: { msgId: string; emoji: string } | null = null;
-
+  /**
+   * Handles hovering over a reaction chip
+   * @param m - The message (null to clear hover)
+   * @param emoji - Optional emoji being hovered
+   */
   onReactionHover(m: Message | null, emoji?: string) {
-    if (!m || !emoji) {
-      this.hoveredReaction = null;
-      return;
-    }
-    this.hoveredReaction = { msgId: m.id, emoji };
+    this.hover.onReactionHover(m, emoji);
   }
 
+  /**
+   * Checks if a specific reaction is currently hovered
+   * @param m - The message
+   * @param emoji - The emoji
+   * @returns True if this reaction is hovered
+   */
   isReactionHovered(m: Message, emoji: string): boolean {
-    return !!this.hoveredReaction
-      && this.hoveredReaction.msgId === m.id
-      && this.hoveredReaction.emoji === emoji;
+    return this.hover.isReactionHovered(m, emoji);
   }
 
+  /**
+   * Gets formatted user names for a reaction tooltip
+   * @param m - The message
+   * @param emoji - The emoji
+   * @returns Array of user names (including 'Du' for current user)
+   */
   reactionNames(m: Message, emoji: string): string[] {
-    const by = ((m as any)?.reactionBy?.[emoji] || {}) as Record<string, any>;
-
-    const myUid = this.currentUserId ?? '';
-
-    const names = Object.keys(by)
-      .filter((uid) => !!by[uid])
-      .map((uid) => {
-        if (myUid && uid === myUid) return 'Du';
-        return this.users.find((u) => u.id === uid)?.name ?? 'Unbekannt';
-      });
-
-    return names.length ? names : ['Unbekannt'];
+    return this.display.getReactionNames(m, emoji, this.users, this.currentUserId);
   }
 
+  /**
+   * Gets the appropriate German verb for reaction tooltip
+   * @param m - The message
+   * @param emoji - The emoji
+   * @returns Verb string ('hast reagiert', 'hat reagiert', or 'haben reagiert')
+   */
   reactionVerb(m: Message, emoji: string): string {
-    const names = this.reactionNames(m, emoji);
-    const includesYou = names.includes('Du');
-
-    if (includesYou && names.length === 1) return 'hast reagiert';
-    return names.length === 1 ? 'hat reagiert' : 'haben reagiert';
+    return this.display.getReactionVerb(m, emoji, this.users, this.currentUserId);
   }
 
-  private emojiToString(x: any): string {
-    if (typeof x === 'string') return x;
-
-    const native = x?.native ?? x?.emoji?.native ?? x?.emoji?.colons;
-    if (typeof native === 'string') return native;
-
-    const s = String(x ?? '');
-    return s === '[object Object]' ? '' : s;
-  }
-
+  /**
+   * Gets the display name for a user ID
+   * @param uid - Optional user ID
+   * @returns User name or 'Unbekannt' if not found
+   */
   userName(uid?: string | null): string {
-    if (!uid) return 'Unbekannt';
-    return this.users.find(u => u.id === uid)?.name ?? 'Unbekannt';
+    return this.display.getUserName(uid, this.users);
   }
 
+  /**
+   * Gets the avatar URL for a user ID
+   * @param uid - Optional user ID
+   * @returns Avatar URL or default avatar if not found
+   */
   userAvatar(uid?: string | null): string {
-    if (!uid) return '/public/images/avatars/avatar-default.svg';
-    return this.users.find(u => u.id === uid)?.avatarUrl ?? '/public/images/avatars/avatar-default.svg';
+    return this.display.getUserAvatar(uid, this.users);
   }
 
+  /**
+   * Handles keydown events in the composer textarea
+   * @param event - The keyboard event
+   */
   onComposerKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.onSendClick();
     }
   }
-
 }

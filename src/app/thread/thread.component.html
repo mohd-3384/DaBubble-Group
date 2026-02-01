@@ -14,8 +14,8 @@
   <div class="messages-scroll">
     <!-- ROOT -->
     <div class="message-row root" *ngIf="rootMessage as rm" [class.own]="isOwnMessage(rm)"
-      [class.is-editing]="editingMessageId === rm.id" [class.is-active]="isRowActive(rm.id)"
-      (mouseenter)="onRowEnter(rm.id)" (mouseleave)="onRowLeave(rm.id)">
+      [class.is-editing]="ui.editingMessageId === rm.id" [class.is-active]="ui.isRowActive(rm.id)"
+      (mouseenter)="hover.onRowEnter(rm.id)" (mouseleave)="hover.onRowLeave(rm.id)">
       <img class="avatar" [src]="rm.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
         [alt]="rm.author.name" />
 
@@ -27,7 +27,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="message-actions" *ngIf="editingMessageId !== rm.id" (click)="$event.stopPropagation()">
+        <div class="message-actions" *ngIf="ui.editingMessageId !== rm.id" (click)="$event.stopPropagation()">
           <button type="button" class="msg-act-btn msg-act-add" aria-label="Add reaction"
             (click)="toggleMessageEmojiPicker($event, rm.id)"></button>
 
@@ -36,8 +36,8 @@
         </div>
 
         <!-- More popover -->
-        <div class="msg-more-popover" *ngIf="editMenuForId === rm.id && editingMessageId !== rm.id"
-          (pointerenter)="onPopoverEnter(rm.id)" (pointerleave)="onPopoverLeave(rm.id)"
+        <div class="msg-more-popover" *ngIf="ui.editMenuForId === rm.id && ui.editingMessageId !== rm.id"
+          (pointerenter)="hover.onPopoverEnter(rm.id)" (pointerleave)="hover.onPopoverLeave(rm.id)"
           (click)="$event.stopPropagation()">
           <button type="button" class="msg-more-item" (click)="startEdit(rm)">
             Nachricht bearbeiten
@@ -45,7 +45,7 @@
         </div>
 
         <!-- Bubble / Edit -->
-        <ng-container *ngIf="editingMessageId !== rm.id; else editRootTpl">
+        <ng-container *ngIf="ui.editingMessageId !== rm.id; else editRootTpl">
           <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(rm)">
             {{ rm.text }}
           </div>
@@ -53,19 +53,19 @@
 
         <ng-template #editRootTpl>
           <div class="edit-box" (click)="$event.stopPropagation()">
-            <textarea class="edit-input" rows="3" [(ngModel)]="editDraft"></textarea>
+            <textarea class="edit-input" rows="3" [(ngModel)]="ui.editDraft"></textarea>
 
             <div class="edit-actions">
               <div class="edit-actions-left">
-                <!-- ✅ klickbar + öffnet Edit-Emoji-Picker -->
+                <!-- klickbar + öffnet Edit-Emoji-Picker -->
                 <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
                   (click)="toggleEditEmojiPicker($event, rm.id)"></span>
 
-                <!-- ✅ Edit Emoji Popover -->
-                <div class="edit-emoji-popover" *ngIf="editEmojiForId === rm.id"
-                  [ngStyle]="{ top: editEmojiPopoverPos.top + 'px', left: editEmojiPopoverPos.left + 'px' }"
-                  [class.edit-emoji-popover--top]="editEmojiPopoverPos.placement === 'top'"
-                  [class.edit-emoji-popover--bottom]="editEmojiPopoverPos.placement === 'bottom'"
+                <!-- Edit Emoji Popover -->
+                <div class="edit-emoji-popover" *ngIf="ui.editEmojiForId === rm.id"
+                  [ngStyle]="{ top: ui.editEmojiPopoverPos.top + 'px', left: ui.editEmojiPopoverPos.left + 'px' }"
+                  [class.edit-emoji-popover--top]="ui.editEmojiPopoverPos.placement === 'top'"
+                  [class.edit-emoji-popover--bottom]="ui.editEmojiPopoverPos.placement === 'bottom'"
                   (click)="$event.stopPropagation()">
                   <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
                     (emojiSelect)="onEditEmojiSelect($event)"></emoji-mart>
@@ -81,27 +81,27 @@
         </ng-template>
 
         <!-- Emoji popover -->
-        <div class="msg-emoji-popover" *ngIf="messageEmojiForId === rm.id"
-          [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
-          [class.msg-emoji-popover--top]="emojiPopoverPos.placement === 'top'"
-          [class.msg-emoji-popover--bottom]="emojiPopoverPos.placement === 'bottom'"
-          (mouseenter)="onPopoverEnter(rm.id)" (mouseleave)="onPopoverLeave(rm.id)" (click)="$event.stopPropagation()">
+        <div class="msg-emoji-popover" *ngIf="ui.messageEmojiForId === rm.id"
+          [ngStyle]="{ top: ui.emojiPopoverPos.top + 'px', left: ui.emojiPopoverPos.left + 'px' }"
+          [class.msg-emoji-popover--top]="ui.emojiPopoverPos.placement === 'top'"
+          [class.msg-emoji-popover--bottom]="ui.emojiPopoverPos.placement === 'bottom'"
+          (mouseenter)="hover.onPopoverEnter(rm.id)" (mouseleave)="hover.onPopoverLeave(rm.id)"
+          (click)="$event.stopPropagation()">
           <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
             (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
         </div>
 
-        <!-- ✅ ROOT reactions (kommt jetzt live aus Root-Listener) -->
+        <!-- ROOT reactions (kommt jetzt live aus Root-Listener) -->
         <div class="reactions-row" *ngIf="reactionsFor(rm).length">
           <div class="reaction-wrap" *ngFor="let rct of reactionsFor(rm); trackBy: trackReaction"
-            (mouseenter)="onReactionHover(rm, rct.emoji)" (mouseleave)="onReactionHover(null)">
-
+            (mouseenter)="hover.onReactionHover(rm, rct.emoji)" (mouseleave)="hover.onReactionHover(null)">
             <button class="reaction" type="button" (click)="toggleReaction(rm, rct.emoji, 'root')"
               [class.active]="rct.reactedByMe">
               <span class="emoji">{{ rct.emoji }}</span>
               <span class="count" *ngIf="rct.count > 1">{{ rct.count }}</span>
             </button>
 
-            <div class="reaction-tooltip" *ngIf="isReactionHovered(rm, rct.emoji)">
+            <div class="reaction-tooltip" *ngIf="hover.isReactionHovered(rm, rct.emoji)">
               <div class="rt-emoji">{{ rct.emoji }}</div>
 
               <div class="rt-names">
@@ -126,8 +126,8 @@
     <!-- REPLIES -->
     <ng-container *ngIf="replies.length > 0; else noReplies">
       <div class="message-row" *ngFor="let r of replies; trackBy: trackReply" [class.own]="isOwnMessage(r)"
-        [class.is-editing]="editingMessageId === r.id" [class.is-active]="isRowActive(r.id)"
-        (mouseenter)="onRowEnter(r.id)" (mouseleave)="onRowLeave(r.id)">
+        [class.is-editing]="ui.editingMessageId === r.id" [class.is-active]="ui.isRowActive(r.id)"
+        (mouseenter)="hover.onRowEnter(r.id)" (mouseleave)="hover.onRowLeave(r.id)">
         <img class="avatar" [src]="r.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
           [alt]="r.author.name" />
 
@@ -139,7 +139,7 @@
           </div>
 
           <!-- Actions -->
-          <div class="message-actions" *ngIf="editingMessageId !== r.id" (click)="$event.stopPropagation()">
+          <div class="message-actions" *ngIf="ui.editingMessageId !== r.id" (click)="$event.stopPropagation()">
             <button type="button" class="msg-act-btn msg-act-add" aria-label="Add reaction"
               (click)="toggleMessageEmojiPicker($event, r.id)"></button>
 
@@ -148,8 +148,8 @@
           </div>
 
           <!-- More popover -->
-          <div class="msg-more-popover" *ngIf="editMenuForId === r.id && editingMessageId !== r.id"
-            (pointerenter)="onPopoverEnter(r.id)" (pointerleave)="onPopoverLeave(r.id)"
+          <div class="msg-more-popover" *ngIf="ui.editMenuForId === r.id && ui.editingMessageId !== r.id"
+            (pointerenter)="hover.onPopoverEnter(r.id)" (pointerleave)="hover.onPopoverLeave(r.id)"
             (click)="$event.stopPropagation()">
             <button type="button" class="msg-more-item" (click)="startEdit(r)">
               Nachricht bearbeiten
@@ -157,7 +157,7 @@
           </div>
 
           <!-- Bubble / Edit -->
-          <ng-container *ngIf="editingMessageId !== r.id; else editReplyTpl">
+          <ng-container *ngIf="ui.editingMessageId !== r.id; else editReplyTpl">
             <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(r)">
               {{ r.text }}
             </div>
@@ -165,18 +165,18 @@
 
           <ng-template #editReplyTpl>
             <div class="edit-box" (click)="$event.stopPropagation()">
-              <textarea class="edit-input" rows="3" [(ngModel)]="editDraft"></textarea>
+              <textarea class="edit-input" rows="3" [(ngModel)]="ui.editDraft"></textarea>
 
               <div class="edit-actions">
                 <div class="edit-actions-left">
                   <span class="icon-span emoji-icon" role="button" tabindex="0" aria-label="Emoji auswählen"
                     (click)="toggleEditEmojiPicker($event, r.id)"></span>
 
-                  <!-- ✅ Edit Emoji Popover -->
-                  <div class="edit-emoji-popover" *ngIf="editEmojiForId === r.id"
-                    [ngStyle]="{ top: editEmojiPopoverPos.top + 'px', left: editEmojiPopoverPos.left + 'px' }"
-                    [class.edit-emoji-popover--top]="editEmojiPopoverPos.placement === 'top'"
-                    [class.edit-emoji-popover--bottom]="editEmojiPopoverPos.placement === 'bottom'"
+                  <!-- Edit Emoji Popover -->
+                  <div class="edit-emoji-popover" *ngIf="ui.editEmojiForId === r.id"
+                    [ngStyle]="{ top: ui.editEmojiPopoverPos.top + 'px', left: ui.editEmojiPopoverPos.left + 'px' }"
+                    [class.edit-emoji-popover--top]="ui.editEmojiPopoverPos.placement === 'top'"
+                    [class.edit-emoji-popover--bottom]="ui.editEmojiPopoverPos.placement === 'bottom'"
                     (click)="$event.stopPropagation()">
                     <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
                       (emojiSelect)="onEditEmojiSelect($event)"></emoji-mart>
@@ -192,19 +192,20 @@
           </ng-template>
 
           <!-- Emoji popover -->
-          <div class="msg-emoji-popover" *ngIf="messageEmojiForId === r.id"
-            [ngStyle]="{ top: emojiPopoverPos.top + 'px', left: emojiPopoverPos.left + 'px' }"
-            [class.msg-emoji-popover--top]="emojiPopoverPos.placement === 'top'"
-            [class.msg-emoji-popover--bottom]="emojiPopoverPos.placement === 'bottom'"
-            (mouseenter)="onPopoverEnter(r.id)" (mouseleave)="onPopoverLeave(r.id)" (click)="$event.stopPropagation()">
+          <div class="msg-emoji-popover" *ngIf="ui.messageEmojiForId === r.id"
+            [ngStyle]="{ top: ui.emojiPopoverPos.top + 'px', left: ui.emojiPopoverPos.left + 'px' }"
+            [class.msg-emoji-popover--top]="ui.emojiPopoverPos.placement === 'top'"
+            [class.msg-emoji-popover--bottom]="ui.emojiPopoverPos.placement === 'bottom'"
+            (mouseenter)="hover.onPopoverEnter(r.id)" (mouseleave)="hover.onPopoverLeave(r.id)"
+            (click)="$event.stopPropagation()">
             <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
               (emojiSelect)="onEmojiSelect($event)"></emoji-mart>
           </div>
 
-          <!-- ✅ REPLY reactions -->
+          <!-- REPLY reactions -->
           <div class="reactions-row" *ngIf="reactionsFor(r).length">
             <div class="reaction-wrap" *ngFor="let rct of reactionsFor(r); trackBy: trackReaction"
-              (mouseenter)="onReactionHover(r, rct.emoji)" (mouseleave)="onReactionHover(null)">
+              (mouseenter)="hover.onReactionHover(r, rct.emoji)" (mouseleave)="hover.onReactionHover(null)">
 
               <button class="reaction" type="button" (click)="toggleReaction(r, rct.emoji, 'reply')"
                 [class.active]="rct.reactedByMe">
@@ -212,7 +213,7 @@
                 <span class="count" *ngIf="rct.count > 1">{{ rct.count }}</span>
               </button>
 
-              <div class="reaction-tooltip" *ngIf="isReactionHovered(r, rct.emoji)">
+              <div class="reaction-tooltip" *ngIf="hover.isReactionHovered(r, rct.emoji)">
                 <div class="rt-emoji">{{ rct.emoji }}</div>
 
                 <div class="rt-names">
@@ -237,8 +238,8 @@
   </div>
 
   <!-- Composer -->
-  <div class="composer composer--sticky" (mousedown)="closeMessageUiFromComposer()">
-    <textarea class="composer-input" rows="3" placeholder="Antworten…" [(ngModel)]="draft"
+  <div class="composer composer--sticky" (mousedown)="ui.closeMessageUi()">
+    <textarea class="composer-input" rows="3" placeholder="Antworten…" [(ngModel)]="composer.draft"
       (keydown)="onComposerKeydown($event)"></textarea>
 
     <div class="composer-actions">
@@ -248,7 +249,7 @@
             (click)="toggleEmoji($event)"></span>
 
           <!-- Composer Emoji Popover -->
-          <div *ngIf="showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
+          <div *ngIf="ui.showEmoji" class="emoji-popover" (click)="$event.stopPropagation()">
             <emoji-mart [showPreview]="false" [emojiTooltip]="true" [isNative]="true"
               (emojiSelect)="onComposerEmojiSelect($event)">
             </emoji-mart>
@@ -259,7 +260,7 @@
           <span class="icon-span at-icon" role="button" aria-label="Jemanden erwähnen"
             (click)="toggleUsers($event)"></span>
 
-          <ng-container *ngIf="showUsers">
+          <ng-container *ngIf="ui.showUsers">
             <div class="mention-popover" (click)="$event.stopPropagation()">
               <div class="mention-item" *ngFor="let u of users; trackBy: trackUser" (click)="insertMention(u)">
                 <img class="mention-avatar" [src]="u.avatarUrl || '/public/images/avatars/avatar-default.svg'" />
@@ -276,6 +277,6 @@
     </div>
   </div>
 
-  <div class="emoji-backdrop" *ngIf="showEmoji || showUsers || messageEmojiForId || editMenuForId"
-    (click)="closePopovers()"></div>
+  <div class="emoji-backdrop" *ngIf="ui.showEmoji || ui.showUsers || ui.messageEmojiForId || ui.editMenuForId"
+    (click)="ui.closePopovers()"></div>
 </section>

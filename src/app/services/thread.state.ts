@@ -13,24 +13,39 @@ import {
 
 import { Message, ReplyDoc, ThreadVM } from '../interfaces/allInterfaces.interface';
 
+/**
+ * Service for managing thread state with real-time Firestore listeners
+ * Handles opening/closing threads, syncing root message and replies
+ */
 @Injectable({ providedIn: 'root' })
 export class ThreadState {
   private fs = inject(Firestore);
   private auth = inject(Auth);
 
+  /**
+   * Internal signal holding the current thread view model
+   */
   private _vm = signal<ThreadVM>({ open: false, replies: [] });
+
+  /**
+   * Read-only signal exposing the current thread state
+   */
   vm = this._vm.asReadonly();
 
   private unsubscribeReplies: Unsubscribe | null = null;
   private unsubscribeRoot: Unsubscribe | null = null;
 
   constructor() {
-    // ✅ Wenn ausgeloggt -> alle Listener stoppen (sonst Permission Error)
+    // Stop all listeners when user logs out to prevent permission errors
     authState(this.auth).subscribe((u) => {
       if (!u) this.close();
     });
   }
 
+  /**
+   * Opens a thread and sets up real-time listeners for root message and replies
+   * @param opts - Thread options including channelId, header, root message, and isDM flag
+   */
   openThread(opts: {
     channelId: string;
     header?: ThreadVM['header'];
@@ -38,13 +53,11 @@ export class ThreadState {
     isDM?: boolean;
   }) {
     const isDM = opts.isDM ?? false;
-    // console.log('[ThreadState] openThread called with:', { channelId: opts.channelId, rootId: opts.root?.id, isDM });
     this.stopAllListeners();
 
     const rootId = opts.root?.id;
     if (!rootId) return;
 
-    // VM sofort setzen (optimistisch)
     this._vm.set({
       open: true,
       channelId: opts.channelId,
@@ -54,7 +67,6 @@ export class ThreadState {
       isDM: isDM,
     });
 
-    // ✅ 1) ROOT-LISTENER -> damit Thread oben live die Chat-Reactions/Edits sieht
     const rootRef = isDM
       ? doc(this.fs, `conversations/${opts.channelId}/messages/${rootId}`)
       : doc(this.fs, `channels/${opts.channelId}/messages/${rootId}`);
@@ -68,13 +80,9 @@ export class ThreadState {
         }
 
         const raw: any = snap.data();
-        console.log('[ThreadState] Root Listener Raw Data:', raw);
-        console.log('[ThreadState] Text field value:', raw?.text);
-
         const v = this._vm();
         if (!v.open) return;
 
-        // Root-Message im Thread live aktualisieren
         const nextRoot: Message = {
           id: rootId,
           author: {
@@ -91,7 +99,6 @@ export class ThreadState {
           reactionBy: this.ensureReactionBy(raw?.reactionBy),
         };
 
-        console.log('[ThreadState] NextRoot:', nextRoot);
         this._vm.set({ ...v, root: nextRoot });
       },
       (err) => {
@@ -100,7 +107,6 @@ export class ThreadState {
       }
     );
 
-    // ✅ 2) REPLIES-LISTENER
     const repliesRef = isDM
       ? collection(this.fs, `conversations/${opts.channelId}/messages/${rootId}/replies`)
       : collection(this.fs, `channels/${opts.channelId}/messages/${rootId}/replies`);
@@ -127,8 +133,6 @@ export class ThreadState {
           };
         });
 
-        console.log('[ThreadState] Replies Listener Update:', { count: replies.length, replies });
-
         const v = this._vm();
         if (!v.open) return;
 
@@ -141,11 +145,17 @@ export class ThreadState {
     );
   }
 
+  /**
+   * Closes the thread and cleans up all Firestore listeners
+   */
   close() {
     this.stopAllListeners();
     this._vm.set({ open: false, replies: [] });
   }
 
+  /**
+   * Unsubscribes from all active Firestore listeners
+   */
   private stopAllListeners() {
     if (this.unsubscribeReplies) {
       this.unsubscribeReplies();
@@ -157,6 +167,11 @@ export class ThreadState {
     }
   }
 
+  /**
+   * Converts a Firestore timestamp to a Date or returns the value as-is
+   * @param ts - Firestore timestamp or date value
+   * @returns Date object or original value
+   */
   private toDateOrString(ts: any): Date | string {
     try {
       if (ts && typeof ts.toDate === 'function') return ts.toDate();
@@ -164,6 +179,12 @@ export class ThreadState {
     return ts ?? '';
   }
 
+  /**
+   * Normalizes reaction data into a consistent emoji -> count map
+   * Handles both array and object formats from Firestore
+   * @param raw - Raw reaction data from Firestore
+   * @returns Record mapping emoji strings to reaction counts
+   */
   private ensureReactionsMap(raw: any): Record<string, number> {
     if (!raw) return {};
 
@@ -190,11 +211,21 @@ export class ThreadState {
     return {};
   }
 
+  /**
+   * Ensures reactionBy data is in the correct format
+   * @param raw - Raw reactionBy data from Firestore
+   * @returns Nested record mapping emoji -> userId -> boolean
+   */
   private ensureReactionBy(raw: any): Record<string, Record<string, boolean>> {
     if (!raw || typeof raw !== 'object') return {};
     return raw as Record<string, Record<string, boolean>>;
   }
 
+  /**
+   * Converts various emoji formats to a string representation
+   * @param x - Emoji object or string from emoji picker
+   * @returns Emoji as string or empty string if invalid
+   */
   private emojiToString(x: any): string {
     if (typeof x === 'string') return x;
 
@@ -205,7 +236,10 @@ export class ThreadState {
     return s === '[object Object]' ? '' : s;
   }
 
-  // ✅ Neu laden wenn die Root-Message bearbeitet wurde
+  /**
+   * Manually refreshes the root message from Firestore
+   * Used after editing the root message to ensure thread displays latest data
+   */
   async refreshRootMessage() {
     const v = this._vm();
     if (!v.open || !v.root?.id) return;

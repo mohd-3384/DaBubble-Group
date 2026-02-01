@@ -1,0 +1,140 @@
+/* ===========================
+    Sections (Channels / DMs)
+   =========================== */
+.section-header {
+  display: grid;
+  grid-template-columns: 1fr 40px;
+  align-items: center;
+  padding: 8px 4px;
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition15);
+  }
+
+  .arrow {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition15);
+  }
+
+  .arrow.rotated {
+    transform: rotate(-90deg);
+  }
+
+  .section-icon {
+    width: 20px;
+    height: 20px;
+    transition: filter var(--transition15);
+  }
+
+  .title {
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.2px;
+    transition: color var(--transition15);
+  }
+
+  /* ===== CHANNELS HEADER ===== */
+  &.channels-header {
+    .left:hover {
+      .arrow {
+        content: url('/public/images/arrow-drop-down-hover.svg');
+      }
+
+      .section-icon {
+        content: url('/public/images/workspaces-hover.svg');
+      }
+
+      .title {
+        color: var(--primary-color);
+      }
+    }
+  }
+
+  /* ===== DIREKTNACHRICHTEN HEADER ===== */
+  &.dms-header {
+    .left:hover {
+      .arrow {
+        content: url('/public/images/arrow-drop-down-hover.svg');
+      }
+
+      .section-icon {
+        content: url('/public/images/account-circle-hover.svg');
+      }
+
+      .title {
+        color: var(--primary-color);
+      }
+    }
+  }
+
+  .icon-swap.add {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius9999);
+    background-color: transparent;
+    background-image: url('/public/images/add.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px 20px;
+    transition: background-color var(--transition15),
+      transform var(--transition15),
+      box-shadow var(--transition15);
+  }
+
+  .icon-swap.add:hover {
+    background-image: url('/public/images/add-hover.svg');
+    background-color: var(--background-color);
+    transform: scale(1.05);
+  }
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.section-spacer {
+  justify-self: end;
+}
+
+.add-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: var(--border-radius9999);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    .add-text {
+      color: var(--primary-color);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 2px;
+  }
+
+  .add-circle {
+    width: 24px;
+    height: 24px;
+    background: no-repeat center / 24px 24px url('/public/images/add-circle.svg');
+    transition: transform var(--transition15), filter var(--transition15);
+  }
+
+  &:hover .add-circle {
+    background-image: url('/public/images/add-circle-hover.svg');
+    transform: scale(1.05);
+  }
+
+  .add-text {
+    font-weight: 600;
+  }
+}

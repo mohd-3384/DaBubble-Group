@@ -13,21 +13,29 @@ import { Auth } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
 import { UserDoc } from '../interfaces/allInterfaces.interface';
 
+/**
+ * Service for managing user documents in Firestore
+ * Handles user creation, presence updates, and user listing
+ */
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private fs = inject(Firestore);
   private auth = inject(Auth);
 
-  // Optional: Liste aller User (für Direktnachrichten)
+  /**
+   * Returns an observable stream of all users from Firestore
+   * @returns Observable of user documents array
+   */
   users$(): Observable<UserDoc[]> {
     const ref = collection(this.fs, 'users');
     return collectionData(ref, { idField: 'id' }) as Observable<UserDoc[]>;
   }
 
   /**
-   * ✅ Users-Dokument wird nur unter users/{uid} geführt.
-   * - existiert es schon: update online/lastSeen (und optional merge data)
-   * - existiert es nicht: wird genau 1x angelegt
+   * Ensures a user document exists in Firestore under users/{uid}
+   * If document exists: updates online/lastSeen and merges extra data
+   * If document doesn't exist: creates it with default values
+   * @param extra - Optional partial user data to merge with defaults
    */
   async ensureUserDoc(extra?: Partial<UserDoc> & { name?: string }) {
     const u = this.auth.currentUser;
@@ -37,7 +45,6 @@ export class UserService {
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      // schon da -> nur Presence / lastSeen aktualisieren
       await updateDoc(ref, {
         online: true,
         lastSeen: serverTimestamp(),
@@ -46,7 +53,6 @@ export class UserService {
       return;
     }
 
-    // neu anlegen (einmalig)
     await setDoc(
       ref,
       {
@@ -65,6 +71,10 @@ export class UserService {
     );
   }
 
+  /**
+   * Updates the online status of the current user
+   * @param online - True to set user as online, false for offline
+   */
   async setOnline(online: boolean) {
     const u = this.auth.currentUser;
     if (!u) return;

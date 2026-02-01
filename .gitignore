@@ -45,3 +45,18 @@ Thumbs.db
 .firebase
 *-debug.log
 .runtimeconfig.json
+
+# Backup and old files
+*.backup
+*.backup.*
+*.old.*
+*.bak
+chat.component.ts.backup
+chat.component.backup.ts
+chat.component.scss.backup
+chat.component.old.ts
+
+# Environment files (if you add them later)
+.env
+.env.local
+.env.*.local

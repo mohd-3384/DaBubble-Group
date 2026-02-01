@@ -1,0 +1,28 @@
+/* Modal Styles - Organized by Modal Type */
+@import 'chat-modal-channel-info';
+@import 'chat-modal-user-profile';
+@import 'chat-modal-members';
+@import 'chat-modal-add-members';
+
+/* Shared Modal Scrollbar Styles */
+.ui-modal,
+.ui-modal__body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-color);
+}
+
+.ui-modal::-webkit-scrollbar,
+.ui-modal__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ui-modal::-webkit-scrollbar-thumb,
+.ui-modal__body::-webkit-scrollbar-thumb {
+  background: var(--background-color);
+  border-radius: 999px;
+}
+
+.ui-modal::-webkit-scrollbar-track,
+.ui-modal__body::-webkit-scrollbar-track {
+  background: var(--surface-bg);
+}

@@ -11,7 +11,7 @@ import { BehaviorSubject, combineLatest, from, Observable, of, take } from 'rxjs
 import { UserService } from '../services/user.service';
 import { ChannelService } from '../services/channel.service';
 import { FormsModule } from '@angular/forms';
-import { ChannelDoc, UserDoc, WsSearchResult } from '../interfaces/allInterfaces.interface';
+import { ChannelDoc, UserDoc, WsChannelResult, WsSearchResult } from '../interfaces/allInterfaces.interface';
 import { Auth, authState } from '@angular/fire/auth';
 import { ThreadState } from '../services/thread.state';
 import { NavigationStart } from '@angular/router';
@@ -67,6 +67,10 @@ export class ChannelsComponent {
   private wsLatestResults: WsSearchResult[] = [];
   wsSearchTerm = '';
 
+  /**
+   * Toggles the workspace sidebar collapse state.
+   * Emits the new collapsed state to parent components.
+   */
   toggleWorkspace() {
     this.workspaceCollapsed.update((v) => {
       const next = !v;
@@ -77,6 +81,12 @@ export class ChannelsComponent {
 
   private auth = inject(Auth);
 
+  /**
+   * Initializes the channels component.
+   * Sets up observables for users and channels, retrieves the current user ID,
+   * and subscribes to router events to close threads on navigation.
+   * @param router - Angular router for navigation
+   */
   constructor(
     private router: Router) {
 
@@ -90,19 +100,27 @@ export class ChannelsComponent {
       .subscribe(() => this.thread.close());
   }
 
-  /** Modal öffnen */
+  /**
+   * Opens the channel creation modal and resets form fields.
+   */
   openCreateChannelModal() {
     this.createChannelOpen = true;
     this.newChannelName = '';
     this.newChannelDescription = '';
   }
 
-  /** Modal schließen */
+  /**
+   * Closes the channel creation modal.
+   */
   closeCreateChannelModal() {
     this.createChannelOpen = false;
   }
 
-  /** Channel wirklich erstellen (Submit im Formular) */
+  /**
+   * Submits the channel creation form.
+   * Creates a new channel, adds the current user as owner, and navigates to it.
+   * @returns Promise that resolves when the channel is created
+   */
   async submitCreateChannel() {
     const raw = (this.newChannelName || '').trim();
     if (!raw) return;
@@ -110,33 +128,56 @@ export class ChannelsComponent {
     const topic = (this.newChannelDescription || '').trim();
 
     try {
-      // createChannel gibt jetzt die generierte ID zurück
       const channelId = await this.chanSvc.createChannel(raw, topic);
       await this.chanSvc.addMeAsMember(channelId, 'owner');
 
-      // Formular leeren & Modal schließen
       this.newChannelName = '';
       this.newChannelDescription = '';
       this.closeCreateChannelModal();
 
-      // gleich in den neuen Channel springen
       this.router.navigate(['/channel', channelId]);
     } catch (e) {
       console.error('[ChannelModal] create failed:', e);
     }
   }
 
-  /** trackBy-Helper für Performance */
+  /**
+   * TrackBy function for user lists to optimize performance.
+   * @param _ - Index (unused)
+   * @param u - User document
+   * @returns User ID
+   */
   trackByUid = (_: number, u: UserDoc) => u.id;
+
+  /**
+   * TrackBy function for channel lists to optimize performance.
+   * @param _ - Index (unused)
+   * @param c - Channel document
+   * @returns Channel ID
+   */
   trackByCid = (_: number, c: ChannelDoc) => c.id;
 
+  /**
+   * Toggles the collapsed state of the channels section.
+   */
   toggleChannels() { this.collapsedChannels.update(v => !v); }
+
+  /**
+   * Toggles the collapsed state of the direct messages section.
+   */
   toggleDMs() { this.collapsedDMs.update(v => !v); }
 
+  /**
+   * Navigates to the new message page.
+   */
   startNewMessage() {
     this.router.navigate(['/new']);
   }
 
+  /**
+   * Updates the workspace search term and opens the search results.
+   * @param v - The search term string
+   */
   setWsSearch(v: string) {
     this.wsSearchTerm = v;
     const term = (v || '').trim().toLowerCase();
@@ -145,11 +186,18 @@ export class ChannelsComponent {
     this.wsSearch$.next(term);
   }
 
+  /**
+   * Opens the workspace search dropdown if there is a search term.
+   */
   openWsSearch() {
     const t = this.wsSearch$.value;
     this.wsSearchOpen = !!t;
   }
 
+  /**
+   * Clears the workspace search and resets the search state.
+   * Refocuses the search input field.
+   */
   clearWsSearch() {
     this.wsSearchTerm = '';
     this.wsSearch$.next('');
@@ -158,11 +206,18 @@ export class ChannelsComponent {
     queueMicrotask(() => this.wsSearchInput?.nativeElement?.focus());
   }
 
+  /**
+   * Closes the workspace search dropdown.
+   */
   closeWsSearch() {
     this.wsSearchOpen = false;
     this.wsActiveIndex = -1;
   }
 
+  /**
+   * Observable that searches across channels, users, and messages based on the search term.
+   * Combines results from all sources and limits to 10 total results.
+   */
   wsResults$: Observable<WsSearchResult[]> = combineLatest([
     authState(this.auth),
     this.wsSearch$.pipe(debounceTime(120), distinctUntilChanged()),
@@ -172,8 +227,6 @@ export class ChannelsComponent {
         this.wsLatestResults = [];
         return of([] as WsSearchResult[]);
       }
-
-      type WsChannelResult = Extract<WsSearchResult, { kind: 'channel' }>;
 
       const channels$ = collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
         map((rows: any[]) =>
@@ -221,6 +274,12 @@ export class ChannelsComponent {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
+  /**
+   * Searches through channel messages for the given term.
+   * Searches up to 40 recent messages in up to 20 channels.
+   * @param term - The search term to look for in messages
+   * @returns Promise resolving to an array of message search results (max 10)
+   */
   private async searchChannelMessages(term: string): Promise<WsSearchResult[]> {
     try {
       const chSnap = await getDocs(query(collection(this.fs, 'channels'), limit(20)));
@@ -252,6 +311,11 @@ export class ChannelsComponent {
     }
   }
 
+  /**
+   * Handles selection of a workspace search result.
+   * Navigates to the appropriate route based on result type and clears the search.
+   * @param r - The selected search result
+   */
   onSelectWsResult(r: WsSearchResult) {
     if (r.kind === 'channel') this.router.navigate(['/channel', r.id]);
     if (r.kind === 'user') this.router.navigate(['/dm', r.id]);
@@ -259,6 +323,11 @@ export class ChannelsComponent {
     this.clearWsSearch();
   }
 
+  /**
+   * Handles keyboard navigation in the workspace search results.
+   * Supports arrow keys for navigation, Enter to select, and Escape to close.
+   * @param ev - The keyboard event
+   */
   onWsSearchKeydown(ev: KeyboardEvent) {
     if (!this.wsSearchOpen) return;
 
@@ -281,6 +350,10 @@ export class ChannelsComponent {
     }
   }
 
+  /**
+   * Closes the workspace search when clicking anywhere in the document.
+   * Listener for global document clicks.
+   */
   @HostListener('document:click')
   onDocClick() {
     this.closeWsSearch();

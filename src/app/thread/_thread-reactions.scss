@@ -1,0 +1,103 @@
+/* Reactions */
+.reactions-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .reaction {
+    border: 1px solid var(--accent-color);
+    background: var(--surface-bg);
+    border-radius: 999px;
+    padding: 4px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+
+    .count {
+      color: var(--background-offline);
+      font-size: 13px;
+      font-weight: 600;
+    }
+  }
+}
+
+.reaction.active {
+  border-color: var(--primary-color);
+  background: var(--surface-bg);
+}
+
+.reactions-row .reaction.reaction-add {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--surface-bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+  border: none;
+  background-image: url('/public/images/add-reaction-comment.svg');
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: var(--background-color);
+    background-image: url('/public/images/add-reaction-comment-hover.svg');
+    transform: scale(1.05);
+  }
+}
+
+.reaction-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reaction-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(0);
+  z-index: 20000;
+  background: var(--primary-color);
+  color: var(--surface-bg);
+  border-radius: 24px;
+  border-bottom-left-radius: 0;
+  padding: 14px 16px;
+  min-width: 100px;
+  max-width: 160px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.rt-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.rt-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rt-name {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.rt-text {
+  font-size: 14px;
+  opacity: 0.95;
+}

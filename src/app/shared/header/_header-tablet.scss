@@ -1,0 +1,57 @@
+/* ===========================
+    Tablet (<=1024px)
+   =========================== */
+@media (max-width: 1024px) {
+    .header-wrapper {
+        height: 72px;
+    }
+
+    .img-wrapper {
+        grid-area: brand;
+        padding-left: 0;
+        gap: 10px;
+        height: auto;
+
+        .logo-bubble {
+            height: 36px;
+        }
+
+        .logo-text {
+            max-height: 14px;
+        }
+
+        &.img-wrapper--chat-open {
+            padding-left: 0;
+            gap: 12px;
+            min-width: 0;
+
+            .ws-title-header {
+                font-size: 18px;
+                font-weight: 800;
+            }
+        }
+    }
+
+    .input-wrapper {
+        display: none;
+    }
+
+    .name-text {
+        font-size: 20px;
+    }
+
+    .profile-img {
+        width: 44px;
+        height: 44px;
+    }
+
+    .online-status-dot {
+        width: 14px;
+        height: 14px;
+    }
+
+    .arrow-down {
+        width: 22px;
+        height: 22px;
+    }
+}

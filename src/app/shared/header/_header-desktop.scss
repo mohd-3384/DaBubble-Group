@@ -1,0 +1,73 @@
+/* ===========================
+    Desktop Large (<=1330px)
+   =========================== */
+@media (max-width: 1330px) {
+    .header-wrapper {
+        height: 76px;
+        padding: 0 16px;
+    }
+
+    .img-wrapper {
+        padding-left: 12px;
+        gap: 12px;
+
+        .logo-bubble {
+            height: 44px;
+        }
+
+        .logo-text {
+            height: 18px;
+        }
+    }
+
+    .input-wrapper {
+        width: min(560px, 52vw);
+        height: 56px;
+
+        input {
+            height: 100%;
+            font-size: 14px;
+            padding: 0 48px 0 16px;
+        }
+
+        .input-search-icon {
+            height: 22px;
+            right: 16px;
+        }
+    }
+
+    .profile-area {
+        margin-right: 8px;
+        gap: 12px;
+        right: 0;
+    }
+
+    .name-text {
+        font-size: 24px;
+    }
+
+    .profile-img {
+        width: 46px;
+        height: 46px;
+    }
+
+    .arrow-down {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .img-wrapper.img-wrapper--chat-open {
+        gap: 16px;
+        padding-left: 45px;
+
+        .back-button {
+            display: none;
+        }
+
+        .ws-brand-header {
+            display: none;
+        }
+    }
+}
