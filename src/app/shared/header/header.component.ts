@@ -95,6 +95,16 @@ export class HeaderComponent {
   profileModalOpen = false;
   profileView: ProfileView = 'view';
   editName = '';
+  selectedAvatar = '';
+
+  availableAvatars = [
+    '/public/images/avatars/avatar1.svg',
+    '/public/images/avatars/avatar2.svg',
+    '/public/images/avatars/avatar3.svg',
+    '/public/images/avatars/avatar4.svg',
+    '/public/images/avatars/avatar5.svg',
+    '/public/images/avatars/avatar6.svg',
+  ];
 
   /**
    * Toggles the profile dropdown menu.
@@ -141,6 +151,40 @@ export class HeaderComponent {
    */
   backToProfileView() {
     this.profileView = 'view';
+  }
+
+  /**
+   * Opens the avatar selection view.
+   * @param user - The current user data to pre-fill the current avatar
+   */
+  openAvatarSelection(user: HeaderUser) {
+    this.profileView = 'avatar';
+    this.selectedAvatar = user.avatarUrl || '';
+  }
+
+  /**
+   * Selects an avatar from the available options.
+   * @param avatarUrl - The URL of the selected avatar
+   */
+  selectAvatar(avatarUrl: string) {
+    this.selectedAvatar = avatarUrl;
+  }
+
+  /**
+   * Saves the selected avatar to Firestore.
+   * Returns to view mode on success.
+   */
+  async saveAvatar() {
+    if (!this.selectedAvatar) return;
+    const authUser = this.auth.currentUser;
+    if (!authUser) return;
+
+    try {
+      await this.profileHelper.updateUserAvatar(authUser.uid, this.selectedAvatar);
+      this.profileView = 'view';
+    } catch (e) {
+      console.error('[Header] Failed to save avatar:', e);
+    }
   }
 
   /**

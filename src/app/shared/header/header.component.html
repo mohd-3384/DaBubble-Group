@@ -89,20 +89,22 @@
 
         <!-- HEADER: Titel je nach View -->
         <div class="ui-modal__header profile-modal__header">
-          <h3>{{ profileView === 'edit' ? 'Dein Profil bearbeiten' : 'Profil' }}</h3>
+          <h3>{{ profileView === 'edit' ? 'Dein Profil bearbeiten' : profileView === 'avatar' ? 'Wähle dein Profilbild
+            aus!' : 'Profil' }}</h3>
           <button type="button" class="ui-modal__close profile-modal__close" (click)="closeProfileModal()">×</button>
         </div>
 
         <!-- VIEW: Profil anzeigen -->
         <div class="ui-modal__body profile-modal__content" *ngIf="profileView === 'view'">
           <div class="profile-modal__avatar">
-            <img [src]="user.avatarUrl" alt="Avatar" />
+            <img [src]="user.avatarUrl" alt="Avatar" (click)="openAvatarSelection(user)" />
           </div>
 
           <div class="profile-modal__row">
             <div class="profile-modal__name">{{ user.name }}</div>
             <button type="button" class="profile-modal__edit" (click)="openEditProfile(user)">
-              Bearbeiten
+              <span class="profile-modal__edit-icon" aria-hidden="true"></span>
+              <span class="profile-modal__edit-text">Bearbeiten</span>
             </button>
           </div>
 
@@ -115,8 +117,28 @@
             <span class="mail-icon">✉</span>
             <div class="mail-block">
               <div class="mail-title">E-Mail-Adresse</div>
-              <a class="mail-link" [href]="'mailto:' + user.email">{{ user.email }}</a>
+              <span class="mail-link">{{ user.email }}</span>
             </div>
+          </div>
+        </div>
+
+        <!-- AVATAR: Avatar auswählen -->
+        <div class="ui-modal__body profile-avatar__content" *ngIf="profileView === 'avatar'">
+          <div class="profile-avatar__preview">
+            <img [src]="selectedAvatar || user.avatarUrl" alt="Vorschau" />
+          </div>
+
+          <div class="profile-avatar__grid">
+            <button type="button" class="profile-avatar__option" *ngFor="let avatar of availableAvatars"
+              [class.selected]="selectedAvatar === avatar" (click)="selectAvatar(avatar)">
+              <img [src]="avatar" [alt]="avatar" />
+            </button>
+          </div>
+
+          <div class="profile-avatar__actions">
+            <button type="button" class="profile-edit__btn primary" (click)="saveAvatar()">
+              Speichern
+            </button>
           </div>
         </div>
 

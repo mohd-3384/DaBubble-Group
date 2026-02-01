@@ -300,7 +300,7 @@ export type HeaderUser = {
 /**
  * Profile view mode: viewing or editing
  */
-export type ProfileView = 'view' | 'edit';
+export type ProfileView = 'view' | 'edit' | 'avatar';
 
 /**
  * User representation for mentions in messages
