@@ -23,7 +23,7 @@
   </div>
 
   <!-- Search -->
-  <div class="input-wrapper" *ngIf="!isNewMessageRoute" (click)="$event.stopPropagation()">
+  <div class="input-wrapper" *ngIf="!isNewMessageRoute || isDesktop" (click)="$event.stopPropagation()">
     <input #searchInput type="text" placeholder="Devspace durchsuchen" [value]="searchTerm"
       (input)="setSearch($any($event.target).value)" (focus)="openSearch()" (keydown)="onSearchKeydown($event)" />
     <img src="/public/images/search.svg" class="input-search-icon" alt="Search" />
