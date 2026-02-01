@@ -1,0 +1,115 @@
+/* Emoji Picker Styles (ngx-emoji-mart) */
+@import '@ctrl/ngx-emoji-mart/picker';
+
+/* Hover-Hintergrund vollständig neutralisieren */
+.emoji-mart .emoji-mart-emoji,
+.emoji-mart .emoji-mart-emoji::before,
+.emoji-mart .emoji-mart-emoji:hover,
+.emoji-mart .emoji-mart-emoji:hover::before,
+.emoji-mart .emoji-mart-emoji:focus,
+.emoji-mart .emoji-mart-emoji:focus::before,
+.emoji-mart .emoji-mart-emoji:active,
+.emoji-mart .emoji-mart-emoji:active::before,
+.emoji-mart .emoji-mart-emoji>span:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* sanfter Hover-Effekt (ohne Cursor) */
+.emoji-mart .emoji-mart-emoji {
+    transition: transform var(--transition15), filter var(--transition15);
+    will-change: transform;
+}
+
+.emoji-mart .emoji-mart-emoji:hover {
+    transform: scale(1.2);
+    filter: brightness(1.15);
+}
+
+/* Picker-Container */
+.emoji-mart {
+    width: 286px !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid var(--background-color);
+    border-radius: 16px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all var(--transition20);
+    z-index: 2000;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Kopf/Leiste */
+.emoji-mart-bar,
+.emoji-mart-anchor-bar {
+    background: transparent !important;
+}
+
+.emoji-mart-anchor {
+    filter: grayscale(1);
+    opacity: 0.8;
+}
+
+.emoji-mart-anchor:hover,
+.emoji-mart-anchor-selected {
+    opacity: 1 !important;
+    filter: none !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Suche */
+.emoji-mart-search input {
+    background: var(--background-color) !important;
+    border: 1px solid #dfe3f3 !important;
+    border-radius: 8px !important;
+    color: #000 !important;
+    font-size: 14px !important;
+}
+
+.emoji-mart-search input::placeholder {
+    color: #999 !important;
+}
+
+.emoji-mart-search input:focus {
+    outline: none !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Kategorie-Label */
+.emoji-mart-category-label span {
+    background: #fff !important;
+    color: #6c7280 !important;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+/* Scrollbar (Picker-Liste) */
+.emoji-mart-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) #fff;
+}
+
+.emoji-mart-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.emoji-mart-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 999px;
+}
+
+.emoji-mart-scroll::-webkit-scrollbar-track {
+    background: #fff;
+}
+
+/* Backdrop (außerhalb klicken) */
+.emoji-backdrop {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+}

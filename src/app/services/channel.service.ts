@@ -33,7 +33,6 @@ export class ChannelService {
     const channelsRef = collection(this.fs, 'channels');
     const docRef = doc(channelsRef);
     const channelId = docRef.id;
-
     await setDoc(docRef, {
       name,
       createdBy: user.uid,
@@ -45,7 +44,6 @@ export class ChannelService {
       lastReplyAt: null,
       topic,
     });
-
     return channelId;
   }
 
@@ -57,14 +55,11 @@ export class ChannelService {
    */
   async addMeAsMember(channelId: string, role: 'owner' | 'member' = 'member'): Promise<void> {
     const user = await this.authReady.requireUser();
-
     const uid = user.uid;
     const chRef = doc(this.fs, `channels/${channelId}`);
     const memRef = doc(this.fs, `channels/${channelId}/members/${uid}`);
-
     await runTransaction(this.fs, async (tx) => {
       const memSnap = await tx.get(memRef);
-
       if (!memSnap.exists()) {
         tx.set(memRef, { role, joinedAt: serverTimestamp() });
         tx.update(chRef, { memberCount: increment(1) });
@@ -79,8 +74,7 @@ export class ChannelService {
    * @param channelId - ID of the channel to post welcome message
    */
   async postWelcome(channelId: string): Promise<void> {
-    const user = await this.authReady.requireUser();
-
+    const user = await this.authReady.requireUser()
     await addDoc(collection(this.fs, `channels/${channelId}/messages`), {
       text: `Willkommen in #${channelId}!`,
       authorId: user.uid,
@@ -100,14 +94,11 @@ export class ChannelService {
    */
   async leaveChannel(channelId: string): Promise<void> {
     const user = await this.authReady.requireUser();
-
     const uid = user.uid;
     const chRef = doc(this.fs, `channels/${channelId}`);
     const memRef = doc(this.fs, `channels/${channelId}/members/${uid}`);
-
     await runTransaction(this.fs, async (tx) => {
       const memSnap = await tx.get(memRef);
-
       if (memSnap.exists()) {
         tx.delete(memRef);
         tx.update(chRef, { memberCount: increment(-1) });

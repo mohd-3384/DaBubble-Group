@@ -1,0 +1,17 @@
+/* ===========================
+    Channels Component Styles
+   =========================== */
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Import partial stylesheets */
+@import 'helpers/channels-header';
+@import 'helpers/channels-sections';
+@import 'helpers/channels-list';
+@import 'helpers/channels-sidebar';
+@import 'helpers/channels-modal';
+@import 'helpers/channels-search';
+@import 'helpers/channels-responsive';

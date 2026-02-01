@@ -29,16 +29,7 @@ export class ThreadActionsService {
     isDM: boolean,
     isRoot: boolean
   ): Promise<void> {
-    let ref;
-    if (isDM) {
-      ref = isRoot
-        ? doc(this.fs, `conversations/${channelId}/messages/${rootMessageId}`)
-        : doc(this.fs, `conversations/${channelId}/messages/${rootMessageId}/replies/${messageId}`);
-    } else {
-      ref = isRoot
-        ? doc(this.fs, `channels/${channelId}/messages/${rootMessageId}`)
-        : doc(this.fs, `channels/${channelId}/messages/${rootMessageId}/replies/${messageId}`);
-    }
+    const ref = this.getMessageRef(messageId, rootMessageId, channelId, isDM, isRoot);
 
     await updateDoc(ref, {
       text: newText,
@@ -46,6 +37,27 @@ export class ThreadActionsService {
     });
 
     this.chatRefresh.refreshReactions();
+  }
+
+  /**
+   * Gets the Firestore document reference for a message
+   * @param messageId - The message ID
+   * @param rootMessageId - The root message ID
+   * @param channelId - The channel or conversation ID
+   * @param isDM - Whether this is a direct message
+   * @param isRoot - Whether this is the root message
+   * @returns Firestore document reference
+   */
+  private getMessageRef(messageId: string, rootMessageId: string, channelId: string, isDM: boolean, isRoot: boolean) {
+    if (isDM) {
+      return isRoot
+        ? doc(this.fs, `conversations/${channelId}/messages/${rootMessageId}`)
+        : doc(this.fs, `conversations/${channelId}/messages/${rootMessageId}/replies/${messageId}`);
+    } else {
+      return isRoot
+        ? doc(this.fs, `channels/${channelId}/messages/${rootMessageId}`)
+        : doc(this.fs, `channels/${channelId}/messages/${rootMessageId}/replies/${messageId}`);
+    }
   }
 
   /**
@@ -68,48 +80,71 @@ export class ThreadActionsService {
     isDM: boolean,
     isRoot: boolean
   ): Promise<void> {
-    let ref;
-    if (isDM) {
-      ref = isRoot
-        ? doc(this.fs, `conversations/${channelId}/messages/${rootMessageId}`)
-        : doc(this.fs, `conversations/${channelId}/messages/${rootMessageId}/replies/${messageId}`);
-    } else {
-      ref = isRoot
-        ? doc(this.fs, `channels/${channelId}/messages/${rootMessageId}`)
-        : doc(this.fs, `channels/${channelId}/messages/${rootMessageId}/replies/${messageId}`);
-    }
+    const ref = this.getMessageRef(messageId, rootMessageId, channelId, isDM, isRoot);
 
     await runInInjectionContext(this.env, () =>
       runTransaction(this.fs, async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists()) return;
-
-        const data = snap.data() as any;
-        const key = String(emoji);
-
-        const already = !!data?.reactionBy?.[key]?.[userId];
-        const currentCount = Number(data?.reactions?.[key] ?? 0);
-
-        if (already) {
-          const updatePayload: any = {
-            [`reactionBy.${key}.${userId}`]: deleteField(),
-          };
-
-          if (currentCount <= 1) updatePayload[`reactions.${key}`] = deleteField();
-          else updatePayload[`reactions.${key}`] = increment(-1);
-
-          tx.update(ref, updatePayload);
-          return;
-        }
-
-        tx.update(ref, {
-          [`reactionBy.${key}.${userId}`]: true,
-          [`reactions.${key}`]: increment(1),
-        });
+        await this.processReactionToggle(tx, ref, userId, emoji);
       })
     );
 
     this.chatRefresh.refreshReactions();
+  }
+
+  /**
+   * Processes the reaction toggle transaction logic
+   * @param tx - Firestore transaction
+   * @param ref - Message document reference
+   * @param userId - User ID toggling the reaction
+   * @param emoji - The emoji being toggled
+   */
+  private async processReactionToggle(tx: any, ref: any, userId: string, emoji: string) {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+
+    const data = snap.data() as any;
+    const key = String(emoji);
+    const already = !!data?.reactionBy?.[key]?.[userId];
+
+    if (already) {
+      this.removeReaction(tx, ref, key, userId, data);
+    } else {
+      this.addReaction(tx, ref, key, userId);
+    }
+  }
+
+  /**
+   * Removes a reaction from a message
+   * @param tx - Firestore transaction
+   * @param ref - Message document reference
+   * @param key - Emoji key
+   * @param userId - User ID removing the reaction
+   * @param data - Current message data
+   */
+  private removeReaction(tx: any, ref: any, key: string, userId: string, data: any) {
+    const currentCount = Number(data?.reactions?.[key] ?? 0);
+    const updatePayload: any = {
+      [`reactionBy.${key}.${userId}`]: deleteField(),
+    };
+
+    if (currentCount <= 1) updatePayload[`reactions.${key}`] = deleteField();
+    else updatePayload[`reactions.${key}`] = increment(-1);
+
+    tx.update(ref, updatePayload);
+  }
+
+  /**
+   * Adds a reaction to a message
+   * @param tx - Firestore transaction
+   * @param ref - Message document reference
+   * @param key - Emoji key
+   * @param userId - User ID adding the reaction
+   */
+  private addReaction(tx: any, ref: any, key: string, userId: string) {
+    tx.update(ref, {
+      [`reactionBy.${key}.${userId}`]: true,
+      [`reactions.${key}`]: increment(1),
+    });
   }
 
   /**

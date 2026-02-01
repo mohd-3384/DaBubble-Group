@@ -1,0 +1,63 @@
+/* Responsive Styles and Mobile Tweaks */
+/* Globale mobile Tweaks: reduzierte Typo und engeres Spacing */
+@media (max-width: 1024px) {
+    body {
+        font-size: clamp(var(--font-sm), 1.6vw, var(--font-md));
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        font-size: var(--font-sm);
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+        font-size: 0.9rem;
+    }
+
+    .shell,
+    app-thread,
+    app-chat,
+    app-channels {
+        --surface-radius: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ui-modal {
+        padding: 12px;
+    }
+
+    .ui-modal--add-members {
+        align-items: flex-end !important;
+        justify-content: stretch !important;
+        padding: 0 !important;
+    }
+
+    .ui-modal--add-members .ui-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 4999;
+    }
+
+    .ui-modal--right {
+        align-items: center !important;
+        justify-content: center !important;
+        padding-top: 12px !important;
+    }
+
+    .ui-modal--right .ui-modal__panel {
+        margin-right: 0 !important;
+    }
+}

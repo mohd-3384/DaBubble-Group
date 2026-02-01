@@ -2,18 +2,20 @@ import { Component, computed, effect, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, ActivatedRoute, ParamMap, Router, NavigationStart, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
-import { ChannelsComponent } from '../../channels/channels.component';
-import { ThreadComponent } from '../../thread/thread.component';
-import { ThreadState } from '../../services/thread.state';
+import { ChannelsComponent } from '../../components/channels/channels.component';
+import { ThreadComponent } from '../../components/thread/thread.component';
+import { ThreadService } from '../../services/thread.service';
 import { ChatRefreshService } from '../../services/chat-refresh.service';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { Firestore, collection, collectionData, addDoc, doc, docData, updateDoc, setDoc, increment, serverTimestamp, } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { MentionUser, UserDoc } from '../../interfaces/allInterfaces.interface';
 import { PresenceService } from '../../services/presence.service';
-
+import { ShellThreadHelper } from './helpers/shell-thread.helper';
+import { ShellNavigationHelper } from './helpers/shell-navigation.helper';
+import { ShellUserHelper } from './helpers/shell-user.helper';
 
 @Component({
   selector: 'app-shell',
@@ -34,7 +36,7 @@ import { PresenceService } from '../../services/presence.service';
   ],
 })
 export class ShellComponent {
-  private thread = inject(ThreadState);
+  private thread = inject(ThreadService);
   private chatRefresh = inject(ChatRefreshService);
   vm = computed(() => this.thread.vm());
 
@@ -42,6 +44,9 @@ export class ShellComponent {
   private route = inject(ActivatedRoute);
   private auth = inject(Auth);
   private presence = inject(PresenceService);
+  private threadHelper = inject(ShellThreadHelper);
+  private navHelper = inject(ShellNavigationHelper);
+  private userHelper = inject(ShellUserHelper);
 
   users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }) as Observable<MentionUser[]>;
 
@@ -97,61 +102,55 @@ export class ShellComponent {
   constructor(
     private router: Router
   ) {
-    const updateMobileView = (url: string) => {
-      const isThread = url.match(/\/(channel|dm)\/[^/]+\/thread\//i);
+    this.initializeMobileView();
+    this.initializeRouterSubscription();
+    this.initializeServices();
+    this.initializeSubscriptions();
+  }
 
-      if (isThread) {
-        this.mobileView = 'thread';
-        return;
-      }
+  /**
+   * Initializes mobile view based on current URL
+   */
+  private initializeMobileView() {
+    this.mobileView = this.navHelper.getMobileView(this.router.url);
+  }
 
-      const isChat = url.startsWith('/channel/') || url.startsWith('/dm/') || url.startsWith('/new');
-      const isChannelsList = url === '/channels' || url === '/channels/';
-
-      this.mobileView = isChannelsList ? 'list' : (isChat ? 'chat' : 'list');
-    };
-
-    updateMobileView(this.router.url);
-
+  /**
+   * Initializes router event subscription for mobile view updates
+   */
+  private initializeRouterSubscription() {
     this.router.events
       .pipe(filter((e): e is NavigationStart | NavigationEnd =>
         e instanceof NavigationStart || e instanceof NavigationEnd))
-      .subscribe((e) => {
-        if (e instanceof NavigationEnd) {
-          updateMobileView(e.urlAfterRedirects || e.url);
-        } else {
-          updateMobileView(e.url);
-        }
-      });
+      .subscribe((e) => this.handleRouterEvent(e));
+  }
 
+  /**
+   * Initializes presence service and thread state effect
+   */
+  private initializeServices() {
     this.presence.init();
-
     effect(() => {
       this.shellThreadOpen = !!this.vm().open;
     });
+  }
 
+  /**
+   * Initializes all data subscriptions (users, channelId, currentUser)
+   */
+  private initializeSubscriptions() {
     this.usersAllForMentions$.subscribe(list => (this.usersAllForMentions = list));
-
     this.channelId$.subscribe(id => (this.channelId = id));
+    this.userHelper.getCurrentUserStream().subscribe(u => (this.currentUser = u));
+  }
 
-    authState(this.auth).pipe(
-      switchMap(user => {
-        if (!user) return of(null);
-
-        const uref = doc(this.fs, `users/${user.uid}`);
-        return docData(uref).pipe(
-          map((raw: any) => {
-            const data = (raw || {}) as any;
-            return {
-              id: user.uid,
-              name: data.name ?? data.displayName ?? user.displayName ?? user.email ?? 'Guest',
-              avatarUrl: data.avatarUrl ?? '/public/images/avatars/avatar-default.svg',
-              ...data,
-            } as UserDoc & { id: string };
-          })
-        );
-      })
-    ).subscribe(u => (this.currentUser = u));
+  /**
+   * Handles router navigation events
+   * @param e - Navigation event (NavigationStart or NavigationEnd)
+   */
+  private handleRouterEvent(e: NavigationStart | NavigationEnd) {
+    const url = this.navHelper.getEventUrl(e);
+    this.mobileView = this.navHelper.getMobileView(url);
   }
 
   workspaceCollapsed = false;
@@ -192,87 +191,16 @@ export class ShellComponent {
   async onSend(text: string) {
     const msg = (text || '').trim();
     if (!msg) return;
-
     const vm = this.thread.vm();
-    if (!vm?.open || !vm.root?.id) {
-      console.warn('[Thread] Kein offener Thread oder keine rootMessage.id');
-      return;
-    }
-
+    if (!this.threadHelper.validateThreadState(vm)) return;
     const channelId = vm.channelId;
-    if (!channelId) {
-      console.warn('[Thread] Kein channelId gefunden. Prüfe deine Thread-VM');
-      return;
-    }
-
-    const messageId = vm.root.id;
+    if (!this.threadHelper.validateChannelId(channelId)) return;
+    const messageId = vm.root!.id;
     const isDM = vm.isDM ?? false;
-
     const authUser = this.auth.currentUser;
-    if (!authUser) {
-      console.warn('[Thread] Kein Auth-User vorhanden, Reply wird nicht gesendet.');
-      return;
-    }
-
-    const guestEmail = 'guest@dabubble.de';
-    const isGuest =
-      (this.currentUser as any)?.role === 'guest' ||
-      authUser.email === guestEmail;
-
-    const authorId = authUser.uid;
-    const authorName = isGuest
-      ? 'Guest'
-      : (this.currentUser?.name ??
-        (this.currentUser as any)?.displayName ??
-        authUser.displayName ??
-        authUser.email ??
-        'Unbekannt');
-
-    const authorAvatar =
-      this.currentUser?.avatarUrl ?? '/public/images/avatars/avatar1.svg';
-
-    try {
-      let repliesRef, parentRef;
-
-      if (isDM) {
-        repliesRef = collection(
-          this.fs,
-          `conversations/${channelId}/messages/${messageId}/replies`
-        );
-        parentRef = doc(this.fs, `conversations/${channelId}/messages/${messageId}`);
-      } else {
-        repliesRef = collection(
-          this.fs,
-          `channels/${channelId}/messages/${messageId}/replies`
-        );
-        parentRef = doc(this.fs, `channels/${channelId}/messages/${messageId}`);
-      }
-
-      await addDoc(repliesRef, {
-        text: msg,
-        authorId,
-        authorName,
-        authorAvatar,
-        createdAt: serverTimestamp(),
-        reactions: {},
-        reactionBy: {},
-      });
-      await updateDoc(parentRef, {
-        replyCount: increment(1),
-        lastReplyAt: serverTimestamp(),
-      }).catch(async (err) => {
-        if (err.code === 'not-found') {
-          await setDoc(parentRef, {
-            replyCount: 1,
-            lastReplyAt: serverTimestamp(),
-          }, { merge: true });
-        } else {
-          throw err;
-        }
-      });
-    } catch (err) {
-      console.error('[Thread] Fehler beim Speichern der Reply:', err);
-    }
+    if (!this.threadHelper.validateAuthUser(authUser)) return;
+    const authorData = this.threadHelper.getAuthorData(authUser, this.currentUser);
+    await this.threadHelper.saveReply(msg, channelId!, messageId, isDM, authorData);
   }
 
   /**
@@ -281,7 +209,6 @@ export class ShellComponent {
    */
   onClose() {
     this.thread.close();
-
     if (window.innerWidth <= 1024) {
       this.mobileView = 'chat';
     }
@@ -296,43 +223,10 @@ export class ShellComponent {
   async onEditThreadMessage(ev: { messageId: string; text: string }) {
     const vm = this.thread.vm();
     if (!vm?.open || !vm.root?.id) return;
-
     const channelId = this.channelId;
     if (!channelId) return;
-
     const rootId = vm.root.id;
     const isDM = this.router.url.includes('/dm/');
-
-    try {
-      if (ev.messageId === rootId) {
-        let ref;
-
-        if (isDM) {
-          const convId = this.makeConvId(this.auth.currentUser!.uid, channelId);
-          ref = doc(this.fs, `conversations/${convId}/messages/${rootId}`);
-        } else {
-          ref = doc(this.fs, `channels/${channelId}/messages/${rootId}`);
-        }
-
-        console.log('[Thread] Edit Root Message:', { channelId, rootId, isDM, newText: ev.text });
-        await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
-        console.log('[Thread] Root Message Saved Successfully');
-
-        this.chatRefresh.refresh();
-      } else {
-        let ref;
-
-        if (isDM) {
-          const convId = this.makeConvId(this.auth.currentUser!.uid, channelId);
-          ref = doc(this.fs, `conversations/${convId}/messages/${rootId}/replies/${ev.messageId}`);
-        } else {
-          ref = doc(this.fs, `channels/${channelId}/messages/${rootId}/replies/${ev.messageId}`);
-        }
-
-        await updateDoc(ref, { text: ev.text, editedAt: serverTimestamp() });
-      }
-    } catch (e) {
-      console.error('[Thread] Fehler beim Speichern der Edit:', e);
-    }
+    await this.threadHelper.editMessage(ev, channelId, rootId, isDM, (a, b) => this.makeConvId(a, b));
   }
 }

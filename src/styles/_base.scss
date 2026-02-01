@@ -1,0 +1,24 @@
+/* Base HTML and Body Styles */
+::selection {
+    background-color: var(--primary-color) !important;
+    color: var(--background-color) !important;
+}
+
+::-moz-selection {
+    background-color: var(--primary-color) !important;
+    color: var(--background-color) !important;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    overflow: hidden;
+    background-color: var(--background-color);
+    font-family: 'Nunito', sans-serif;
+    font-size: clamp(var(--font-sm), 1.5vw, var(--font-base));
+}

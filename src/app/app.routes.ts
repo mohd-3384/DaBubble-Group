@@ -11,17 +11,16 @@ export const routes: Routes = [
   {
     path: 'imprint',
     loadComponent: () =>
-      import('./imprint/imprint.component').then((m) => m.ImprintComponent),
+      import('./pages/imprint/imprint.component').then((m) => m.ImprintComponent),
   },
   {
     path: 'privacy-policy',
     loadComponent: () =>
-      import('./privacypolicy/privacypolicy.component').then(
-        (m) => m.PrivacypolicyComponent
+      import('./pages/privacy-policy/privacy-policy.component').then(
+        (m) => m.PrivacyPolicyComponent
       ),
   },
 
-  // Alles im Shell-Bereich ist geschützt
   {
     path: '',
     component: ShellComponent,
@@ -30,44 +29,36 @@ export const routes: Routes = [
       {
         path: 'new',
         loadComponent: () =>
-          import('./chat/chat.component').then((m) => m.ChatComponent),
+          import('./components/chat/chat.component').then((m) => m.ChatComponent),
       },
       {
         path: 'channel/:id',
         loadComponent: () =>
-          import('./chat/chat.component').then((m) => m.ChatComponent),
+          import('./components/chat/chat.component').then((m) => m.ChatComponent),
       },
       {
         path: 'channel/:id/thread/:threadId',
         loadComponent: () =>
-          import('./chat/chat.component').then((m) => m.ChatComponent),
+          import('./components/chat/chat.component').then((m) => m.ChatComponent),
       },
       {
         path: 'dm/:id',
         loadComponent: () =>
-          import('./chat/chat.component').then((m) => m.ChatComponent),
+          import('./components/chat/chat.component').then((m) => m.ChatComponent),
       },
       {
         path: 'dm/:id/thread/:threadId',
         loadComponent: () =>
-          import('./chat/chat.component').then((m) => m.ChatComponent),
+          import('./components/chat/chat.component').then((m) => m.ChatComponent),
       },
-
-      // Channels-Liste Route (zeigt nur Sidebar in Mobile, Chat-Bereich leer in Desktop)
       {
         path: 'channels',
         loadComponent: () =>
-          import('./chat/chat.component').then((m) => m.ChatComponent),
+          import('./components/chat/chat.component').then((m) => m.ChatComponent),
       },
-
-      // Default im eingeloggten Bereich
       { path: '', pathMatch: 'full', redirectTo: 'new' },
     ],
   },
-
-  // App-Start ohne Match -> Login
   { path: '', pathMatch: 'full', redirectTo: 'login' },
-
-  // Wildcard -> Login
   { path: '**', redirectTo: 'login' },
 ];

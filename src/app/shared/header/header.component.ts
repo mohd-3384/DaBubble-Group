@@ -1,20 +1,24 @@
-import { ViewChild, Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { ViewChild, Component, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationStart, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { Firestore, doc, docData, updateDoc, serverTimestamp, } from '@angular/fire/firestore';
-import { Auth, authState, signOut } from '@angular/fire/auth';
+import { Firestore } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap, startWith, distinctUntilChanged, debounceTime } from 'rxjs/operators';
 import { catchError, shareReplay } from 'rxjs/operators';
-import { HeaderUser, ProfileView, SearchResult, UserDoc } from '../../interfaces/allInterfaces.interface';
+import { HeaderUser, ProfileView, SearchResult } from '../../interfaces/allInterfaces.interface';
 import { HeaderSearchService } from '../../services/header-search.service';
+import { HeaderProfileHelper } from './helpers/header-profile.helper';
+import { HeaderSearchHelper } from './helpers/header-search.helper';
+import { HeaderUserHelper } from './helpers/header-user.helper';
+import { HeaderNavigationHelper } from './helpers/header-navigation.helper';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss', './header.modal.scss'],
+  styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
   private fs = inject(Firestore);
@@ -23,11 +27,13 @@ export class HeaderComponent {
   private route = inject(ActivatedRoute);
   private host = inject(ElementRef<HTMLElement>);
   private searchService = inject(HeaderSearchService);
+  private profileHelper = inject(HeaderProfileHelper);
+  private searchHelper = inject(HeaderSearchHelper);
+  private userHelper = inject(HeaderUserHelper);
+  private navHelper = inject(HeaderNavigationHelper);
 
   @ViewChild('searchInput', { static: false })
   searchInput?: ElementRef<HTMLInputElement>;
-
-  private readonly DEFAULT_AVATAR = '/public/images/avatars/avatar-default.svg';
 
   /** ---------- MOBILE CHAT OPEN STATE ---------- */
   isChatOpen = false;
@@ -41,37 +47,7 @@ export class HeaderComponent {
   }
 
   /** ---------- USER (Firestore users/{uid}) ---------- */
-  private guestUser: HeaderUser = {
-    id: 'guest',
-    name: 'Guest',
-    email: 'guest@dabubble.de',
-    status: 'active',
-    avatarUrl: this.DEFAULT_AVATAR,
-    online: true,
-  };
-
-  user$: Observable<HeaderUser> = authState(this.auth).pipe(
-    switchMap((u) => {
-      if (!u) return of(this.guestUser);
-
-      const uref = doc(this.fs, `users/${u.uid}`);
-      return docData(uref, { idField: 'id' }).pipe(
-        map((raw: any) => {
-          const data = (raw || {}) as Partial<UserDoc> & { id?: string };
-          return {
-            id: data.id ?? u.uid,
-            name: String(data.name ?? '').trim() || 'Guest',
-            email: String(data.email ?? u.email ?? 'guest@dabubble.de').trim(),
-            status: (data.status === 'away' ? 'away' : 'active') as 'active' | 'away',
-            avatarUrl: String(data.avatarUrl ?? '').trim() || this.DEFAULT_AVATAR,
-            online: !!(data.online ?? true),
-          } satisfies HeaderUser;
-        }),
-        catchError(() => of(this.guestUser))
-      );
-    }),
-    startWith(this.guestUser)
-  );
+  user$: Observable<HeaderUser> = this.userHelper.getUserStream();
 
   /**
    * Initializes the header component.
@@ -81,26 +57,29 @@ export class HeaderComponent {
     this.router.events
       .pipe()
       .subscribe((event) => {
-        if (event instanceof NavigationStart || event instanceof NavigationEnd) {
-          const url = event instanceof NavigationEnd
-            ? (event.urlAfterRedirects || event.url)
-            : event.url;
-
-          // Check if we're in a chat route (channel, dm, new) or thread route
-          const isChat =
-            url.startsWith('/channel/') ||
-            url.startsWith('/dm/') ||
-            url.startsWith('/new');
-          this.isChatOpen = isChat;
-
-          // Check if we're in the new message route
-          this.isNewMessageRoute = url.startsWith('/new');
-
-          // Extrahiere channelId aus URL
-          const channelMatch = url.match(/\/channel\/([^/]+)/);
-          this.currentChannelId = channelMatch ? channelMatch[1] : null;
-        }
+        this.handleRouterEvent(event);
       });
+  }
+
+  /**
+   * Handles router navigation events to update chat state
+   * @param event - Router event (NavigationStart or NavigationEnd)
+   */
+  private handleRouterEvent(event: any) {
+    if (event instanceof NavigationStart || event instanceof NavigationEnd) {
+      const url = this.navHelper.getEventUrl(event);
+      this.updateChatState(url);
+    }
+  }
+
+  /**
+   * Updates component state based on current URL
+   * @param url - The current route URL
+   */
+  private updateChatState(url: string) {
+    this.isChatOpen = this.navHelper.isChatRoute(url);
+    this.isNewMessageRoute = this.navHelper.isNewMessageRoute(url);
+    this.currentChannelId = this.navHelper.extractChannelId(url);
   }
 
   /**
@@ -108,27 +87,7 @@ export class HeaderComponent {
    * Handles thread, new message, and chat routes differently.
    */
   goBack() {
-    const currentUrl = this.router.url;
-
-    if (currentUrl.match(/\/(channel|dm)\/[^/]+\/thread\//)) {
-      window.history.back();
-      return;
-    }
-
-    // Wenn wir in "Neue Nachricht" sind → Browser Back zur vorherigen Seite
-    if (currentUrl.startsWith('/new')) {
-      window.history.back();
-      return;
-    }
-
-    // Wenn wir im Chat sind (Channel oder DM, aber nicht Thread) → zu Channels-Liste Vollbild
-    if (currentUrl.startsWith('/channel/') || currentUrl.startsWith('/dm/')) {
-      this.router.navigate(['/channels']);
-      return;
-    }
-
-    // Fallback
-    this.router.navigate(['/channels']);
+    this.navHelper.navigateBack(this.router.url);
   }
 
   /** ---------- PROFILE ---------- */
@@ -192,19 +151,14 @@ export class HeaderComponent {
   async saveProfile(user: HeaderUser) {
     const name = (this.editName || '').trim();
     if (!name) return;
-
     const authUser = this.auth.currentUser;
     if (!authUser) return;
 
-    console.log('[Profile] uid:', authUser.uid);
-
     try {
-      const uref = doc(this.fs, `users/${authUser.uid}`);
-      await updateDoc(uref, { name });
-      console.log('[Profile] update ok');
+      await this.profileHelper.updateUserName(authUser.uid, name);
       this.profileView = 'view';
-    } catch (e: any) {
-      console.error('[Profile] update failed:', e?.code, e);
+    } catch (e) {
+      // Error already logged in helper
     }
   }
 
@@ -232,21 +186,7 @@ export class HeaderComponent {
    */
   async logout() {
     this.closeAll();
-
-    const u = this.auth.currentUser;
-    if (u) {
-      try {
-        await updateDoc(doc(this.fs, `users/${u.uid}`), {
-          online: false,
-          lastSeen: serverTimestamp(),
-        });
-      } catch (e) {
-        console.warn('[Logout] could not set offline:', e);
-      }
-    }
-
-    await signOut(this.auth);
-    this.router.navigate(['/login']);
+    await this.profileHelper.logout();
   }
 
   /** ---------- SEARCH ---------- */
@@ -254,7 +194,6 @@ export class HeaderComponent {
   searchOpen = false;
   activeIndex = -1;
   private latestResults: SearchResult[] = [];
-
   searchTerm = '';
 
   /**
@@ -300,31 +239,9 @@ export class HeaderComponent {
    * Observable that searches across channels, users, and messages.
    * Combines results from all sources and limits to 10 total results.
    */
-  results$: Observable<SearchResult[]> = combineLatest([
-    authState(this.auth),
-    this.search$.pipe(debounceTime(120), distinctUntilChanged())
-  ]).pipe(
-    switchMap(([u, term]) => {
-      if (!u || !term) {
-        this.latestResults = [];
-        return of([] as SearchResult[]);
-      }
-
-      const channels$ = this.searchService.searchChannels(term);
-      const users$ = this.searchService.searchUsers(term);
-      const messages$ = this.searchService.searchMessages(term);
-
-      return combineLatest([channels$, users$, messages$]).pipe(
-        map(([c, uu, m]) => {
-          const merged = [...c, ...uu, ...m].slice(0, 10);
-          this.latestResults = merged;
-          return merged;
-        }),
-        catchError(() => of([] as SearchResult[]))
-      );
-    }),
-    startWith([] as SearchResult[]),
-    shareReplay({ bufferSize: 1, refCount: true })
+  results$: Observable<SearchResult[]> = this.searchHelper.createSearchStream(
+    this.search$.pipe(debounceTime(120), distinctUntilChanged()),
+    (results) => { this.latestResults = results; }
   );
 
   /**
@@ -332,22 +249,7 @@ export class HeaderComponent {
    * @param newNameRaw - The new display name to save
    */
   async saveDisplayName(newNameRaw: string) {
-    const newName = (newNameRaw || '').trim();
-    if (!newName) return;
-
-    const authUser = this.auth.currentUser;
-    if (!authUser) {
-      console.warn('[Profile] Not authenticated -> cannot update Firestore');
-      return;
-    }
-
-    try {
-      const ref = doc(this.fs, `users/${authUser.uid}`);
-      await updateDoc(ref, { name: newName });
-      console.log('[Profile] name updated:', newName);
-    } catch (e) {
-      console.error('[Profile] update failed:', e);
-    }
+    await this.profileHelper.saveDisplayName(newNameRaw, this.auth.currentUser);
   }
 
   /**
@@ -356,18 +258,7 @@ export class HeaderComponent {
    * @param r - The selected search result
    */
   onSelectResult(r: SearchResult) {
-    if (r.kind === 'channel') {
-      this.router.navigate(['/channel', r.id]);
-    }
-
-    if (r.kind === 'user') {
-      this.router.navigate(['/dm', r.id]);
-    }
-
-    if (r.kind === 'message') {
-      this.router.navigate(['/channel', r.channelId]);
-    }
-
+    this.searchHelper.navigateToResult(r);
     this.clearSearch();
   }
 
@@ -378,24 +269,65 @@ export class HeaderComponent {
    */
   onSearchKeydown(ev: KeyboardEvent) {
     if (!this.searchOpen) return;
-
     const results = this.latestResults ?? [];
     if (!results.length) return;
+    this.handleSearchKeyAction(ev, results);
+  }
 
+  /**
+   * Dispatches keyboard events to appropriate handlers
+   * @param ev - The keyboard event
+   * @param results - Current search results
+   */
+  private handleSearchKeyAction(ev: KeyboardEvent, results: SearchResult[]) {
     if (ev.key === 'ArrowDown') {
-      ev.preventDefault();
-      this.activeIndex = Math.min(results.length - 1, this.activeIndex + 1);
+      this.moveSearchSelectionDown(ev, results);
     } else if (ev.key === 'ArrowUp') {
-      ev.preventDefault();
-      this.activeIndex = Math.max(0, this.activeIndex - 1);
+      this.moveSearchSelectionUp(ev);
     } else if (ev.key === 'Enter') {
-      ev.preventDefault();
-      const picked = results[this.activeIndex];
-      if (picked) this.onSelectResult(picked);
+      this.selectSearchResult(ev, results);
     } else if (ev.key === 'Escape') {
-      ev.preventDefault();
-      this.closeAll();
+      this.closeSearchOnEscape(ev);
     }
+  }
+
+  /**
+   * Moves the search selection down
+   * @param ev - The keyboard event
+   * @param results - Current search results
+   */
+  private moveSearchSelectionDown(ev: KeyboardEvent, results: SearchResult[]) {
+    ev.preventDefault();
+    this.activeIndex = this.searchHelper.moveSelectionDown(this.activeIndex, results.length);
+  }
+
+  /**
+   * Moves the search selection up
+   * @param ev - The keyboard event
+   */
+  private moveSearchSelectionUp(ev: KeyboardEvent) {
+    ev.preventDefault();
+    this.activeIndex = this.searchHelper.moveSelectionUp(this.activeIndex);
+  }
+
+  /**
+   * Selects the current search result
+   * @param ev - The keyboard event
+   * @param results - Current search results
+   */
+  private selectSearchResult(ev: KeyboardEvent, results: SearchResult[]) {
+    ev.preventDefault();
+    const picked = results[this.activeIndex];
+    if (picked) this.onSelectResult(picked);
+  }
+
+  /**
+   * Closes search on Escape key
+   * @param ev - The keyboard event
+   */
+  private closeSearchOnEscape(ev: KeyboardEvent) {
+    ev.preventDefault();
+    this.closeAll();
   }
 
   /**
@@ -407,7 +339,6 @@ export class HeaderComponent {
   onDocumentClick(ev: MouseEvent) {
     const target = ev.target as Node | null;
     if (!target) return;
-
     if (!this.host.nativeElement.contains(target)) {
       this.closeAll();
     }

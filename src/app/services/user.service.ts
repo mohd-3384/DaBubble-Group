@@ -45,14 +45,32 @@ export class UserService {
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      await updateDoc(ref, {
-        online: true,
-        lastSeen: serverTimestamp(),
-        ...(extra ? { ...extra } : {}),
-      } as any);
-      return;
+      await this.updateExistingUser(ref, extra);
+    } else {
+      await this.createNewUser(ref, u, extra);
     }
+  }
 
+  /**
+   * Updates an existing user document with online status and extra data
+   * @param ref - Firestore document reference
+   * @param extra - Optional extra user data to merge
+   */
+  private async updateExistingUser(ref: any, extra?: Partial<UserDoc>) {
+    await updateDoc(ref, {
+      online: true,
+      lastSeen: serverTimestamp(),
+      ...(extra ? { ...extra } : {}),
+    } as any);
+  }
+
+  /**
+   * Creates a new user document with default values
+   * @param ref - Firestore document reference
+   * @param u - Firebase user object
+   * @param extra - Optional extra user data to merge
+   */
+  private async createNewUser(ref: any, u: any, extra?: Partial<UserDoc> & { name?: string }) {
     await setDoc(
       ref,
       {

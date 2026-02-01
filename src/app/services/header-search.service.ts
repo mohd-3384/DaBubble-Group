@@ -78,33 +78,57 @@ export class HeaderSearchService {
    */
   private async searchChannelMessages(term: string): Promise<SearchResult[]> {
     try {
-      const chSnap = await getDocs(query(collection(this.fs, 'channels'), limit(20)));
-      const channelIds = chSnap.docs.map((d) => d.id);
-
-      const hits: SearchResult[] = [];
-      const t = term.toLowerCase();
-
-      for (const channelId of channelIds) {
-        if (hits.length >= 10) break;
-
-        const msgSnap = await getDocs(
-          query(collection(this.fs, `channels/${channelId}/messages`), orderBy('createdAt', 'desc'), limit(40))
-        );
-
-        for (const d of msgSnap.docs) {
-          const data: any = d.data();
-          const text = String(data?.text ?? '');
-          if (text && text.toLowerCase().includes(t)) {
-            hits.push({ kind: 'message', channelId, text });
-            if (hits.length >= 10) break;
-          }
-        }
-      }
-
-      return hits.slice(0, 10);
+      const channelIds = await this.getChannelIds();
+      return await this.searchMessagesInChannels(channelIds, term);
     } catch (e) {
       console.error('[HeaderSearch] message search failed:', e);
       return [];
+    }
+  }
+
+  /**
+   * Fetches up to 20 channel IDs from Firestore.
+   * @returns Promise resolving to an array of channel IDs
+   */
+  private async getChannelIds(): Promise<string[]> {
+    const chSnap = await getDocs(query(collection(this.fs, 'channels'), limit(20)));
+    return chSnap.docs.map((d) => d.id);
+  }
+
+  /**
+   * Iterates through channels and searches their messages for the term.
+   * @param channelIds - Array of channel IDs to search in
+   * @param term - The search term
+   * @returns Promise resolving to matching message results (max 10)
+   */
+  private async searchMessagesInChannels(channelIds: string[], term: string): Promise<SearchResult[]> {
+    const hits: SearchResult[] = [];
+    const t = term.toLowerCase();
+    for (const channelId of channelIds) {
+      if (hits.length >= 10) break;
+      await this.searchMessagesInChannel(channelId, t, hits);
+    }
+    return hits.slice(0, 10);
+  }
+
+  /**
+   * Searches messages in a specific channel for the given term.
+   * Fetches up to 40 recent messages and adds matches to hits array.
+   * @param channelId - The channel ID to search in
+   * @param term - The lowercase search term
+   * @param hits - Array to accumulate matching results
+   */
+  private async searchMessagesInChannel(channelId: string, term: string, hits: SearchResult[]): Promise<void> {
+    const msgSnap = await getDocs(
+      query(collection(this.fs, `channels/${channelId}/messages`), orderBy('createdAt', 'desc'), limit(40))
+    );
+    for (const d of msgSnap.docs) {
+      const data: any = d.data();
+      const text = String(data?.text ?? '');
+      if (text && text.toLowerCase().includes(term)) {
+        hits.push({ kind: 'message', channelId, text });
+        if (hits.length >= 10) break;
+      }
     }
   }
 }

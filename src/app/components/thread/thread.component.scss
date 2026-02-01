@@ -1,0 +1,21 @@
+/* Thread Component Main Styles */
+:host {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  flex-grow: 1;
+  width: 100%;
+}
+
+@import 'helpers/thread-header';
+@import 'helpers/thread-body';
+@import 'helpers/thread-messages';
+@import 'helpers/thread-own-messages';
+@import 'helpers/thread-actions';
+@import 'helpers/thread-edit';
+@import 'helpers/thread-reactions';
+@import 'helpers/thread-composer';
+@import 'helpers/thread-popovers';
+@import 'helpers/thread-responsive';

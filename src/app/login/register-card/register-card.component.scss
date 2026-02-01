@@ -183,11 +183,12 @@ input {
         }
 
         &:active {
-            transform: translateY(1px) scale(0.98); 
+            transform: translateY(1px) scale(0.98);
             filter: brightness(105%);
             box-shadow: 0 2px 6px rgba(68, 77, 242, 0.2);
         }
-         &:disabled {
+
+        &:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             filter: none;

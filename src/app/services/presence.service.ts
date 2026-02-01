@@ -26,34 +26,62 @@ export class PresenceService {
     if (this.sub) return; // init nur 1x
 
     this.sub = authState(this.auth).subscribe(async (user) => {
-      if (!user) {
-        this.cleanupHandlers();
-        return;
-      }
-
-      const isGuest = (user.email ?? '').toLowerCase() === this.GUEST_EMAIL;
-      const ref = doc(this.fs, `users/${user.uid}`);
-      const snap = await getDoc(ref);
-      const fallbackName = isGuest ? 'Guest' : (user.displayName ?? user.email ?? 'User');
-      const payload: any = {
-        ...(snap.exists() ? {} : {
-          uid: user.uid,
-          name: fallbackName,
-          email: user.email ?? '',
-          avatarUrl: '/public/images/avatars/avatar-default.svg',
-          createdAt: serverTimestamp(),
-        }),
-        role: isGuest ? 'guest' : 'member',
-        status: 'active',
-        online: true,
-        lastSeen: serverTimestamp(),
-      };
-
-      await setDoc(ref, payload, { merge: true });
-
-      this.registerUnloadHandler(user.uid);
-      this.registerVisibilityHandler(user.uid);
+      await this.handleAuthStateChange(user);
     });
+  }
+
+  /**
+   * Handles authentication state changes by updating user presence
+   * @param user - The authenticated user or null if logged out
+   */
+  private async handleAuthStateChange(user: any) {
+    if (!user) {
+      this.cleanupHandlers();
+      return;
+    }
+
+    const payload = await this.buildUserPayload(user);
+    const ref = doc(this.fs, `users/${user.uid}`);
+    await setDoc(ref, payload, { merge: true });
+
+    this.registerUnloadHandler(user.uid);
+    this.registerVisibilityHandler(user.uid);
+  }
+
+  /**
+   * Builds the user presence payload for Firestore
+   * @param user - The Firebase user object
+   * @returns Promise resolving to the user payload object
+   */
+  private async buildUserPayload(user: any): Promise<any> {
+    const isGuest = (user.email ?? '').toLowerCase() === this.GUEST_EMAIL;
+    const ref = doc(this.fs, `users/${user.uid}`);
+    const snap = await getDoc(ref);
+    const fallbackName = isGuest ? 'Guest' : (user.displayName ?? user.email ?? 'User');
+
+    return {
+      ...(snap.exists() ? {} : this.getNewUserFields(user, fallbackName)),
+      role: isGuest ? 'guest' : 'member',
+      status: 'active',
+      online: true,
+      lastSeen: serverTimestamp(),
+    };
+  }
+
+  /**
+   * Returns fields for a new user document
+   * @param user - The Firebase user object
+   * @param name - The user's display name
+   * @returns Object with new user fields
+   */
+  private getNewUserFields(user: any, name: string): any {
+    return {
+      uid: user.uid,
+      name,
+      email: user.email ?? '',
+      avatarUrl: '/public/images/avatars/avatar-default.svg',
+      createdAt: serverTimestamp(),
+    };
   }
 
   /**
@@ -65,7 +93,6 @@ export class PresenceService {
       if (!this.auth.currentUser) return;
       this.setOnline(uid, false);
     };
-
     window.removeEventListener('beforeunload', this.unloadHandler as any);
     window.addEventListener('beforeunload', this.unloadHandler as any);
   }
@@ -80,7 +107,6 @@ export class PresenceService {
       const hidden = document.visibilityState === 'hidden';
       this.setOnline(uid, !hidden);
     };
-
     document.removeEventListener('visibilitychange', this.visHandler as any);
     document.addEventListener('visibilitychange', this.visHandler as any);
   }
@@ -107,7 +133,6 @@ export class PresenceService {
    */
   async setOnline(uid: string, online: boolean) {
     if (!this.auth.currentUser) return;
-
     const ref = doc(this.fs, `users/${uid}`);
     try {
       await updateDoc(ref, { online, lastSeen: serverTimestamp() });
