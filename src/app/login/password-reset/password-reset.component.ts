@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,8 +12,8 @@ import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
   selector: 'app-password-reset',
   standalone: true,
   imports: [
-    MatCardModule,
     CommonModule,
+    MatCardModule,
     MatIconModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -23,6 +23,8 @@ import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
   styleUrl: './password-reset.component.scss',
 })
 export class PasswordResetComponent {
+  @Output() success = new EventEmitter<void>();
+
   private fb = inject(FormBuilder);
   private auth = inject(Auth);
 
@@ -30,47 +32,68 @@ export class PasswordResetComponent {
     email: ['', [Validators.required, Validators.email]],
   });
 
-  successMsg = '';
-  errorMsg = '';
+  successVisible = false;
+  errorMessage = '';
 
   async onSubmit() {
-    this.successMsg = '';
-    this.errorMsg = '';
-
     if (this.resetForm.invalid) {
       this.resetForm.markAllAsTouched();
       return;
     }
 
-    const email = String(this.resetForm.value.email || '').trim();
+    const email = this.getEmailValue();
+    await this.sendReset(email);
+  }
 
+  private getEmailValue(): string {
+    return String(this.resetForm.value.email || '').trim();
+  }
+
+  private async sendReset(email: string) {
     try {
-      const actionCodeSettings = {
-        url: `${window.location.origin}/login`,
-        handleCodeInApp: false,
-      };
-
-      await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
-
-      this.successMsg =
-        'E-Mail wurde gesendet. Nach dem Zurücksetzen wirst du zum Login weitergeleitet.';
-      this.resetForm.reset();
+      await this.sendPasswordResetEmail(email);
+      this.handleResetSuccess();
     } catch (err: any) {
-      console.error('[PasswordReset] failed', err);
-
-      const code = err?.code ?? 'unknown';
-
-      if (code === 'auth/user-not-found') {
-        // Security Best Practice
-        this.successMsg =
-          'Wenn die E-Mail existiert, wurde eine Reset-Mail gesendet.';
-      } else if (code === 'auth/invalid-email') {
-        this.errorMsg = 'Ungültige E-Mail-Adresse.';
-      } else if (code === 'auth/too-many-requests') {
-        this.errorMsg = 'Zu viele Versuche. Bitte später erneut versuchen.';
-      } else {
-        this.errorMsg = 'Reset-Mail konnte nicht gesendet werden.';
-      }
+      this.handleResetError(err);
     }
+  }
+
+  private async sendPasswordResetEmail(email: string) {
+    const actionCodeSettings = {
+      url: `${window.location.origin}/enter-new-password`,
+      handleCodeInApp: true,
+    };
+    await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
+  }
+
+  private handleResetSuccess() {
+    this.errorMessage = '';
+    this.successVisible = true;
+    this.success.emit();
+    this.scheduleHideMessage(5000);
+    this.resetForm.reset();
+  }
+
+  private handleResetError(err: any) {
+    console.error('[PasswordReset] Fehler:', err);
+    this.errorMessage = this.getErrorMessage(err?.code);
+    this.successVisible = true;
+    this.scheduleHideMessage(5000);
+  }
+
+  private getErrorMessage(code: string): string {
+    const errorMap: { [key: string]: string } = {
+      'auth/invalid-email': 'Ungültige E-Mail-Adresse',
+      'auth/too-many-requests': 'Zu viele Versuche. Bitte später erneut versuchen',
+      'auth/user-not-found': 'Wenn die E-Mail existiert, wurde eine Reset-Mail gesendet',
+    };
+    return errorMap[code] || 'Fehler beim Senden der E-Mail';
+  }
+
+  private scheduleHideMessage(delayMs: number) {
+    setTimeout(() => {
+      this.successVisible = false;
+      this.errorMessage = '';
+    }, delayMs);
   }
 }

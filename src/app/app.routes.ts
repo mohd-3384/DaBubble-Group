@@ -2,9 +2,15 @@ import { Routes } from '@angular/router';
 import { ShellComponent } from './shared/shell/shell.component';
 import { authGuard } from './guards/auth.guard';
 
+
 export const routes: Routes = [
   {
     path: 'login',
+    loadComponent: () =>
+      import('./login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'enter-new-password',
     loadComponent: () =>
       import('./login/login.component').then((m) => m.LoginComponent),
   },

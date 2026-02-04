@@ -45,19 +45,16 @@
         <div class="line"></div>
       </div>
 
-      <!-- Google-Login bleibt erstmal nur optisch -->
       <button (click)="loginWithGoogle()" class="google-login" type="button">
         <img src="./public/images/google-icon.svg" alt="google-icon">
         <span>Anmelden mit Google</span>
       </button>
 
       <div class="button-container">
-        <!-- Normales Login -->
         <button class="button_1" type="submit" [disabled]="f.invalid">
           Anmelden
         </button>
 
-        <!-- Gäste-Login -->
         <button class="button_2" type="button" (click)="loginAsGuest()">
           Gäste-Login
         </button>
