@@ -196,7 +196,7 @@
                   <div class="reactions-row" *ngIf="hasReactions(m)" (mouseleave)="onMessageRowLeaveKeepEmoji(m.id)"
                     (click)="$event.stopPropagation()">
 
-                    <div class="reaction-wrap" *ngFor="let r of reactionList(m); trackBy: trackReaction"
+                    <div class="reaction-wrap" *ngFor="let r of visibleReactions(m); trackBy: trackReaction"
                       (mouseenter)="onReactionHover(m, r.emoji)" (mouseleave)="onReactionHover(null)">
                       <button type="button" class="reaction" (click)="onReactionChipClick($event, m, r.emoji)"
                         aria-label="Reaction">
@@ -214,6 +214,11 @@
                         <div class="rt-text">{{ reactionVerb(m, r.emoji) }}</div>
                       </div>
                     </div>
+
+                    <button type="button" class="reaction reaction-more" *ngIf="reactionOverflowCount(m) > 0"
+                      aria-label="Weitere Reaktionen">
+                      + {{ reactionOverflowCount(m) }} weitere
+                    </button>
 
                     <button type="button" class="reaction reaction-add" aria-label="Add reaction"
                       (click)="toggleMessageEmojiPicker($event, m, 'reactions')">
@@ -355,8 +360,10 @@
               <div class="channel-input-wrap channel-input-wrap--info">
                 <span class="channel-hash">#</span>
                 <input class="channel-input" type="text" [(ngModel)]="editChannelName"
-                  [ngModelOptions]="{standalone:true}" autocomplete="off" />
+                  (ngModelChange)="onChannelNameInput($event)" [ngModelOptions]="{standalone:true}"
+                  autocomplete="off" />
               </div>
+              <div class="channel-info__error" *ngIf="channelNameError">{{ channelNameError }}</div>
             </div>
           </section>
 

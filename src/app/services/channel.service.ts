@@ -10,7 +10,7 @@ import {
   addDoc,
   collectionData,
 } from '@angular/fire/firestore';
-import { Observable, map } from 'rxjs';
+import { Observable, map, firstValueFrom } from 'rxjs';
 import { ChannelDoc } from '../interfaces/allInterfaces.interface';
 import { AuthReadyService } from './auth-ready.service';
 
@@ -119,5 +119,41 @@ export class ChannelService {
         )
       )
     );
+  }
+
+  /**
+   * Checks if a channel name already exists (case-insensitive)
+   * @param name - Channel name to check
+   * @param excludeId - Optional channel ID to exclude from check
+   * @returns True if a duplicate exists
+   */
+  async isChannelNameTaken(name: string, excludeId?: string): Promise<boolean> {
+    const normalized = this.normalizeName(name);
+    if (!normalized) return false;
+    try {
+      const ref = collection(this.fs, 'channels');
+      const list = await firstValueFrom(
+        collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>
+      );
+      return list.some(
+        (ch) =>
+          this.normalizeName(String(ch.name ?? '')) === normalized &&
+          (!excludeId || ch.id !== excludeId)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Normalizes channel names for comparison
+   * @param name - Channel name
+   * @returns Normalized name
+   */
+  private normalizeName(name: string): string {
+    return String(name || '')
+      .trim()
+      .replace(/^#+/, '')
+      .toLowerCase();
   }
 }

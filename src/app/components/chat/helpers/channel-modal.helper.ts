@@ -5,6 +5,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { ChannelDoc } from '../../../interfaces/allInterfaces.interface';
 import { AuthReadyService } from '../../../services/auth-ready.service';
+import { ChannelService } from '../../../services/channel.service';
 
 /**
  * Service for channel info modal management
@@ -14,6 +15,7 @@ export class ChannelModalHelper {
   private fs = inject(Firestore);
   private route = inject(ActivatedRoute);
   private authReady = inject(AuthReadyService);
+  private chanSvc = inject(ChannelService);
 
   /**
    * Opens channel info modal
@@ -44,15 +46,23 @@ export class ChannelModalHelper {
     channelNameEdit: boolean,
     editChannelName: string,
     channelDoc$: Observable<ChannelDoc | null>
-  ): Promise<{ channelNameEdit: boolean; editChannelName: string } | null> {
+  ): Promise<{ channelNameEdit: boolean; editChannelName: string; channelNameError?: string } | null> {
     if (!channelNameEdit) {
       const ch = await this.getChannelDocSnapshot(channelDoc$);
       return {
         channelNameEdit: true,
         editChannelName: String(ch?.name ?? '').trim(),
+        channelNameError: '',
       };
     }
-    await this.saveChannelName(editChannelName);
+    const result = await this.saveChannelName(editChannelName);
+    if (!result.saved) {
+      return {
+        channelNameEdit: true,
+        editChannelName,
+        channelNameError: result.error ?? '',
+      };
+    }
     return null;
   }
 
@@ -83,14 +93,20 @@ export class ChannelModalHelper {
    * Saves channel name
    * @param newNameRaw - New channel name
    */
-  async saveChannelName(newNameRaw: string): Promise<void> {
+  async saveChannelName(newNameRaw: string): Promise<{ saved: boolean; error?: string }> {
     try {
       await this.authReady.requireUser();
       const channelId = this.route.snapshot.paramMap.get('id') ?? '';
-      if (!channelId) return;
+      if (!channelId) return { saved: false };
+      const duplicate = await this.chanSvc.isChannelNameTaken(newNameRaw, channelId);
+      if (duplicate) {
+        return { saved: false, error: 'Channel-Name existiert bereits.' };
+      }
       await this.updateChannelName(channelId, newNameRaw);
+      return { saved: true };
     } catch (e) {
       console.error('Channel-Name speichern fehlgeschlagen:', e);
+      return { saved: false };
     }
   }
 

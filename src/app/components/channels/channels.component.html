@@ -140,6 +140,7 @@
               <input class="channel-input" type="text" name="channelName" required autocomplete="off"
                 placeholder="z.B. Kooperationsprojekte" [(ngModel)]="newChannelName" />
             </div>
+            <div class="channel-modal__error" *ngIf="channelNameError">{{ channelNameError }}</div>
           </label>
 
           <!-- Beschreibung -->
@@ -170,8 +171,7 @@
   </div>
 
   <!-- MOBILE FAB: Neue Nachricht -->
-  <button class="fab-new-message" type="button" aria-label="Neue Nachricht" title="Neue Nachricht"
-    routerLink="/new">
+  <button class="fab-new-message" type="button" aria-label="Neue Nachricht" title="Neue Nachricht" routerLink="/new">
   </button>
 
 </div>

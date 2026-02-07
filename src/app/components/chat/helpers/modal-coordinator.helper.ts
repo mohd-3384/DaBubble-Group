@@ -29,6 +29,7 @@ export class ModalCoordinatorHelper {
   async openChannelInfoModal(channelDoc$: Observable<ChannelDoc | null>): Promise<void> {
     this.state.channelNameEdit = false;
     this.state.channelDescEdit = false;
+    this.state.channelNameError = '';
     const data = await this.channelModal.openChannelInfo(channelDoc$);
     this.state.editChannelName = data.editChannelName;
     this.state.editChannelDesc = data.editChannelDesc;
@@ -43,6 +44,7 @@ export class ModalCoordinatorHelper {
     this.state.channelInfoOpen = false;
     this.state.channelNameEdit = false;
     this.state.channelDescEdit = false;
+    this.state.channelNameError = '';
   }
 
   /**
@@ -58,8 +60,10 @@ export class ModalCoordinatorHelper {
     if (result) {
       this.state.channelNameEdit = result.channelNameEdit;
       this.state.editChannelName = result.editChannelName;
+      this.state.channelNameError = result.channelNameError ?? '';
     } else {
       this.state.channelNameEdit = false;
+      this.state.channelNameError = '';
     }
   }
 

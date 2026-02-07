@@ -93,7 +93,7 @@
 
         <!-- ROOT reactions (kommt jetzt live aus Root-Listener) -->
         <div class="reactions-row" *ngIf="reactionsFor(rm).length">
-          <div class="reaction-wrap" *ngFor="let rct of reactionsFor(rm); trackBy: trackReaction"
+          <div class="reaction-wrap" *ngFor="let rct of visibleReactionsFor(rm); trackBy: trackReaction"
             (mouseenter)="hover.onReactionHover(rm, rct.emoji)" (mouseleave)="hover.onReactionHover(null)">
             <button class="reaction" type="button" (click)="toggleReaction(rm, rct.emoji, 'root')"
               [class.active]="rct.reactedByMe">
@@ -111,6 +111,11 @@
               <div class="rt-text">{{ reactionVerb(rm, rct.emoji) }}</div>
             </div>
           </div>
+
+          <button class="reaction reaction-more" type="button" *ngIf="reactionOverflowCount(rm) > 0"
+            aria-label="Weitere Reaktionen">
+            + {{ reactionOverflowCount(rm) }} weitere
+          </button>
 
           <button class="reaction reaction-add" type="button" aria-label="Add reaction"
             (click)="toggleMessageEmojiPicker($event, rm.id)"></button>
@@ -204,7 +209,7 @@
 
           <!-- REPLY reactions -->
           <div class="reactions-row" *ngIf="reactionsFor(r).length">
-            <div class="reaction-wrap" *ngFor="let rct of reactionsFor(r); trackBy: trackReaction"
+            <div class="reaction-wrap" *ngFor="let rct of visibleReactionsFor(r); trackBy: trackReaction"
               (mouseenter)="hover.onReactionHover(r, rct.emoji)" (mouseleave)="hover.onReactionHover(null)">
 
               <button class="reaction" type="button" (click)="toggleReaction(r, rct.emoji, 'reply')"
@@ -223,6 +228,11 @@
                 <div class="rt-text">{{ reactionVerb(r, rct.emoji) }}</div>
               </div>
             </div>
+
+            <button class="reaction reaction-more" type="button" *ngIf="reactionOverflowCount(r) > 0"
+              aria-label="Weitere Reaktionen">
+              + {{ reactionOverflowCount(r) }} weitere
+            </button>
 
             <button class="reaction reaction-add" type="button" aria-label="Add reaction"
               (click)="toggleMessageEmojiPicker($event, r.id)"></button>

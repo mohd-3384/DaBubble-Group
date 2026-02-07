@@ -124,8 +124,22 @@
   font-size: 16px;
 }
 
+.channel-info__field-pill--edit {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
 .channel-info__field-text {
   font-size: 16px;
+}
+
+.channel-info__error {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #c62828;
+  font-weight: 600;
 }
 
 .channel-info__desc-box {

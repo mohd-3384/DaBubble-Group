@@ -99,6 +99,7 @@ export class ChatComponent {
   suggestIndex!: number; draft!: string; composeTarget!: any; showMembers!: boolean;
   channelInfoOpen!: boolean; channelNameEdit!: boolean; channelDescEdit!: boolean;
   editChannelName!: string; editChannelDesc!: string; channelTopic!: string;
+  channelNameError!: string;
   membersModalOpen!: boolean; membersModalPos!: any; addMembersOpen!: boolean;
   addMembersModalPos!: any; addMemberInput!: string; showAddMemberSuggest!: boolean;
   addMemberSelected!: any; userProfileOpen!: boolean; userProfile!: any;
@@ -252,6 +253,28 @@ export class ChatComponent {
   }
 
   /**
+   * Gets the visible reactions list based on viewport
+   * @param m - Message
+   * @returns Limited reaction list
+   */
+  visibleReactions(m: MessageVm): Array<{ emoji: string; count: number }> {
+    const list = this.reactionCoordinator.reactionList(m);
+    const max = this.getMaxReactions();
+    return list.slice(0, max);
+  }
+
+  /**
+   * Gets the number of hidden reactions based on viewport
+   * @param m - Message
+   * @returns Count of hidden reactions
+   */
+  reactionOverflowCount(m: MessageVm): number {
+    const list = this.reactionCoordinator.reactionList(m);
+    const max = this.getMaxReactions();
+    return Math.max(0, list.length - max);
+  }
+
+  /**
    * Checks if a specific user has reacted with an emoji
    * @param m - Message
    * @param emoji - Emoji to check
@@ -280,6 +303,24 @@ export class ChatComponent {
    */
   reactionVerb(m: MessageVm, emoji: string): string {
     return this.reactionCoordinator.reactionVerb(m, emoji);
+  }
+
+  /**
+   * Gets the max number of reactions to show based on viewport
+   * @returns Max visible reactions
+   */
+  private getMaxReactions(): number {
+    return this.isMobileViewport() ? 7 : 20;
+  }
+
+  /**
+   * Checks if current viewport is considered mobile
+   * @returns True if mobile viewport
+   */
+  private isMobileViewport(): boolean {
+    if (typeof window === 'undefined') return false;
+    const width = window.innerWidth || document.documentElement.clientWidth;
+    return width <= 768;
   }
 
   /**
@@ -384,6 +425,15 @@ export class ChatComponent {
    */
   async toggleChannelNameEdit(): Promise<void> {
     await this.modalCoordinator.toggleChannelNameEdit(this.channelDoc$);
+  }
+
+  /**
+   * Clears channel name error on input
+   * @param value - New channel name
+   */
+  onChannelNameInput(value: string): void {
+    this.state.editChannelName = value;
+    this.state.channelNameError = '';
   }
 
   /**

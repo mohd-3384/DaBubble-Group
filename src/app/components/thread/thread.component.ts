@@ -264,6 +264,26 @@ export class ThreadComponent {
   }
 
   /**
+   * Gets the visible reactions list for thread messages
+   * @param m - The message
+   * @returns Limited reaction list
+   */
+  visibleReactionsFor(m: Message): ReactionVm[] {
+    const list = this.reactionsFor(m);
+    return list.slice(0, 7);
+  }
+
+  /**
+   * Gets the number of hidden reactions for thread messages
+   * @param m - The message
+   * @returns Count of hidden reactions
+   */
+  reactionOverflowCount(m: Message): number {
+    const list = this.reactionsFor(m);
+    return Math.max(0, list.length - 7);
+  }
+
+  /**
    * Checks if the current user reacted to a message with a specific emoji
    * @param m - The message
    * @param emoji - The emoji to check

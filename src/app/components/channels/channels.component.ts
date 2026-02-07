@@ -69,6 +69,7 @@ export class ChannelsComponent {
   set newChannelName(v: string) { this.modalHelper.newChannelName = v; }
   get newChannelDescription() { return this.modalHelper.newChannelDescription; }
   set newChannelDescription(v: string) { this.modalHelper.newChannelDescription = v; }
+  get channelNameError() { return this.modalHelper.channelNameError; }
 
   // Delegierte Properties für Search
   get wsSearchTerm() { return this.searchHelper.wsSearchTerm; }

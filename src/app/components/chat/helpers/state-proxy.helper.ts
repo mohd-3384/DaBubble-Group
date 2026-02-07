@@ -11,7 +11,7 @@ export function createStateProxies(state: ChatStateHelper, target: any): void {
         'editMenuForId', 'editMenuPos', 'editingMessageId', 'editDraft', 'to',
         'suggestOpen', 'suggestIndex', 'draft', 'composeTarget', 'showMembers',
         'channelInfoOpen', 'channelNameEdit', 'channelDescEdit', 'editChannelName',
-        'editChannelDesc', 'channelTopic', 'membersModalOpen', 'membersModalPos',
+        'editChannelDesc', 'channelTopic', 'channelNameError', 'membersModalOpen', 'membersModalPos',
         'addMembersOpen', 'addMembersModalPos', 'addMemberInput', 'showAddMemberSuggest',
         'addMemberSelected', 'userProfileOpen', 'userProfile', 'hoveredReaction'
     ];

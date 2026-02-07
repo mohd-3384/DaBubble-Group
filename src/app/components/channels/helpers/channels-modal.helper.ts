@@ -17,6 +17,9 @@ export class ChannelsModalHelper {
   /** New channel description/topic input */
   newChannelDescription = '';
 
+  /** Channel name validation error */
+  channelNameError = '';
+
   constructor(
     private chanSvc: ChannelService,
     private router: Router
@@ -29,6 +32,7 @@ export class ChannelsModalHelper {
     this.createChannelOpen = true;
     this.newChannelName = '';
     this.newChannelDescription = '';
+    this.channelNameError = '';
   }
 
   /**
@@ -36,6 +40,7 @@ export class ChannelsModalHelper {
    */
   closeCreateChannelModal(): void {
     this.createChannelOpen = false;
+    this.channelNameError = '';
   }
 
   /**
@@ -46,6 +51,13 @@ export class ChannelsModalHelper {
   async submitCreateChannel(): Promise<void> {
     const raw = (this.newChannelName || '').trim();
     if (!raw) return;
+
+    this.channelNameError = '';
+    const duplicate = await this.chanSvc.isChannelNameTaken(raw);
+    if (duplicate) {
+      this.channelNameError = 'Channel-Name existiert bereits.';
+      return;
+    }
 
     const topic = (this.newChannelDescription || '').trim();
     await this.createAndNavigateToChannel(raw, topic);
@@ -73,6 +85,7 @@ export class ChannelsModalHelper {
   private resetChannelForm(): void {
     this.newChannelName = '';
     this.newChannelDescription = '';
+    this.channelNameError = '';
     this.closeCreateChannelModal();
   }
 }
