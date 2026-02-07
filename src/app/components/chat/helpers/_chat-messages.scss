@@ -1,0 +1,182 @@
+/* ===========================
+    Message Row & Bubbles
+   =========================== */
+
+$muted: #6c7280;
+
+.message-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 8px 16px;
+    margin: 8px 0;
+    transition: var(--transition15);
+
+    &:hover {
+        background: var(--background-color);
+
+        .bubble.bubble-light {
+            background: var(--surface-bg) !important;
+        }
+
+        .message-actions {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+    }
+
+    .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+    }
+
+    .message-col {
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+
+            .name {
+                font-weight: 700;
+            }
+
+            .time {
+                font-size: 13px;
+                color: $muted;
+            }
+
+            .dot {
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: var(--accent-color);
+            }
+        }
+
+        .bubble {
+            display: inline-block;
+            max-width: min(720px, 92%);
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+
+            &.bubble-light {
+                background: var(--background-color);
+                border-top-left-radius: 0;
+            }
+        }
+
+        .thread-teaser {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+
+            .replies {
+                color: var(--primary-color);
+                text-decoration: none;
+                font-weight: 600;
+                transition: var(--transition15);
+                cursor: pointer;
+                transition: var(--transition15);
+
+                &:hover {
+                    font-weight: 700;
+                }
+            }
+
+            .last-reply {
+                color: $muted;
+            }
+        }
+    }
+
+    .message-actions {
+        position: absolute;
+        top: 8px;
+        right: 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 32px 32px 0 32px;
+        background: var(--surface-bg);
+        border: 1px solid var(--accent-color);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(32px);
+        transition: opacity var(--transition20), transform var(--transition20);
+        z-index: 15;
+    }
+}
+
+/* ===========================
+        OWN MESSAGE
+   =========================== */
+.message-row.own {
+    grid-template-columns: 1fr 48px;
+    align-items: flex-start;
+    justify-items: end;
+
+    .avatar {
+        grid-column: 2;
+    }
+
+    .message-col {
+        grid-column: 1;
+        margin-top: -64px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        width: 100%;
+
+        .bubble-light {
+            background-color: var(--primary-color) !important;
+            color: var(--surface-bg);
+        }
+    }
+
+    .header {
+        justify-content: flex-end;
+        text-align: right;
+        width: fit-content;
+        margin-bottom: 8px;
+    }
+
+    .bubble {
+        align-self: flex-end;
+        border-top-left-radius: 16px !important;
+        border-top-right-radius: 0 !important;
+    }
+
+    .message-actions {
+        right: auto;
+        left: 24px;
+        border-radius: 32px 32px 32px 0;
+        transform: translateX(-32px);
+    }
+
+    &:hover {
+        .message-actions {
+            transform: translateX(0);
+        }
+    }
+}
+
+.bubble-own {
+    background: var(--primary-color) !important;
+    color: var(--surface-bg) !important;
+    border-top-right-radius: 0;
+    border-top-left-radius: 16px;
+}
+
+.message-row.is-editing .message-actions {
+    display: none !important;
+}

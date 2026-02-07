@@ -1,0 +1,172 @@
+/* ===========================
+    Chat Header
+   =========================== */
+
+.chat-header {
+    position: sticky;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    box-shadow: 0 2px 10px #00000014;
+    flex: 0 0 auto;
+    top: 0;
+    z-index: 10;
+}
+
+/* Pill-Stil */
+.header-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: var(--border-radius9999);
+    cursor: pointer;
+    transition: var(--transition15);
+    background: transparent;
+
+    &:hover {
+        background: var(--background-color);
+
+        .title {
+            color: var(--primary-color);
+        }
+
+        .arrow {
+            background-image: url('/public/images/arrow-down-hover.svg');
+        }
+    }
+
+    .title {
+        margin: 0;
+        font-weight: 700;
+        line-height: 1;
+        font-size: 28px;
+    }
+
+    .arrow {
+        width: 32px;
+        height: 32px;
+        background-image: url('/public/images/arrow-down.svg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 32px 32px;
+        display: inline-block;
+        transition: background-image var(--transition15);
+    }
+}
+
+/* DM-Teil: Avatar + Online-Dot */
+.header-pill.dm {
+    .avatar-wrap {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        flex-shrink: 0;
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--surface-bg);
+            object-fit: cover;
+            display: block;
+        }
+
+        .dot {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--surface-bg);
+            background: var(--background-offline);
+
+            &.online {
+                background: var(--background-online);
+            }
+        }
+    }
+}
+
+.mitglieder-channel {
+    display: none;
+}
+
+/* ===========================
+    Mitgliederbereich rechts
+   =========================== */
+.members-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatars {
+    display: flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color var(--transition15);
+    background: transparent;
+
+    &:hover {
+        background: var(--background-color);
+
+        .count {
+            color: var(--primary-color);
+        }
+    }
+
+    .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid var(--surface-bg);
+        object-fit: cover;
+        margin-left: -8px;
+
+        &:first-child {
+            margin-left: 0;
+        }
+    }
+
+    .count {
+        margin-left: 8px;
+        font-weight: 700;
+        font-size: 18px;
+    }
+}
+
+/* ===========================
+    Add Member Button (global)
+   =========================== */
+.icon-swap {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 22px 22px;
+    cursor: pointer;
+    transition: all var(--transition20);
+
+    &:focus-visible {
+        outline: 2px solid var(--secondary-color);
+        outline-offset: 2px;
+    }
+}
+
+.add-member {
+    background-image: url('/public/images/add-member.svg');
+
+    &:hover {
+        background-image: url('/public/images/add-member-hover.svg');
+        background-color: var(--background-color);
+        transform: scale(1.05);
+    }
+}

@@ -1,0 +1,60 @@
+/* ===========================
+    Emoji Popovers
+   =========================== */
+
+.emoji-popover {
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  z-index: 10000;
+}
+
+.emoji-popover--composer {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  transform: translateX(-16px);
+  z-index: 99999;
+}
+
+.emoji-popover--global {
+  position: fixed;
+  bottom: 110px;
+  right: 40px;
+  z-index: 99999;
+}
+
+.msg-emoji-popover {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.composer-emoji-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  transform: translateX(-16px);
+  z-index: 99999;
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.composer-emoji-popover-fixed {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface-bg);
+  border: 1px solid var(--background-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}

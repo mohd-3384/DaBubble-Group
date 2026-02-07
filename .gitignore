@@ -48,6 +48,9 @@ Thumbs.db
 
 # Backup and old files
 *.backup
+*.final
+*.new
+*.optimized
 *.backup.*
 *.old.*
 *.bak

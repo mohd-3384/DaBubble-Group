@@ -13,8 +13,23 @@
   min-width: 240px;
   max-height: 320px;
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
   display: flex;
   flex-direction: column;
+}
+
+.mention-popover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mention-popover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mention-popover::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 999px;
 }
 
 .mention-item {
@@ -71,4 +86,18 @@
   border-radius: 16px;
   box-shadow: var(--shadow-modal);
   overflow: hidden;
+}
+
+:host ::ng-deep .emoji-popover .emoji-mart,
+:host ::ng-deep .msg-emoji-popover .emoji-mart,
+:host ::ng-deep .edit-emoji-popover .emoji-mart {
+  background: var(--surface-bg) !important;
+  color: #000 !important;
+}
+
+:host ::ng-deep .emoji-popover .emoji-mart-search input,
+:host ::ng-deep .msg-emoji-popover .emoji-mart-search input,
+:host ::ng-deep .edit-emoji-popover .emoji-mart-search input {
+  background: var(--primary-color) !important;
+  color: #000 !important;
 }

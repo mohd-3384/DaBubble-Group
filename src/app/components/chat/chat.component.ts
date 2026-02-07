@@ -1,80 +1,42 @@
-import {
-  Component,
-  ElementRef,
-  EnvironmentInjector,
-  HostListener,
-  PLATFORM_ID,
-  ViewChild,
-  inject,
-  runInInjectionContext,
-} from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  Firestore,
-  doc,
-  docData,
-  collection,
-  collectionData,
-  query,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  limit,
-  setDoc,
-  getDoc,
-  getDocs,
-  deleteDoc,
-  updateDoc,
-  deleteField,
-  increment,
-  runTransaction
-} from '@angular/fire/firestore';
-import { Observable, of, combineLatest, BehaviorSubject } from 'rxjs';
-import { map, switchMap, startWith, take, catchError, filter } from 'rxjs/operators';
-import {
-  ChannelDoc,
-  DayGroup,
-  MemberDenorm,
-  MemberVM,
-  MessageVm,
-  SuggestItem,
-  UserDoc,
-  Vm,
-  UserMini,
-} from '../../interfaces/allInterfaces.interface';
+import { Observable } from 'rxjs';
+import { ChannelDoc, DayGroup, MemberVM, MessageVm, SuggestItem, UserDoc, Vm, UserMini, } from '../../interfaces/allInterfaces.interface';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { ThreadService } from '../../services/thread.service';
-import { Auth, authState } from '@angular/fire/auth';
-import { AuthReadyService } from '../../services/auth-ready.service';
 import { ChannelService } from '../../services/channel.service';
-import { ChatRefreshService } from '../../services/chat-refresh.service';
-
-function toDateMaybe(ts: any): Date | null {
-  if (!ts) return null;
-  if (typeof ts?.toDate === 'function') return ts.toDate();
-  if (ts instanceof Date) return ts;
-  const d = new Date(ts);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function sameYMD(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function dayLabel(d: Date): string {
-  const fmt = new Intl.DateTimeFormat('de-DE', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-  });
-  return fmt.format(d).replace(/\./g, '').replace(/\s+/g, ' ');
-}
+import { MessageSendHelper } from './helpers/message-send.helper';
+import { MessageEditHelper } from './helpers/message-edit.helper';
+import { ReactionHelper } from './helpers/reaction.helper';
+import { EmojiHelper } from './helpers/emoji.helper';
+import { EmojiPopoverHelper } from './helpers/emoji-popover.helper';
+import { ModalPositionHelper } from './helpers/modal-position.helper';
+import { ChannelModalHelper } from './helpers/channel-modal.helper';
+import { MembersModalHelper } from './helpers/members-modal.helper';
+import { UserProfileHelper } from './helpers/user-profile.helper';
+import { EditMenuHelper } from './helpers/edit-menu.helper';
+import { UiStateHelper } from './helpers/ui-state.helper';
+import { ComposeHelper } from './helpers/compose.helper';
+import { MentionHelper } from './helpers/mention.helper';
+import { ThreadHelper } from './helpers/thread.helper';
+import { isOwnMessage } from './helpers/message.utils';
+import { ChatStateHelper } from './helpers/chat-state.helper';
+import { ViewUtilsHelper } from './helpers/view-utils.helper';
+import { MessageCheckHelper } from './helpers/message-check.helper';
+import { ModalCoordinatorHelper } from './helpers/modal-coordinator.helper';
+import { EmojiCoordinatorHelper } from './helpers/emoji-coordinator.helper';
+import { ReactionCoordinatorHelper } from './helpers/reaction-coordinator.helper';
+import { ChatStreamsHelper } from './helpers/chat-streams.helper';
+import { ChatRefsHelper } from './helpers/chat-refs.helper';
+import { createStateProxies } from './helpers/state-proxy.helper';
+import { MessageDataHelper } from './helpers/message-data.helper';
+import { UserDataHelper } from './helpers/user-data.helper';
+import { MemberDataHelper } from './helpers/member-data.helper';
+import { ChannelDataHelper } from './helpers/channel-data.helper';
+import { MessageGroupHelper } from './helpers/message-group.helper';
+import { SuggestHelper } from './helpers/suggest.helper';
+import { ViewModelHelper } from './helpers/view-model.helper';
 
 @Component({
   selector: 'app-chat',
@@ -82,1683 +44,651 @@ function dayLabel(d: Date): string {
   imports: [CommonModule, FormsModule, PickerModule],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
+  providers: [ChatStateHelper, ChatStreamsHelper, ChatRefsHelper, MessageDataHelper, UserDataHelper, MemberDataHelper, ChannelDataHelper, MessageGroupHelper, SuggestHelper, ViewModelHelper, MessageSendHelper, MessageEditHelper, ReactionHelper, EmojiHelper, EmojiPopoverHelper, ModalPositionHelper, ChannelModalHelper, MembersModalHelper, UserProfileHelper, EditMenuHelper, UiStateHelper, ComposeHelper, MentionHelper, ThreadHelper, ViewUtilsHelper, MessageCheckHelper, ModalCoordinatorHelper, EmojiCoordinatorHelper, ReactionCoordinatorHelper,
+  ],
 })
 export class ChatComponent {
-  private authReady = inject(AuthReadyService);
-  private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private fs = inject(Firestore);
-  private env = inject(EnvironmentInjector);
-  private platformId = inject(PLATFORM_ID);
-  private chatRefresh = inject(ChatRefreshService);
-  private guestUser: UserDoc & { id: string } = {
-    id: 'guest',
-    name: 'Guest',
-    email: '',
-    status: 'active',
-    avatarUrl: '/public/images/avatars/avatar-default.svg',
-    role: 'guest',
-  };
-
-  // für Emoji-Popover an einer Nachricht
-  messageEmojiForId: string | null = null;
-  emojiPopoverPos = {
-    top: 0,
-    left: 0,
-    placement: 'bottom' as 'top' | 'bottom',
-  };
-
-  @ViewChild('toInputEl') toInputEl!: ElementRef<HTMLInputElement>;
-
-  composeMode = false;
-
-  currentUser: (UserDoc & { id: string }) | null = null;
-
-  private userNameMap = new Map<string, string>();
-
-  private auth = inject(Auth);
-  private thread = inject(ThreadService);
-  @ViewChild('membersBtn') membersBtn!: ElementRef<HTMLElement>;
-  @ViewChild('addMembersBtn') addMembersBtn!: ElementRef<HTMLElement>;
-
-  membersModalPos = { top: 0, left: 0 };
-  addMembersModalPos = { top: 0, left: 0 };
-
-  private positionModalFrom(el: HTMLElement, which: 'members' | 'add') {
-    const rect = el.getBoundingClientRect();
-    const offset = 10;
-
-    const viewportW = window.innerWidth;
-    const panelWidth = which === 'members' ? 360 : 480;
-
-    const left = Math.min(
-      viewportW - panelWidth - 16,
-      Math.max(16, rect.right - panelWidth)
-    );
-
-    const top = rect.bottom + offset;
-
-    if (which === 'members') this.membersModalPos = { top, left };
-    else this.addMembersModalPos = { top, left };
-  }
-
-  // Channel-Info Modal
-  channelInfoOpen = false;
-
-  // aktueller Channel aus Firestore
-  channelDoc$!: Observable<ChannelDoc | null>;
-  channelTopic = '';
-  channelCreator$!: Observable<UserDoc | null>;
-
-  // Edit-States für Channel-Info
-  channelNameEdit = false;
-  channelDescEdit = false;
-
-  // Eingabewerte im Edit-Modus
-  editChannelName = '';
-  editChannelDesc = '';
-
-  composerEmojiPos = { top: 0, left: 0 };
-
-  editingMessageId: string | null = null;
-  editDraft = '';
-
-  editMenuForId: string | null = null;
-  editMenuPos = { top: 0, left: 0 };
-
-  emojiOpenedFrom: 'actions' | 'reactions' | null = null;
-
-  emojiMartCfg = {
-    showPreview: false,
-    showSkinTones: false,
-    autoFocus: true,
-    // set: 'apple', perLine: 8, emojiSize: 20, ...
-  };
-
-  toggleEditMenu(ev: MouseEvent, m: any) {
-    ev.stopPropagation();
-    if (!this.isOwnMessage(m)) return;
-    if (this.editingMessageId === m.id) return;
-
-    if (this.editMenuForId === m.id) {
-      this.editMenuForId = null;
-      return;
-    }
-
-    const btn = ev.currentTarget as HTMLElement;
-    const rect = btn.getBoundingClientRect();
-
-    const popW = 320;  // Breite deines Popovers (oder min-width)
-    const offset = 8;
-
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-
-    // ✅ Top: direkt unter dem Button
-    let top = rect.bottom + offset - 4;
-
-    // ✅ Left: linke Kante vom Button
-    let left = rect.left;
-
-    // ✅ Im Viewport halten (rechts nicht rauslaufen)
-    left = Math.min(left, viewportW - popW - 16);
-    left = Math.max(16, left);
-
-    // optional: wenn unten kein Platz, nach oben klappen
-    const estimatedH = 70; // grob (dein Popover ist klein)
-    if (top + estimatedH > viewportH - 10) {
-      top = rect.top - estimatedH - offset;
-      top = Math.max(10, top);
-    }
-
-    this.editMenuForId = m.id;
-    this.editMenuPos = { top, left };
-
-    // andere Popover schließen
-    this.messageEmojiForId = null;
-    this.showEmoji = false;
-    this.showMembers = false;
-  }
-
-  onMessageRowLeave(messageId: string) {
-    if (this.editMenuForId === messageId) this.editMenuForId = null;
-
-    // Emoji-Popover nur schließen, wenn er aus message-actions geöffnet wurde
-    if (this.messageEmojiForId === messageId && this.emojiOpenedFrom === 'actions') {
-      this.closeMessageEmojiPopover();
-    }
-  }
-
-  onMessageRowLeaveKeepEmoji(messageId: string) {
-    if (this.editMenuForId === messageId) this.editMenuForId = null;
-  }
-
-  @ViewChild('msgEmojiPopover') msgEmojiPopover?: ElementRef<HTMLElement>;
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(ev: MouseEvent) {
-    if (!this.messageEmojiForId) return;
-
-    const target = ev.target as Node;
-
-    // Klick IM Popover -> nix
-    const popEl = this.msgEmojiPopover?.nativeElement;
-    if (popEl && popEl.contains(target)) return;
-
-    this.closeMessageEmojiPopover();
-  }
-
-  @HostListener('window:scroll', [])
-  onWindowScroll() {
-    if (!this.messageEmojiForId) return;
-    this.closeMessageEmojiPopover();
-  }
-
-  @HostListener('window:touchmove', [])
-  onTouchMove() {
-    if (!this.messageEmojiForId) return;
-    this.closeMessageEmojiPopover();
-  }
-
-  startEdit(m: any) {
-    if (!this.isOwnMessage(m)) return;
-    this.editMenuForId = null;
-    this.messageEmojiForId = null;
-    this.showEmoji = false;
-    this.showMembers = false;
-
-    this.editingMessageId = m.id;
-    this.editDraft = (m.text ?? '').toString();
-  }
-
-  cancelEdit() {
-    this.editingMessageId = null;
-    this.editDraft = '';
-    this.showEmoji = false;
-    this.emojiContext = null;
-  }
-
-  closeAllPopovers() {
-    this.showEmoji = false;
-    this.showMembers = false;
-    this.messageEmojiForId = null;
-    this.editMenuForId = null;
-  }
-
-  async saveEdit(m: any, vm: Vm) {
-    if (!this.isOwnMessage(m)) return;
-
-    const next = (this.editDraft || '').trim();
-    if (!next || next === (m.text ?? '').trim()) {
-      this.cancelEdit();
-      this.showEmoji = false;
-      this.emojiContext = null;
-      return;
-    }
-
-    const id = this.route.snapshot.paramMap.get('id')!;
-    const authUser = await this.authReady.requireUser();
-
-    try {
-      if (vm.kind === 'dm') {
-        const otherUserId = id;
-        const convId = this.makeConvId(authUser.uid, otherUserId);
-        const ref = doc(this.fs, `conversations/${convId}/messages/${m.id}`);
-        await updateDoc(ref, { text: next, editedAt: serverTimestamp() });
-      } else {
-        const ref = doc(this.fs, `channels/${id}/messages/${m.id}`);
-        await updateDoc(ref, { text: next, editedAt: serverTimestamp() });
-      }
-
-      this.cancelEdit();
-
-      // ✅ Close thread wenn eine Message bearbeitet wurde (NACH erfolgreichem Speichern)
-      console.log('[Chat] Schließe Thread nach Message-Edit');
-      this.thread.close();
-    } catch (err) {
-      console.error('[Chat] Fehler beim Editieren der Message:', err);
-    }
-  }
-
-  private me$ = authState(this.auth).pipe(startWith(this.auth.currentUser));
+  private route = inject(ActivatedRoute);
   private chanSvc = inject(ChannelService);
+  private state = inject(ChatStateHelper);
+  private streams = inject(ChatStreamsHelper);
+  private refs = inject(ChatRefsHelper);
+  private messageSend = inject(MessageSendHelper);
+  private messageEdit = inject(MessageEditHelper);
+  private reactionCoordinator = inject(ReactionCoordinatorHelper);
+  private modalCoordinator = inject(ModalCoordinatorHelper);
+  private emojiCoordinator = inject(EmojiCoordinatorHelper);
+  private editMenu = inject(EditMenuHelper);
+  private uiState = inject(UiStateHelper);
+  private compose = inject(ComposeHelper);
+  private mention = inject(MentionHelper);
+  private thread = inject(ThreadHelper);
+  private viewUtils = inject(ViewUtilsHelper);
+  private messageCheck = inject(MessageCheckHelper);
 
-  private async updateChannelName(channelId: string, newNameRaw: string) {
-    await this.authReady.requireUser();
-    const newName = (newNameRaw || '').trim();
-    if (!newName) return;
+  @ViewChild('toInputEl') set toInputEl(el: ElementRef<HTMLInputElement>) { this.refs.setToInputEl(el); }
+  @ViewChild('composerInput') set composerInputEl(el: ElementRef<HTMLTextAreaElement>) { this.refs.setComposerInputEl(el); }
+  @ViewChild('membersBtn') set membersBtn(el: ElementRef<HTMLElement>) { this.refs.setMembersBtn(el); }
+  @ViewChild('addMembersBtn') set addMembersBtn(el: ElementRef<HTMLElement>) { this.refs.setAddMembersBtn(el); }
+  @ViewChild('msgEmojiPopover') set msgEmojiPopover(el: ElementRef<HTMLElement>) { this.refs.setMsgEmojiPopover(el); }
 
-    await updateDoc(doc(this.fs, `channels/${channelId}`), {
-      name: newName,
-    });
-  }
-
-  async onLeaveChannel() {
-    const channelId = this.route.snapshot.paramMap.get('id');
-    if (!channelId) return;
-
-    try {
-      await this.chanSvc.leaveChannel(channelId);
-      this.closeChannelInfoModal(); // Modal zu
-      // optional: wohin navigieren, z.B. Home oder Login
-      // this.router.navigate(['/new']);
-    } catch (e) {
-      console.error('Channel verlassen fehlgeschlagen:', e);
-    }
-  }
-
-  openChannelInfoModal() {
-    this.channelNameEdit = false;
-    this.channelDescEdit = false;
-
-    this.channelDoc$
-      .pipe(
-        filter((ch): ch is ChannelDoc => !!ch),
-        take(1)
-      )
-      .subscribe((ch) => {
-        this.editChannelName = String(ch.name ?? '').trim();
-        this.editChannelDesc = String(ch.topic ?? '').trim();
-        this.channelTopic = String(ch.topic ?? '');
-      });
-
-    this.channelInfoOpen = true;
-  }
-
-  closeChannelInfoModal() {
-    this.channelInfoOpen = false;
-    this.channelNameEdit = false;
-    this.channelDescEdit = false;
-  }
-
-  async toggleChannelNameEdit() {
-    // ENTER edit mode
-    if (!this.channelNameEdit) {
-      // Sicherstellen, dass editChannelName den aktuellen Wert hat
-      if (!this.editChannelName) {
-        this.channelDoc$
-          .pipe(
-            filter((ch): ch is ChannelDoc => !!ch),
-            take(1)
-          )
-          .subscribe((ch) => {
-            this.editChannelName = String(ch.name ?? '').trim();
-          });
-      }
-
-      this.channelNameEdit = true;
-      return;
-    }
-
-    // SAVE
-    try {
-      await this.authReady.requireUser();
-      const channelId = this.route.snapshot.paramMap.get('id') ?? '';
-      if (!channelId) return;
-
-      await this.updateChannelName(channelId, this.editChannelName);
-      this.channelNameEdit = false;
-    } catch (e) {
-      console.error('Channel-Name speichern fehlgeschlagen:', e);
-    }
-  }
-
-  async toggleChannelDescEdit() {
-    // ENTER edit mode
-    if (!this.channelDescEdit) {
-      // Sicherstellen, dass editChannelDesc den aktuellen Wert hat
-      if (!this.editChannelDesc) {
-        this.channelDoc$
-          .pipe(
-            filter((ch): ch is ChannelDoc => !!ch),
-            take(1)
-          )
-          .subscribe((ch) => {
-            this.editChannelDesc = String(ch.topic ?? '').trim();
-          });
-      }
-
-      this.channelDescEdit = true;
-      return;
-    }
-
-    // SAVE
-    try {
-      await this.authReady.requireUser();
-      const channelId = this.route.snapshot.paramMap.get('id') ?? '';
-      if (!channelId) return;
-
-      await setDoc(
-        doc(this.fs, `channels/${channelId}`),
-        { topic: (this.editChannelDesc || '').trim() },
-        { merge: true }
-      );
-
-      this.channelDescEdit = false;
-    } catch (e) {
-      console.error('Topic speichern fehlgeschlagen:', e);
-    }
-  }
-
-  // User-Profil Modal (für DMs)
-  userProfileOpen = false;
-  userProfile: { name: string; email?: string; avatarUrl: string; status?: string } | null = null;
-
-  // Klick aus Mitglieder-Modal
-  onMemberClick(userId: string) {
-    this.closeMembersModal();
-    this.openUserProfileModal(userId);
-  }
-
-  openUserProfileModal(userIdFromList?: string) {
-    const id = userIdFromList ?? this.route.snapshot.paramMap.get('id');
-    if (!id) return;
-
-    const uref = doc(this.fs, `users/${id}`);
-
-    runInInjectionContext(this.env, () =>
-      docData(uref).pipe(take(1))
-    ).subscribe((raw: any) => {
-      if (!raw) return;
-
-      this.userProfile = {
-        name: raw.name ?? raw.displayName ?? 'Unbekannt',
-        avatarUrl: this.fixAvatar(raw.avatarUrl),
-        email: raw.email ?? '',
-        status: raw.status ?? 'offline',
-      };
-      this.userProfileOpen = true;
-    });
-  }
-
-  closeUserProfileModal() {
-    this.userProfileOpen = false;
-  }
-
-  // Mitglieder-Modal
-  membersModalOpen = false;
-
-  openMembersModal(event?: MouseEvent) {
-    event?.stopPropagation();
-    this.membersModalOpen = true;
-
-    const el = this.membersBtn?.nativeElement;
-    if (el) this.positionModalFrom(el, 'members');
-  }
-
-  closeMembersModal() {
-    this.membersModalOpen = false;
-  }
-
-  // Add-Members Modal
-  addMembersOpen = false;
-  addMemberName = '';
-  addMemberInput = '';
-  showAddMemberSuggest = false;
-  addMemberSelected: UserMini | null = null;
-
-  // interner Stream für das Suchfeld im Add-Members-Modal
-  private addMemberInput$ = new BehaviorSubject<string>('');
-
-  // Vorschlagsliste im Add-Members-Modal
-  addMemberSuggestions$!: Observable<UserMini[]>;
-
-  openAddMembersModal() {
-    this.membersModalOpen = false;
-    this.addMembersOpen = true;
-
-    const el = this.addMembersBtn?.nativeElement;
-    if (el) this.positionModalFrom(el, 'add');
-  }
-
-  closeAddMembersModal() {
-    this.addMembersOpen = false;
-    this.addMemberInput = '';
-    this.addMemberSelected = null;
-    this.addMemberInput$.next('');
-  }
-
-  async submitAddMember() {
-    const selected = this.addMemberSelected;
-    if (!selected) return;
-
-    const channelId = this.route.snapshot.paramMap.get('id');
-    if (!channelId) return;
-
-    try {
-      const mref = doc(this.fs, `channels/${channelId}/members/${selected.id}`);
-
-      await setDoc(
-        mref,
-        {
-          uid: selected.id,
-          displayName: selected.name,
-          avatarUrl: selected.avatarUrl,
-          joinedAt: serverTimestamp(),
-          role: 'member',
-        },
-        { merge: true }
-      );
-
-      this.closeAddMembersModal();
-    } catch (err) {
-      console.error('Fehler beim Hinzufügen des Members:', err);
-    }
-  }
-
-  onAddMemberInput(value: string) {
-    this.addMemberInput = value;
-    this.addMemberSelected = null;
-    this.addMemberInput$.next(value);
-    this.showAddMemberSuggest = !!value.trim();
-  }
-
-  selectAddMember(u: UserMini) {
-    this.addMemberSelected = u;
-    this.addMemberInput = u.name;
-    this.addMemberInput$.next(u.name);
-    this.showAddMemberSuggest = false;
-  }
-
-  // UI-VMs
+  private streamsData!: ReturnType<typeof this.streams.initializeStreams>;
   vm$!: Observable<Vm>;
   messages$!: Observable<MessageVm[]>;
   groups$!: Observable<DayGroup[]>;
   isEmpty$!: Observable<boolean>;
-
-  // Composer
-  to = '';
-  private toInput$ = new BehaviorSubject<string>('');
-  suggestOpen = false;
-  suggestIndex = -1;
-  draft = '';
-  showEmoji = false;
-  showMembers = false;
-  emojiContext: 'composer' | 'message' | 'edit' | null = null;
-
-  emojiMessageTarget: MessageVm | null = null;
-
-  // Header-Mitglieder (Channel)
   members$!: Observable<MemberVM[]>;
-  trackMsg = (_: number, m: MessageVm) => m.id;
-  trackMember = (_: number, m: MemberVM) => m.uid;
-
-  channelsAll$!: Observable<{ id: string; name: string }[]>;
+  channelDoc$!: Observable<ChannelDoc | null>;
+  channelCreator$!: Observable<UserDoc | null>;
   usersAll$!: Observable<UserMini[]>;
+  channelsAll$!: Observable<{ id: string; name: string }[]>;
   suggestions$!: Observable<SuggestItem[]>;
-  composeTarget: SuggestItem | null = null;
+  addMemberSuggestions$!: Observable<UserMini[]>;
+  composeMode$!: Observable<boolean>;
 
-  // Compose-Modus (= /new)
-  composeMode$ = this.route.url.pipe(
-    map((segs) => segs.some((s) => s.path === 'new')),
-    startWith(this.router.url.startsWith('/new'))
-  );
+  trackMsg = (i: number, m: MessageVm) => this.viewUtils.trackMsg(i, m);
+  trackMember = (i: number, m: MemberVM) => this.viewUtils.trackMember(i, m);
+  trackReaction = (i: number, r: { emoji: string; count: number }) => this.viewUtils.trackReaction(i, r);
+  emojiMartCfg = this.viewUtils.getEmojiMartConfig();
 
-  private fixAvatar(url?: string) {
-    if (!url) return '/public/images/avatars/avatar-default.svg';
-    return url.startsWith('/') ? url : '/' + url;
+  composeMode!: boolean; currentUser!: any; showEmoji!: boolean; emojiContext!: any;
+  emojiMessageTarget!: any; composerEmojiPos!: any; messageEmojiForId!: any;
+  emojiPopoverPos!: any; emojiOpenedFrom!: any; editMenuForId!: any; editMenuPos!: any;
+  editingMessageId!: any; editDraft!: string; to!: string; suggestOpen!: boolean;
+  suggestIndex!: number; draft!: string; composeTarget!: any; showMembers!: boolean;
+  channelInfoOpen!: boolean; channelNameEdit!: boolean; channelDescEdit!: boolean;
+  editChannelName!: string; editChannelDesc!: string; channelTopic!: string;
+  membersModalOpen!: boolean; membersModalPos!: any; addMembersOpen!: boolean;
+  addMembersModalPos!: any; addMemberInput!: string; showAddMemberSuggest!: boolean;
+  addMemberSelected!: any; userProfileOpen!: boolean; userProfile!: any;
+  hoveredReaction!: any;
+  private lastConversationId: string | null = null;
+
+  constructor() {
+    createStateProxies(this.state, this);
+    this.streamsData = this.streams.initializeStreams();
+    this.vm$ = this.streamsData.vm$;
+    this.messages$ = this.streamsData.messages$;
+    this.groups$ = this.streamsData.groups$;
+    this.isEmpty$ = this.streamsData.isEmpty$;
+    this.members$ = this.streamsData.members$;
+    this.channelDoc$ = this.streamsData.channelDoc$;
+    this.channelCreator$ = this.streamsData.channelCreator$;
+    this.usersAll$ = this.streamsData.usersAll$;
+    this.channelsAll$ = this.streamsData.channelsAll$;
+    this.suggestions$ = this.streamsData.suggestions$;
+    this.addMemberSuggestions$ = this.streamsData.addMemberSuggestions$;
+    this.composeMode$ = this.streamsData.composeMode$;
+    this.streams.initializeCurrentUser();
+    this.streams.initializeThreadFromRoute(this.vm$);
+    this.bindComposerFocusOnChannelSwitch();
   }
 
-  private makeConvId(a: string, b: string): string {
-    return a < b ? `${a}_${b}` : `${b}_${a}`;
-  }
+  /**
+   * Focuses the composer input when switching channels
+   */
+  private bindComposerFocusOnChannelSwitch(): void {
+    this.route.paramMap.subscribe((params) => {
+      const id = params.get('id');
+      if (!id) return;
 
-  private async ensureConversation(convId: string, meUid: string, otherUid: string) {
-    const convRef = doc(this.fs, `conversations/${convId}`);
-    const snap = await getDoc(convRef);
+      if (this.lastConversationId && this.lastConversationId !== id) {
+        this.focusComposerInput();
+      }
 
-    if (snap.exists()) return; // schon da
-
-    await setDoc(convRef, {
-      createdAt: serverTimestamp(),
-      participants: {
-        [meUid]: otherUid,
-        [otherUid]: meUid,
-      },
+      this.lastConversationId = id;
     });
   }
 
-  // call this from (input) in HTML
-  onToInput(v: string) {
-    this.to = v;
-    this.toInput$.next(v);
-    this.suggestOpen = true;
-    this.composeTarget = null;
+  /**
+   * Focuses the main composer input when available
+   */
+  private focusComposerInput(): void {
+    if (this.state.composeMode) return;
+    setTimeout(() => {
+      this.refs.composerInputEl?.nativeElement.focus();
+    });
   }
 
-  // Keyboard im "An:"-Feld
-  onToKeydown(ev: KeyboardEvent, list: SuggestItem[] | null | undefined) {
-    if (!this.suggestOpen || !list || list.length === 0) return;
-    const max = list.length - 1;
+  /**
+   * Sends a message in the current channel or DM
+   * @param vm - View model containing conversation details
+   */
+  async send(vm: Vm): Promise<void> {
+    await this.messageSend.send(vm, this.state.draft, this.state.currentUser);
+    this.state.draft = '';
+    this.state.showEmoji = false;
+  }
 
-    if (ev.key === 'ArrowDown') {
-      ev.preventDefault();
-      this.suggestIndex = Math.min(max, this.suggestIndex + 1);
-    } else if (ev.key === 'ArrowUp') {
-      ev.preventDefault();
-      this.suggestIndex = Math.max(0, this.suggestIndex - 1);
-    } else if (ev.key === 'Enter') {
-      ev.preventDefault();
-      if (this.suggestIndex >= 0 && this.suggestIndex <= max) {
-        this.pickSuggestion(list[this.suggestIndex]);
-      }
-    } else if (ev.key === 'Escape') {
-      this.suggestOpen = false;
+  /**
+   * Sends a message from the compose mode (new message)
+   */
+  async sendFromCompose(): Promise<void> {
+    await this.messageSend.sendFromCompose(this.state.composeTarget, this.state.draft, this.state.currentUser);
+    this.state.draft = '';
+    this.state.to = '';
+    this.state.composeTarget = null;
+    this.state.showEmoji = false;
+  }
+
+  /**
+   * Starts editing a message
+   * @param m - Message to edit
+   */
+  startEdit(m: any): void {
+    const text = this.messageEdit.startEdit(m, this.state.currentUser?.id ?? null);
+    if (!text) return;
+    this.closeAllPopovers();
+    this.state.editingMessageId = m.id;
+    this.state.editDraft = text;
+  }
+
+  /**
+   * Cancels the current message edit operation
+   */
+  cancelEdit(): void {
+    this.state.editingMessageId = null;
+    this.state.editDraft = '';
+    this.state.showEmoji = false;
+    this.state.emojiContext = null;
+  }
+
+  /**
+   * Saves the edited message to Firestore
+   * @param m - Message being edited
+   * @param vm - View model containing conversation details
+   */
+  async saveEdit(m: any, vm: Vm): Promise<void> {
+    await this.messageEdit.saveEdit(m, this.state.editDraft, vm, this.state.currentUser?.id ?? null);
+    this.cancelEdit();
+  }
+
+  /**
+   * Checks if a message was sent by the current user
+   * @param m - Message to check
+   * @returns True if message is from current user
+   */
+  isOwnMessage(m: { authorId?: string } | null | undefined): boolean {
+    const uid = this.state.currentUser?.id;
+    return !!uid && !!m?.authorId && m.authorId === uid;
+  }
+
+  /**
+   * Adds an emoji reaction to a message
+   * @param m - Message to react to
+   * @param emoji - Emoji to add
+   */
+  async addReactionToMessage(m: MessageVm, emoji: string): Promise<void> {
+    await this.reactionCoordinator.addReactionToMessage(m, emoji);
+  }
+
+  /**
+   * Handles click on a reaction chip
+   * @param ev - Mouse event
+   * @param m - Message
+   * @param emoji - Emoji that was clicked
+   */
+  onReactionChipClick(ev: MouseEvent, m: MessageVm, emoji: string): void {
+    this.reactionCoordinator.onReactionChipClick(ev, m, emoji);
+  }
+
+  /**
+   * Checks if a message has any reactions
+   * @param m - Message to check
+   * @returns True if message has reactions
+   */
+  hasReactions(m: MessageVm): boolean {
+    return this.reactionCoordinator.hasReactions(m);
+  }
+
+  /**
+   * Gets list of reactions for a message
+   * @param m - Message
+   * @returns Array of reaction objects with emoji and count
+   */
+  reactionList(m: MessageVm): Array<{ emoji: string; count: number }> {
+    return this.reactionCoordinator.reactionList(m);
+  }
+
+  /**
+   * Checks if a specific user has reacted with an emoji
+   * @param m - Message
+   * @param emoji - Emoji to check
+   * @param uid - User ID
+   * @returns True if user has reacted with this emoji
+   */
+  hasUserReacted(m: MessageVm, emoji: string, uid: string): boolean {
+    return this.reactionCoordinator.hasUserReacted(m, emoji, uid);
+  }
+
+  /**
+   * Gets names of users who reacted with a specific emoji
+   * @param m - Message
+   * @param emoji - Emoji
+   * @returns Array of user names
+   */
+  reactionNames(m: MessageVm, emoji: string): string[] {
+    return this.reactionCoordinator.reactionNames(m, emoji);
+  }
+
+  /**
+   * Gets appropriate verb for reaction tooltip ("hat/haben reagiert")
+   * @param m - Message
+   * @param emoji - Emoji
+   * @returns Verb string for tooltip
+   */
+  reactionVerb(m: MessageVm, emoji: string): string {
+    return this.reactionCoordinator.reactionVerb(m, emoji);
+  }
+
+  /**
+   * Handles hover over a reaction
+   * @param m - Message
+   * @param emoji - Emoji being hovered
+   */
+  onReactionHover(m: MessageVm | null, emoji?: string): void {
+    this.reactionCoordinator.onReactionHover(m, emoji);
+  }
+
+  /**
+   * Checks if a reaction is currently hovered
+   * @param m - Message
+   * @param emoji - Emoji
+   * @returns True if this reaction is hovered
+   */
+  isReactionHovered(m: MessageVm, emoji: string): boolean {
+    return this.reactionCoordinator.isReactionHovered(m, emoji);
+  }
+
+  /**
+   * Toggles the emoji picker visibility
+   * @param evt - Optional event to stop propagation
+   */
+  toggleEmoji(evt?: Event): void {
+    this.emojiCoordinator.toggleEmoji(evt);
+  }
+
+  /**
+   * Closes the emoji picker
+   */
+  closeEmoji(): void {
+    this.emojiCoordinator.closeEmoji();
+  }
+
+  /**
+   * Handles emoji selection from picker
+   * @param e - Emoji selection event
+   */
+  async onEmojiSelect(e: any): Promise<void> {
+    await this.emojiCoordinator.onEmojiSelect(e);
+  }
+
+  /**
+   * Opens emoji picker for message composer
+   * @param ev - Mouse event for positioning
+   */
+  openEmojiForComposer(ev: MouseEvent): void {
+    this.emojiCoordinator.openEmojiForComposer(ev);
+  }
+
+  /**
+   * Opens emoji picker for edit mode
+   * @param ev - Mouse event for positioning
+   */
+  openEmojiForEdit(ev: MouseEvent): void {
+    this.emojiCoordinator.openEmojiForEdit(ev);
+  }
+
+  /**
+   * Toggles emoji picker for a specific message
+   * @param ev - Mouse event for positioning
+   * @param msg - Message to add emoji to
+   * @param from - Source of the emoji picker (actions or reactions)
+   */
+  toggleMessageEmojiPicker(ev: MouseEvent, msg: MessageVm, from: 'actions' | 'reactions' = 'reactions'): void {
+    this.emojiCoordinator.toggleMessageEmojiPicker(ev, msg, from);
+  }
+
+  /**
+   * Closes the message-specific emoji popover
+   */
+  private closeMessageEmojiPopover(): void {
+    this.emojiCoordinator.closeMessageEmojiPopover();
+  }
+
+  /**
+   * Handles direct emoji click (custom element)
+   * @param event - Emoji click event
+   */
+  onEmojiClick(event: any): void {
+    this.emojiCoordinator.onEmojiClick(event);
+  }
+
+  /**
+   * Opens the channel info modal
+   */
+  async openChannelInfoModal(): Promise<void> {
+    await this.modalCoordinator.openChannelInfoModal(this.channelDoc$);
+  }
+
+  /**
+   * Closes the channel info modal
+   */
+  closeChannelInfoModal(): void {
+    this.modalCoordinator.closeChannelInfoModal();
+  }
+
+  /**
+   * Toggles channel name edit mode (edit/save)
+   */
+  async toggleChannelNameEdit(): Promise<void> {
+    await this.modalCoordinator.toggleChannelNameEdit(this.channelDoc$);
+  }
+
+  /**
+   * Toggles channel description edit mode (edit/save)
+   */
+  async toggleChannelDescEdit(): Promise<void> {
+    await this.modalCoordinator.toggleChannelDescEdit(this.channelDoc$);
+  }
+
+  /**
+   * Handles leaving the current channel
+   */
+  async onLeaveChannel(): Promise<void> {
+    await this.modalCoordinator.onLeaveChannel();
+  }
+
+  /**
+   * Opens the members modal
+   * @param event - Optional mouse event
+   */
+  openMembersModal(event?: MouseEvent): void {
+    this.modalCoordinator.openMembersModal(event);
+  }
+
+  /**
+   * Closes the members modal
+   */
+  closeMembersModal(): void {
+    this.modalCoordinator.closeMembersModal();
+  }
+
+  /**
+   * Opens the add members modal
+   */
+  openAddMembersModal(): void {
+    this.modalCoordinator.openAddMembersModal();
+  }
+
+  /**
+   * Closes the add members modal
+   */
+  closeAddMembersModal(): void {
+    this.modalCoordinator.closeAddMembersModal();
+  }
+
+  /**
+   * Submits the add member operation
+   */
+  async submitAddMember(): Promise<void> {
+    const success = await this.modalCoordinator.submitAddMember();
+    if (success) this.closeAddMembersModal();
+  }
+
+  /**
+   * Handles input in add member field
+   * @param value - Input value
+   */
+  onAddMemberInput(value: string): void {
+    this.modalCoordinator.onAddMemberInput(value);
+  }
+
+  /**
+   * Selects a member from add member suggestions
+   * @param u - User to add
+   */
+  selectAddMember(u: UserMini): void {
+    this.modalCoordinator.selectAddMember(u);
+  }
+
+  /**
+   * Handles click on a member in the members list
+   * @param userId - ID of clicked user
+   */
+  onMemberClick(userId: string): void {
+    this.closeMembersModal();
+    this.openUserProfileModal(userId);
+  }
+
+  /**
+   * Opens the user profile modal
+   * @param userIdFromList - Optional user ID to display
+   */
+  async openUserProfileModal(userIdFromList?: string): Promise<void> {
+    await this.modalCoordinator.openUserProfileModal(userIdFromList);
+  }
+
+  /**
+   * Closes the user profile modal
+   */
+  closeUserProfileModal(): void {
+    this.modalCoordinator.closeUserProfileModal();
+  }
+
+  /**
+   * Toggles the edit menu for a message
+   * @param ev - Mouse event
+   * @param m - Message
+   */
+  toggleEditMenu(ev: MouseEvent, m: any): void {
+    const result = this.editMenu.toggleEditMenu(ev, m, this.state.editMenuForId, this.state.editingMessageId, this.state.currentUser?.id ?? null);
+    if (result) {
+      this.state.editMenuForId = result.editMenuForId;
+      this.state.editMenuPos = result.editMenuPos;
+      this.state.messageEmojiForId = null;
+      this.state.showEmoji = false;
+      this.state.showMembers = false;
+    } else {
+      this.state.editMenuForId = null;
     }
   }
 
-  onSuggestionClick(ev: MouseEvent, s: SuggestItem) {
-    ev.stopPropagation();
-    this.pickSuggestion(s);
+  /**
+   * Handles mouse leaving a message row
+   * @param messageId - ID of the message
+   */
+  onMessageRowLeave(messageId: string): void {
+    const result = this.uiState.onMessageRowLeave(messageId, this.state.editMenuForId, this.state.messageEmojiForId, this.state.emojiOpenedFrom);
+    this.state.editMenuForId = result.editMenuForId;
+    this.state.messageEmojiForId = result.messageEmojiForId;
   }
 
-  onToBlur() {
+  /**
+   * Handles mouse leaving message row but keeps emoji open
+   * @param messageId - ID of the message
+   */
+  onMessageRowLeaveKeepEmoji(messageId: string): void {
+    const result = this.uiState.onMessageRowLeaveKeepEmoji(messageId, this.state.editMenuForId);
+    this.state.editMenuForId = result.editMenuForId;
+  }
+
+  /**
+   * Closes all open popovers and menus
+   */
+  closeAllPopovers(): void {
+    const result = this.uiState.closeAllPopovers();
+    this.state.showEmoji = result.showEmoji;
+    this.state.showMembers = result.showMembers;
+    this.state.messageEmojiForId = result.messageEmojiForId;
+    this.state.editMenuForId = result.editMenuForId;
+  }
+
+  /**
+   * Wrapper to close all popovers
+   */
+  closePopovers(): void {
+    this.closeAllPopovers();
+  }
+
+  /**
+   * Handles document click to close emoji popover
+   * @param ev - Mouse event
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(ev: MouseEvent): void {
+    if (this.emojiCoordinator.shouldCloseOnDocumentClick(ev)) {
+      this.emojiCoordinator.closeMessageEmojiPopover();
+    }
+  }
+
+  /**
+   * Handles window scroll to close emoji popover
+   */
+  @HostListener('window:scroll', [])
+  onWindowScroll(): void {
+    if (this.emojiCoordinator.shouldCloseOnScrollOrTouch()) {
+      this.emojiCoordinator.closeMessageEmojiPopover();
+    }
+  }
+
+  /**
+   * Handles touch move to close emoji popover
+   */
+  @HostListener('window:touchmove', [])
+  onTouchMove(): void {
+    if (this.emojiCoordinator.shouldCloseOnScrollOrTouch()) {
+      this.emojiCoordinator.closeMessageEmojiPopover();
+    }
+  }
+
+  /**
+   * Handles input in 'To' field for new messages
+   * @param v - Input value
+   */
+  onToInput(v: string): void {
+    const result = this.compose.onToInput(v, this.state.getToInput$());
+    this.state.to = result.to;
+    this.state.suggestOpen = result.suggestOpen;
+    this.state.composeTarget = result.composeTarget;
+  }
+
+  /**
+   * Handles keyboard navigation in 'To' field suggestions
+   * @param ev - Keyboard event
+   * @param list - List of suggestions
+   */
+  onToKeydown(ev: KeyboardEvent, list: SuggestItem[] | null | undefined): void {
+    const result = this.compose.onToKeydown(ev, list, this.state.suggestIndex, this.state.suggestOpen);
+    if (!result) return;
+    this.state.suggestIndex = result.suggestIndex;
+    if (result.suggestOpen !== undefined) this.state.suggestOpen = result.suggestOpen;
+    if (result.pickSuggestion) this.pickSuggestion(result.pickSuggestion);
+  }
+
+  /**
+   * Handles click on suggestion item
+   * @param ev - Mouse event
+   * @param s - Suggestion item
+   */
+  onSuggestionClick(ev: MouseEvent, s: SuggestItem): void {
+    const result = this.compose.onSuggestionClick(ev, s, this.state.getToInput$());
+    this.state.to = result.to;
+    this.state.suggestOpen = result.suggestOpen;
+    this.state.suggestIndex = result.suggestIndex;
+    this.state.composeTarget = result.composeTarget;
+  }
+
+  /**
+   * Handles blur event on 'To' field
+   */
+  onToBlur(): void {
     setTimeout(() => {
-      this.suggestOpen = false;
-      this.suggestIndex = -1;
+      const result = this.compose.onToBlur();
+      this.state.suggestOpen = result.suggestOpen;
+      this.state.suggestIndex = result.suggestIndex;
     }, 120);
   }
 
-  pickSuggestion(s: SuggestItem) {
-    this.to = s.value;
-    this.toInput$.next(this.to);
-    this.suggestOpen = false;
-    this.suggestIndex = -1;
-    this.composeTarget = s;
+  /**
+   * Picks a suggestion and sets it as compose target
+   * @param s - Suggestion item
+   */
+  pickSuggestion(s: SuggestItem): void {
+    const result = this.compose.pickSuggestion(s, this.state.getToInput$());
+    this.state.to = result.to;
+    this.state.suggestOpen = result.suggestOpen;
+    this.state.suggestIndex = result.suggestIndex;
+    this.state.composeTarget = result.composeTarget;
   }
 
-  isOwnMessage(m: { authorId?: string } | null | undefined): boolean {
-    const uid = this.currentUser?.id ?? this.auth.currentUser?.uid;
-    return !!uid && String(m?.authorId ?? '') === String(uid);
+  /**
+   * Returns placeholder text for compose input
+   * @param vm - View model
+   * @returns Placeholder text
+   */
+  composePlaceholder(vm: Vm): string {
+    return this.compose.composePlaceholder(vm);
   }
 
-  closePopovers() {
-    this.showEmoji = false;
-    this.showMembers = false;
-    this.messageEmojiForId = null;
-    this.editMenuForId = null;
+  /**
+   * Opens 'To' field suggestions with @ prefix
+   */
+  private openToSuggestWithAt(): void {
+    const result = this.compose.openToSuggestWithAt(this.state.getToInput$(), this.refs.toInputEl?.nativeElement);
+    this.state.to = result.to;
+    this.state.suggestOpen = result.suggestOpen;
+    this.state.suggestIndex = result.suggestIndex;
+    this.state.composeTarget = result.composeTarget;
   }
 
-  private normalize(s: string) {
-    return (s || '').toLowerCase().trim();
-  }
-
-  constructor() {
-    /** ---------- HEADER (VM) ---------- */
-    const baseVm$ = this.route.paramMap.pipe(
-      switchMap((params) => {
-        const id = params.get('id')!;
-        const isDM = this.router.url.includes('/dm/');
-
-        if (!isPlatformBrowser(this.platformId)) {
-          return of<Vm>(
-            isDM
-              ? { kind: 'dm', title: '', avatarUrl: undefined, online: undefined }
-              : { kind: 'channel', title: `# ${id}`, avatarUrl: undefined, online: undefined }
-          );
-        }
-
-        if (!isDM) {
-          // Lade Channel-Dokument um name Feld zu bekommen
-          const chRef = doc(this.fs, `channels/${id}`);
-          return runInInjectionContext(this.env, () => docData(chRef)).pipe(
-            map((ch: any): Vm => ({
-              kind: 'channel',
-              title: `# ${ch?.name ?? id}` // Verwende name, fallback auf id
-            })),
-            startWith({ kind: 'channel', title: `# ${id}` } as Vm)
-          );
-        }
-
-        const uref = doc(this.fs, `users/${id}`);
-        return runInInjectionContext(this.env, () => docData(uref)).pipe(
-          map(
-            (u: any): Vm => {
-              const online =
-                u?.online !== undefined
-                  ? !!u.online
-                  : u?.status === 'active';
-
-              return {
-                kind: 'dm',
-                title: String(u?.name ?? ''),
-                avatarUrl: u?.avatarUrl as string | undefined,
-                online,
-              };
-            }
-          ),
-          startWith({
-            kind: 'dm',
-            title: '',
-            avatarUrl: undefined,
-            online: undefined,
-          } as Vm)
-        );
-      })
-    );
-
-    this.vm$ = this.composeMode$.pipe(
-      switchMap((isCompose) =>
-        isCompose ? of<Vm>({ kind: 'channel', title: 'Neue Nachricht' }) : baseVm$
-      )
-    );
-
-    this.composeMode$.subscribe((isCompose) => {
-      this.composeMode = isCompose;
-    });
-
-    /** ---------- USERS (inkl. Online) ---------- */
-    this.usersAll$ = runInInjectionContext(this.env, () =>
-      collectionData(collection(this.fs, 'users'), { idField: 'id' })
-    ).pipe(
-      map((rows: any[]): UserMini[] =>
-        (rows || []).map((u: any) => {
-          const isOnline =
-            u.online !== undefined ? !!u.online : u.status === 'active';
-
-          return {
-            id: u.id,
-            name: u.name ?? u.displayName ?? 'Unbekannt',
-            avatarUrl: this.fixAvatar(u.avatarUrl),
-            online: isOnline,
-          } as UserMini;
-        })
-      ),
-      startWith([] as UserMini[])
-    );
-
-    /** ---------- MEMBERS (Header + Modal, nur Channel) ---------- */
-    const channelMembersRaw$ = this.route.paramMap.pipe(
-      map((params) => params.get('id')!),
-      switchMap((id) => {
-        if (!isPlatformBrowser(this.platformId)) return of([] as MemberDenorm[]);
-
-        const ref = collection(this.fs, `channels/${id}/members`);
-        const source$ = runInInjectionContext(this.env, () =>
-          collectionData(ref, { idField: 'id' }) as Observable<any[]>
-        );
-
-        return source$.pipe(
-          map((rows) => rows as MemberDenorm[]),
-          startWith([] as MemberDenorm[])
-        );
-      })
-    );
-
-    this.members$ = combineLatest([channelMembersRaw$, this.usersAll$]).pipe(
-      map(([members, users]) => {
-        const userMap = new Map(users.map((u) => [u.id, u]));
-
-        return members.map((m: any) => {
-          const uid = m.uid || m.id;
-          const u = userMap.get(uid);
-
-          return <MemberVM>{
-            uid,
-            name: m.displayName ?? u?.name ?? 'Member',
-            avatarUrl: this.fixAvatar(m.avatarUrl ?? u?.avatarUrl),
-            online: u?.online ?? false,
-          };
-        });
-      }),
-      startWith([] as MemberVM[])
-    );
-
-    // "Leute hinzufügen"-Modal
-    this.addMemberSuggestions$ = combineLatest([
-      this.addMemberInput$.pipe(startWith('')),
-      this.usersAll$,
-      this.members$.pipe(startWith([] as MemberVM[])),
-    ]).pipe(
-      map(([query, users, members]) => {
-        const q = (query || '').trim().toLowerCase();
-        if (!q) return [];
-
-        // bestehende Channel-Mitglieder herausfiltern
-        const memberIds = new Set(members.map(m => m.uid));
-
-        return users
-          .filter(u => !memberIds.has(u.id))
-          .filter(u => u.name.toLowerCase().includes(q))
-          .slice(0, 8);
-      })
-    );
-
-    /** ---------- NACHRICHTEN ---------- */
-    const baseMessages$ = combineLatest([
-      this.route.paramMap.pipe(map(p => p.get('id')!)),
-      this.me$,
-      this.usersAll$,
-      this.chatRefresh.refreshTrigger$,
-    ]).pipe(
-      switchMap(([id, me, users]) => {
-        const userMap = new Map(users.map(u => [u.id, u]));
-        const isDM = this.router.url.includes('/dm/');
-        if (!isPlatformBrowser(this.platformId)) return of([] as MessageVm[]);
-
-        // Channel
-        if (!isDM) {
-          const collRef = collection(this.fs, `channels/${id}/messages`);
-          const qRef = query(collRef, orderBy('createdAt', 'asc'));
-          return runInInjectionContext(this.env, () =>
-            collectionData(qRef, { idField: 'id' }) as Observable<any[]>
-          ).pipe(
-            map(rows =>
-              rows.map(m => {
-                const u = userMap.get(m.authorId ?? '');
-                return ({
-                  id: m.id,
-                  text: m.text ?? '',
-                  authorId: m.authorId ?? '',
-                  authorName: u?.name ?? m.authorName ?? 'Unbekannt',
-                  authorAvatar: u?.avatarUrl ?? m.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
-                  createdAt: toDateMaybe(m.createdAt),
-                  replyCount: (m.replyCount ?? 0),
-                  lastReplyAt: toDateMaybe(m.lastReplyAt),
-                  reactions: m.reactions ?? {},
-                  reactionBy: m.reactionBy ?? {},
-                } as MessageVm);
-              })
-            ),
-            startWith([] as MessageVm[])
-          );
-        }
-
-        // DM
-        if (!me) return of([] as MessageVm[]);
-
-        const convId = this.makeConvId(me.uid, id);
-        const collRef = collection(this.fs, `conversations/${convId}/messages`);
-        const qRef = query(collRef, orderBy('createdAt', 'asc'));
-
-        return runInInjectionContext(this.env, () =>
-          collectionData(qRef, { idField: 'id' }) as Observable<any[]>
-        ).pipe(
-          map(rows =>
-            rows.map(m => ({
-              id: m.id,
-              text: m.text ?? '',
-              authorId: m.authorId ?? '',
-              authorName: m.authorName ?? 'Unbekannt',
-              authorAvatar: m.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
-              createdAt: toDateMaybe(m.createdAt),
-              replyCount: (m.replyCount ?? 0),
-              lastReplyAt: toDateMaybe(m.lastReplyAt),
-              reactions: m.reactions ?? {},
-              reactionBy: m.reactionBy ?? {},
-            } as MessageVm))
-          ),
-          startWith([] as MessageVm[])
-        );
-      })
-    );
-
-    this.messages$ = this.composeMode$.pipe(
-      switchMap((isCompose) => (isCompose ? of([] as MessageVm[]) : baseMessages$))
-    );
-
-    // Gruppierung
-    this.groups$ = this.messages$.pipe(
-      map((msgs) => {
-        const today = new Date();
-        const buckets = new Map<string, MessageVm[]>();
-
-        for (const m of msgs) {
-          const d = m.createdAt;
-          if (!d) continue;
-
-          const key = `${d.getFullYear()}-${String(
-            d.getMonth() + 1
-          ).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-          if (!buckets.has(key)) buckets.set(key, []);
-          buckets.get(key)!.push(m);
-        }
-
-        const groups: DayGroup[] = [...buckets.entries()]
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([key, items]) => {
-            items.sort(
-              (a, b) => a.createdAt!.getTime() - b.createdAt!.getTime()
-            );
-
-            const [y, mo, da] = key.split('-').map(Number);
-            const date = new Date(y, mo - 1, da);
-            const isToday = sameYMD(date, today);
-
-            return {
-              label: isToday ? 'Heute' : dayLabel(date),
-              isToday,
-              items,
-            } as DayGroup;
-          });
-
-        return groups;
-      })
-    );
-
-    /** ---------- LEER/AKTIV ---------- */
-    const channelId$ = this.route.paramMap.pipe(map((p) => p.get('id')!));
-
-    this.channelDoc$ = channelId$.pipe(
-      switchMap((id) => {
-        if (!isPlatformBrowser(this.platformId)) return of<ChannelDoc | null>(null);
-
-        return (docData(doc(this.fs, `channels/${id}`)) as Observable<any>).pipe(
-          map(data => (data ? ({ id, ...data } as ChannelDoc) : null)),
-          catchError(() => of<ChannelDoc | null>(null))
-        );
-      }),
-      startWith<ChannelDoc | null>(null)
-    );
-
-    this.channelCreator$ = this.channelDoc$.pipe(
-      switchMap((ch) => {
-        const uid = ch?.createdBy;
-        if (!uid) return of<UserDoc | null>(null);
-
-        return (docData(doc(this.fs, `users/${uid}`)) as Observable<any>).pipe(
-          map(u => (u ? ({ id: uid, ...u } as UserDoc) : null)),
-          catchError(() => of<UserDoc | null>(null))
-        );
-      }),
-      startWith<UserDoc | null>(null)
-    );
-
-    // Topic in lokale Variable spiegeln (für Modal & Editfeld)
-    this.channelDoc$.subscribe((ch) => {
-      this.channelTopic = ch?.topic ?? '';
-    });
-
-    const firstMessage$ = channelId$.pipe(
-      switchMap((id) =>
-        isPlatformBrowser(this.platformId)
-          ? (collectionData(
-            query(
-              collection(this.fs, `channels/${id}/messages`),
-              orderBy('createdAt', 'asc'),
-              limit(1)
-            ),
-            { idField: 'id' }
-          ) as Observable<any[]>)
-          : of<any[]>([])
-      ),
-      startWith<any[]>([])
-    );
-
-    const baseIsEmpty$ = combineLatest([this.channelDoc$, firstMessage$]).pipe(
-      map(([ch, first]) =>
-        (ch?.messageCount ?? 0) === 0 && (first?.length ?? 0) === 0
-      )
-    );
-
-    this.isEmpty$ = this.composeMode$.pipe(
-      switchMap((isCompose) => (isCompose ? of(true) : baseIsEmpty$))
-    );
-
-    /** ---------- Channels + Users (für Autocomplete) ---------- */
-    this.channelsAll$ = runInInjectionContext(this.env, () =>
-      collectionData(collection(this.fs, 'channels'), { idField: 'id' })
-    ).pipe(
-      map((rows: any[]) =>
-        (rows || [])
-          .map((r: any) => ({
-            id: String(r?.id || ''),
-            name: String(r?.name ?? '').trim(),
-          }))
-          .filter((x) => !!x.id && !!x.name)
-      ),
-      startWith([] as { id: string; name: string }[])
-    );
-
-    // suggestions$ nutzt dieselben usersAll$
-    this.suggestions$ = combineLatest([
-      this.toInput$.pipe(startWith('')),
-      this.channelsAll$,
-      this.usersAll$,
-    ]).pipe(
-      map(([raw, channels, users]) => {
-        const q = this.normalize(raw);
-        if (!q) return [] as SuggestItem[];
-
-        // Basis-Suchterm: ohne #/@ am Anfang
-        const term =
-          q.startsWith('#') || q.startsWith('@')
-            ? this.normalize(q.slice(1))
-            : q;
-
-        // #channel → nur Channels filtern
-        if (q.startsWith('#')) {
-          return channels
-            .filter(c => this.normalize(c.name).includes(term))
-            .slice(0, 8)
-            .map<SuggestItem>(c => ({
-              kind: 'channel',
-              id: c.id,
-              label: `# ${c.name}`,
-              value: `#${c.name}`,
-            }));
-        }
-
-        // @user → nur User filtern
-        if (q.startsWith('@')) {
-          return users
-            .filter(u => this.normalize(u.name).includes(term))
-            .slice(0, 8)
-            .map<SuggestItem>(u => ({
-              kind: 'user',
-              id: u.id,
-              label: `@${u.name}`,
-              value: `@${u.name}`,
-              avatarUrl: u.avatarUrl,
-            }));
-        }
-
-        // sonst: Channels + User gemischt, beide nach term filtern
-        const channelMatches = channels
-          .filter(c => this.normalize(c.name).includes(term))
-          .slice(0, 4)
-          .map<SuggestItem>(c => ({
-            kind: 'channel',
-            id: c.id,
-            label: `# ${c.name}`,
-            value: `#${c.name}`,
-          }));
-
-        const userMatches = users
-          .filter(u => this.normalize(u.name).includes(term))
-          .slice(0, 4)
-          .map<SuggestItem>(u => ({
-            kind: 'user',
-            id: u.id,
-            label: `@${u.name}`,
-            value: `@${u.name}`,
-            avatarUrl: u.avatarUrl,
-          }));
-
-        return [...channelMatches, ...userMatches];
-      })
-    );
-
-    /** ---------- aktueller User ---------- */
-    authState(this.auth)
-      .pipe(
-        switchMap((user) => {
-          if (!user) return of(null);
-
-          const uref = doc(this.fs, `users/${user.uid}`);
-          return docData(uref).pipe(
-            map((raw) => {
-              const data = (raw || {}) as any;
-              return {
-                id: user.uid,
-                name:
-                  data.name ??
-                  data.displayName ??
-                  user.displayName ??
-                  user.email ??
-                  'Guest',
-                avatarUrl:
-                  data.avatarUrl ??
-                  '/public/images/avatars/avatar-default.svg',
-                ...data,
-              } as UserDoc & { id: string };
-            })
-          );
-        })
-      )
-      .subscribe((u) => {
-        this.currentUser = u;
-      });
-
-    this.usersAll$.subscribe(users => {
-      this.userNameMap = new Map(users.map(u => [u.id, u.name]));
-    });
-
-    // Handle threadId from route (Mobile Thread Navigation)
-    combineLatest([this.route.paramMap, this.vm$, authState(this.auth)]).pipe(
-      switchMap(([params, vm, authUser]) => {
-        const threadId = params.get('threadId');
-        const id = params.get('id');
-
-        if (!threadId || !id) return of(null);
-
-        const isDM = this.router.url.includes('/dm/');
-        let msgRef;
-
-        if (isDM && authUser) {
-          const convId = this.makeConvId(authUser.uid, id);
-          msgRef = doc(this.fs, `conversations/${convId}/messages/${threadId}`);
-        } else {
-          msgRef = doc(this.fs, `channels/${id}/messages/${threadId}`);
-        }
-
-        return runInInjectionContext(this.env, () => docData(msgRef)).pipe(
-          map((raw: any) => {
-            if (!raw) return null;
-
-            return {
-              vm,
-              msg: {
-                id: threadId,
-                text: raw?.text ?? '',
-                authorId: raw?.authorId ?? '',
-                authorName: raw?.authorName ?? 'Unbekannt',
-                authorAvatar: raw?.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
-                createdAt: toDateMaybe(raw?.createdAt) ?? new Date(),
-              },
-              channelId: isDM && authUser ? this.makeConvId(authUser.uid, id) : id,
-              isDM,
-            };
-          }),
-          startWith(null)
-        );
-      }),
-      filter((x): x is { vm: Vm; msg: any; channelId: string; isDM: boolean } => !!x)
-    ).subscribe(({ vm, msg, channelId, isDM }) => {
-      this.thread.openThread({
-        channelId,
-        header: { title: 'Thread', channel: vm.title },
-        root: {
-          id: msg.id,
-          author: {
-            id: msg.authorId,
-            name: msg.authorName,
-            avatarUrl: msg.authorAvatar,
-          },
-          text: msg.text,
-          createdAt: msg.createdAt,
-        },
-        isDM,
-      });
-    });
-  }
-
-  /** ---------- Composer / Emoji ---------- */
-  toggleEmoji(evt?: Event) {
+  /**
+   * Toggles members mention popup
+   * @param evt - Optional event
+   */
+  toggleMembers(evt?: Event): void {
     evt?.stopPropagation();
-    const next = !this.showEmoji;
-    this.showEmoji = next;
-    if (next) this.showMembers = false;
-  }
-
-  closeEmoji() {
-    this.showEmoji = false;
-  }
-
-  onEmojiSelect(e: any) {
-    const native =
-      e?.emoji?.native ??
-      e?.emoji?.char ??
-      e?.native ??
-      e?.colons ??
-      '';
-
-    if (this.emojiContext === 'message' && this.emojiMessageTarget) {
-      this.addReactionToMessage(this.emojiMessageTarget, native);
-
-      this.messageEmojiForId = null;
-      this.emojiContext = null;
-      this.emojiMessageTarget = null;
-      return;
-    }
-
-    // Edit-Mode: Emoji in editDraft einfügen
-    if (this.emojiContext === 'edit') {
-      this.editDraft = (this.editDraft || '') + native;
-
-      // optional: Picker schließen wie beim Composer
-      this.showEmoji = false;
-      this.emojiContext = null;
-      return;
-    }
-
-    this.draft += native;
-    this.closeEmoji();
-  }
-
-  // UI-Stub für Reaktionen – hier kannst du später Firestore-Update einbauen
-  private async addReactionToMessage(msg: MessageVm, emoji: string) {
-    try {
-      const id = this.route.snapshot.paramMap.get('id')!;
-      const isDM = this.router.url.includes('/dm/');
-      const authUser = await this.authReady.requireUser();
-
-      const uid = authUser.uid;
-      const key = String(emoji);
-
-      const ref = !isDM
-        ? doc(this.fs, `channels/${id}/messages/${msg.id}`)
-        : doc(this.fs, `conversations/${this.makeConvId(uid, id)}/messages/${msg.id}`);
-
-      await runTransaction(this.fs, async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists()) return;
-
-        const data = snap.data() as any;
-
-        const already = !!data?.reactionBy?.[key]?.[uid];
-        const currentCount = Number(data?.reactions?.[key] ?? 0);
-
-        const displayName =
-          this.currentUser?.name ??
-          authUser.displayName ??
-          authUser.email ??
-          'Unbekannt';
-
-        if (already) {
-          const updatePayload: any = {
-            [`reactionBy.${key}.${uid}`]: deleteField(),
-          };
-
-          if (currentCount <= 1) {
-            updatePayload[`reactions.${key}`] = deleteField();
-          } else {
-            updatePayload[`reactions.${key}`] = increment(-1);
-          }
-
-          tx.update(ref, updatePayload);
-          return;
-        }
-
-        tx.update(ref, {
-          [`reactionBy.${key}.${uid}`]: true,
-          [`reactions.${key}`]: increment(1),
-        });
-      });
-
-    } catch (e) {
-      console.error('[Chat] Reaction update failed:', e);
-    }
-  }
-
-  onReactionChipClick(ev: MouseEvent, m: MessageVm, emoji: string) {
-    ev.stopPropagation();
-    this.addReactionToMessage(m, emoji);
-  }
-
-  onEmojiClick(event: any) {
-    const emoji =
-      event?.detail?.unicode || event?.detail?.emoji?.unicode || '';
-    this.draft += emoji;
-  }
-
-  toggleMembers(evt?: Event) {
-    evt?.stopPropagation();
-
-    if (this.composeMode) {
+    const result = this.mention.toggleMembers(this.state.showMembers, this.state.showEmoji, this.state.composeMode);
+    if (result.shouldOpenCompose) {
       this.openToSuggestWithAt();
       return;
     }
-
-    const next = !this.showMembers;
-    this.showMembers = next;
-    if (next) this.showEmoji = false;
+    this.state.showMembers = result.showMembers;
+    this.state.showEmoji = result.showEmoji;
   }
 
-  closeMembers() {
-    this.showMembers = false;
+  /**
+   * Closes members mention popup
+   */
+  closeMembers(): void {
+    this.state.showMembers = this.mention.closeMembers();
   }
 
-  insertMention(m: MemberVM) {
-    const name = m.name ?? 'Member';
-    const mention = `@${name}`;
-
-    const base = this.draft || '';
-    const needsSpace = base.length > 0 && !/\s$/.test(base);
-
-    this.draft = base + (needsSpace ? ' ' : '') + mention + ' ';
-    this.showMembers = false;
+  /**
+   * Inserts a mention into the draft
+   * @param m - Member to mention
+   */
+  insertMention(m: MemberVM): void {
+    this.state.draft = this.mention.insertMention(m, this.state.draft);
+    this.state.showMembers = false;
   }
 
-  composePlaceholder(vm: Vm): string {
-    const who = vm.title || '';
-    return `Nachricht an ${who}`;
+  /**
+   * Opens thread for a message
+   * @param m - Message object
+   * @param vm - View model
+   */
+  async openThread(m: any, vm: any): Promise<void> {
+    await this.thread.openThread(m, vm);
   }
 
-  async openThread(m: any, vm: any) {
-    const routeId = this.route.snapshot.paramMap.get('id');
-    if (!routeId) return;
-
-    const isDM = this.router.url.includes('/dm/');
-
-    let threadChannelId = routeId; // default: ChannelId
-
-    if (isDM) {
-      const me = await this.authReady.requireUser();
-      threadChannelId = this.makeConvId(me.uid, routeId); // convId
-    }
-
-    const threadData = {
-      channelId: threadChannelId, // ✅ bei DM jetzt convId
-      header: {
-        title: 'Thread',
-        channel: vm.kind === 'dm' ? vm.title : vm.title, // vm.title ist bei Channel schon "# <name>"
-      },
-      root: {
-        id: m.id,
-        author: {
-          id: m.authorId ?? '',
-          name: m.authorName,
-          avatarUrl: m.authorAvatar,
-        },
-        text: m.text,
-        createdAt: m.createdAt ?? new Date(),
-      },
-      isDM,
-    };
-
-    this.thread.openThread(threadData);
-
-    // Mobile Thread Route für Channels und DMs
-    if (window.innerWidth <= 1024) {
-      if (isDM) {
-        this.router.navigate(['/dm', routeId, 'thread', m.id]);
-      } else {
-        this.router.navigate(['/channel', routeId, 'thread', m.id]);
-      }
-    }
-  }
-
-  private openToSuggestWithAt() {
-    this.to = '@';
-    this.toInput$.next(this.to);
-    this.suggestOpen = true;
-    this.suggestIndex = -1;
-    this.composeTarget = null;
-
-    // Input fokussieren (nach dem nächsten Change Detection Tick)
-    setTimeout(() => {
-      this.toInputEl?.nativeElement.focus();
-    });
-  }
-
-  private lockBodyScroll(locked: boolean) {
-    if (!isPlatformBrowser(this.platformId)) return;
-    document.body.style.overflow = locked ? 'hidden' : '';
-  }
-
-  openEmojiForComposer(ev: MouseEvent) {
-    ev.stopPropagation();
-
-    // Toggle: wenn Composer-Emoji schon offen ist -> schließen
-    if (this.showEmoji && this.emojiContext === 'composer') {
-      this.showEmoji = false;
-      this.emojiContext = null;
-      return;
-    }
-
-    const btn = ev.currentTarget as HTMLElement;
-    const rect = btn.getBoundingClientRect();
-
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-
-    const pickerWidth = 360;
-    const estimatedHeight = 360;
-    const offset = 10;
-
-    let left = Math.max(10, Math.min(rect.left, viewportW - pickerWidth - 10));
-    let top = rect.top - estimatedHeight - offset;
-
-    this.composerEmojiPos = { top, left };
-
-    // Kontext setzen + andere Popover schließen
-    this.emojiContext = 'composer';
-    this.emojiMessageTarget = null;
-    this.showEmoji = true;
-    this.showMembers = false;
-
-    // nach Render: echte Höhe messen und neu setzen
-    requestAnimationFrame(() => {
-      const el = document.querySelector('.composer-emoji-popover-fixed') as HTMLElement | null;
-      if (!el) return;
-
-      const realH = el.offsetHeight || estimatedHeight;
-      const roomBelow = viewportH - rect.bottom;
-      const placeAbove = roomBelow < realH + offset;
-
-      let finalTop = placeAbove ? rect.top - realH - offset : rect.bottom + offset;
-      finalTop = Math.max(10, Math.min(finalTop, viewportH - realH - 10));
-
-      this.composerEmojiPos = { top: finalTop, left };
-    });
-  }
-
-  toggleMessageEmojiPicker(ev: MouseEvent, msg: MessageVm, from: 'actions' | 'reactions' = 'reactions') {
-    ev.stopPropagation();
-
-    if (this.messageEmojiForId === msg.id) {
-      this.closeMessageEmojiPopover();
-      return;
-    }
-
-    this.emojiOpenedFrom = from;
-
-    const btn = ev.currentTarget as HTMLElement;
-    const rect = btn.getBoundingClientRect();
-
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-
-    const pickerHeight = 360;
-    const pickerWidth = 360;
-    const offset = 8;
-
-    const roomBelow = viewportH - rect.bottom;
-    const placement: 'top' | 'bottom' =
-      roomBelow > pickerHeight + offset ? 'bottom' : 'top';
-
-    let top = placement === 'bottom' ? rect.bottom + offset : rect.top - pickerHeight - offset;
-
-    let left = rect.left;
-    const maxLeft = viewportW - pickerWidth - 16;
-    if (left > maxLeft) left = Math.max(16, maxLeft);
-
-    this.messageEmojiForId = msg.id;
-    this.emojiPopoverPos = { top, left, placement };
-
-    this.emojiContext = 'message';
-    this.emojiMessageTarget = msg;
-  }
-
-  private closeMessageEmojiPopover() {
-    this.messageEmojiForId = null;
-    this.emojiContext = null;
-    this.emojiMessageTarget = null;
-    this.emojiOpenedFrom = null;
-  }
-
-  async send(vm: Vm) {
-    const msg = this.draft.trim();
-    if (!msg) return;
-
-    const id = this.route.snapshot.paramMap.get('id')!;
-    const isDM = vm.kind === 'dm';
-
-    const authUser = await this.authReady.requireUser();
-
-    const u = this.currentUser;
-
-    const guestEmail = 'guest@dabubble.de';
-    const isGuest = u?.role === 'guest' || authUser.email === guestEmail;
-
-    const authorId = authUser.uid;
-    const authorName = isGuest
-      ? 'Guest'
-      : u?.name ??
-      (u as any)?.displayName ??
-      authUser.displayName ??
-      authUser.email ??
-      'Unbekannt';
-
-    const authorAvatar =
-      u?.avatarUrl ?? '/public/images/avatars/avatar-default.svg.svg';
-
-    try {
-      if (!isDM) {
-        const coll = collection(this.fs, `channels/${id}/messages`);
-        await addDoc(coll, {
-          text: msg,
-          authorId,
-          authorName,
-          authorAvatar,
-          createdAt: serverTimestamp(),
-          replyCount: 0,
-          reactions: {},
-        });
-      } else {
-        const otherUserId = id;
-        const convId = this.makeConvId(authorId, otherUserId);
-
-        // ✅ Conversation doc erst beim ersten Senden anlegen
-        const convRef = doc(this.fs, `conversations/${convId}`);
-        await setDoc(
-          convRef,
-          {
-            createdAt: serverTimestamp(),
-            participants: {
-              [authorId]: otherUserId,
-              [otherUserId]: authorId,
-            },
-          },
-          { merge: true }
-        );
-
-        // Mit addDoc schreiben (auto-generated ID)
-        const coll = collection(this.fs, `conversations/${convId}/messages`);
-        await addDoc(coll, {
-          text: msg,
-          authorId,
-          authorName,
-          authorAvatar,
-          createdAt: serverTimestamp(),
-        });
-      }
-
-      this.draft = '';
-      this.showEmoji = false;
-    } catch (err) {
-      console.error('Fehler beim Senden:', err);
-    }
-  }
-
-  async sendFromCompose() {
-    const target = this.composeTarget;
-    const text = this.draft.trim();
-
-    if (!target) {
-      return;
-    }
-
-    const authUser = await this.authReady.requireUser();
-
-    const u = this.currentUser;
-    const guestEmail = 'guest@dabubble.de';
-    const isGuest = u?.role === 'guest' || authUser.email === guestEmail;
-
-    const authorId = authUser.uid;
-    const authorName = isGuest
-      ? 'Guest'
-      : u?.name ??
-      (u as any)?.displayName ??
-      authUser.displayName ??
-      authUser.email ??
-      'Unbekannt';
-
-    const authorAvatar = u?.avatarUrl ?? '/public/images/avatars/avatar-default.svg';
-
-    try {
-      // === CHANNEL als Ziel ===
-      if (target.kind === 'channel' && target.id) {
-        const channelId = target.id;
-
-        if (text) {
-          const coll = collection(this.fs, `channels/${channelId}/messages`);
-          await addDoc(coll, {
-            text,
-            authorId,
-            authorName,
-            authorAvatar,
-            createdAt: serverTimestamp(),
-            replyCount: 0,
-            reactions: {},
-          });
-        }
-
-        // Eingaben zurücksetzen
-        this.draft = '';
-        this.to = '';
-        this.composeTarget = null;
-        this.showEmoji = false;
-
-        // zum Channel navigieren
-        this.router.navigate(['/channel', channelId]);
-        return;
-      }
-
-      // === USER / DM als Ziel ===
-      if (target.kind === 'user' && target.id) {
-        const otherUserId = target.id;
-        const convId = this.makeConvId(authorId, otherUserId);
-
-        // ✅ Conversation-Doc sicher anlegen
-        await this.ensureConversation(convId, authorId, otherUserId);
-
-        if (text) {
-          // Mit addDoc schreiben (auto-generated ID)
-          const coll = collection(this.fs, `conversations/${convId}/messages`);
-          await addDoc(coll, {
-            text,
-            authorId,
-            authorName,
-            authorAvatar,
-            createdAt: serverTimestamp(),
-          });
-        }
-
-        this.draft = '';
-        this.to = '';
-        this.composeTarget = null;
-        this.showEmoji = false;
-
-        this.router.navigate(['/dm', otherUserId]);
-        return;
-      }
-
-      // === E-Mail als Ziel === (einfaches mailto, optional)
-      if (target.kind === 'email') {
-        if (isPlatformBrowser(this.platformId)) {
-          const body = text ? `?body=${encodeURIComponent(text)}` : '';
-          window.location.href = `mailto:${target.value}${body}`;
-        }
-        this.draft = '';
-        this.to = '';
-        this.composeTarget = null;
-        this.showEmoji = false;
-      }
-    } catch (err) {
-      console.error('Fehler beim Senden aus /new:', err);
-    }
-  }
-
-  hasReactions(m: MessageVm): boolean {
-    const r = (m as any)?.reactions || {};
-    return Object.keys(r).length > 0;
-  }
-
-  reactionList(m: MessageVm): Array<{ emoji: string; count: number }> {
-    const r = ((m as any)?.reactions || {}) as Record<string, number>;
-    return Object.entries(r)
-      .map(([emoji, count]) => ({ emoji, count: Number(count || 0) }))
-      .filter(x => x.count > 0)
-      .sort((a, b) => b.count - a.count);
-  }
-
-  trackReaction = (_: number, r: { emoji: string; count: number }) => r.emoji;
-  private asEmojiString(e: any): string {
-    return (
-      e?.emoji?.native ??
-      e?.native ??
-      e?.emoji?.char ??
-      e?.char ??
-      (typeof e === 'string' ? e : '')
-    );
-  }
-
-  hasUserReacted(m: MessageVm, emoji: string, uid: string): boolean {
-    const by = (m as any)?.reactionBy || {};
-    return !!by?.[emoji]?.[uid];
-  }
-
-  hoveredReaction: { msgId: string; emoji: string } | null = null;
-
-  onReactionHover(m: MessageVm | null, emoji?: string) {
-    if (!m || !emoji) {
-      this.hoveredReaction = null;
-      return;
-    }
-    this.hoveredReaction = { msgId: m.id, emoji };
-  }
-
-  isReactionHovered(m: MessageVm, emoji: string): boolean {
-    return !!this.hoveredReaction
-      && this.hoveredReaction.msgId === m.id
-      && this.hoveredReaction.emoji === emoji;
-  }
-
-  reactionNames(m: MessageVm, emoji: string): string[] {
-    const by = ((m as any)?.reactionBy?.[emoji] || {}) as Record<string, any>;
-    const myUid = this.currentUser?.id ?? this.auth.currentUser?.uid ?? '';
-
-    const names = Object.keys(by)
-      .filter(uid => !!by[uid])
-      .map(uid => {
-        if (myUid && uid === myUid) return 'Du';
-        return this.userNameMap.get(uid) ?? 'Unbekannt';
-      });
-
-    return names.length ? names : ['Unbekannt'];
-  }
-
-  reactionVerb(m: MessageVm, emoji: string): string {
-    const names = this.reactionNames(m, emoji);
-
-    const includesYou = names.includes('Du');
-
-    if (includesYou && names.length === 1) return 'hast reagiert';
-
-    return names.length === 1 ? 'hat reagiert' : 'haben reagiert';
-  }
-
-  openEmojiForEdit(ev: MouseEvent) {
-    ev.stopPropagation();
-
-    // Toggle: wenn Edit-Emoji schon offen ist -> schließen
-    if (this.showEmoji && this.emojiContext === 'edit') {
-      this.showEmoji = false;
-      this.emojiContext = null;
-      return;
-    }
-
-    const btn = ev.currentTarget as HTMLElement;
-    const rect = btn.getBoundingClientRect();
-
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
-    const viewportW = window.innerWidth || document.documentElement.clientWidth;
-
-    const pickerWidth = 360;
-    const estimatedHeight = 360;
-    const offset = 10;
-
-    let left = Math.max(10, Math.min(rect.left, viewportW - pickerWidth - 10));
-    let top = rect.top - estimatedHeight - offset;
-
-    this.composerEmojiPos = { top, left };
-
-    // Kontext setzen + andere Popover schließen
-    this.emojiContext = 'edit';
-    this.emojiMessageTarget = null;
-    this.showEmoji = true;
-    this.showMembers = false;
-    this.messageEmojiForId = null;
-
-    requestAnimationFrame(() => {
-      const el = document.querySelector('.composer-emoji-popover-fixed') as HTMLElement | null;
-      if (!el) return;
-
-      const realH = el.offsetHeight || estimatedHeight;
-      const roomBelow = viewportH - rect.bottom;
-      const placeAbove = roomBelow < realH + offset;
-
-      let finalTop = placeAbove ? rect.top - realH - offset : rect.bottom + offset;
-      finalTop = Math.max(10, Math.min(finalTop, viewportH - realH - 10));
-
-      this.composerEmojiPos = { top: finalTop, left };
-    });
-  }
-
-  onComposerKeydown(event: KeyboardEvent, vm?: Vm) {
+  /**
+   * Handles Enter key in composer to send message
+   * @param event - Keyboard event
+   * @param vm - Optional view model
+   */
+  onComposerKeydown(event: KeyboardEvent, vm?: Vm): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       if (vm) {

@@ -265,8 +265,8 @@
 
       <!-- COMPOSER FEST UNTEN -->
       <div class="composer composer--sticky">
-        <textarea class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)" [(ngModel)]="draft"
-          (keydown)="onComposerKeydown($event, vm)"></textarea>
+        <textarea #composerInput class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)"
+          [(ngModel)]="draft" (keydown)="onComposerKeydown($event, vm)"></textarea>
 
         <div class="composer-actions">
           <div class="actions-left">
