@@ -2,16 +2,15 @@
     Channels Component Styles
    =========================== */
 
+@use 'helpers/channels-header' as *;
+@use 'helpers/channels-sections' as *;
+@use 'helpers/channels-list' as *;
+@use 'helpers/channels-sidebar' as *;
+@use 'helpers/channels-modal' as *;
+@use 'helpers/channels-search' as *;
+@use 'helpers/channels-responsive' as *;
+
 :host {
   display: block;
   height: 100%;
 }
-
-/* Import partial stylesheets */
-@import 'helpers/channels-header';
-@import 'helpers/channels-sections';
-@import 'helpers/channels-list';
-@import 'helpers/channels-sidebar';
-@import 'helpers/channels-modal';
-@import 'helpers/channels-search';
-@import 'helpers/channels-responsive';

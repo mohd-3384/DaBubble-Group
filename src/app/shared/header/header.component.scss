@@ -3,14 +3,14 @@
    =========================== */
 
 /* Import partial stylesheets */
-@import 'helpers/header-logo';
-@import 'helpers/header-search';
-@import 'helpers/header-profile';
+@use 'helpers/header-logo' as *;
+@use 'helpers/header-search' as *;
+@use 'helpers/header-profile' as *;
 
 /* Import responsive partials */
-@import 'helpers/header-desktop';
-@import 'helpers/header-tablet';
-@import 'helpers/header-mobile';
+@use 'helpers/header-desktop' as *;
+@use 'helpers/header-tablet' as *;
+@use 'helpers/header-mobile' as *;
 
 /* Import modal partial */
-@import 'helpers/header-modal'
+@use 'helpers/header-modal' as *;

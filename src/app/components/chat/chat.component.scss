@@ -3,6 +3,19 @@
    Main file with imports only
    =========================== */
 
+@use './helpers/chat-header' as *;
+@use './helpers/chat-body' as *;
+@use './helpers/chat-messages' as *;
+@use './helpers/chat-actions' as *;
+@use './helpers/chat-composer' as *;
+@use './helpers/chat-edit' as *;
+@use './helpers/chat-reactions' as *;
+@use './helpers/chat-emoji' as *;
+@use './helpers/chat-mentions' as *;
+@use './helpers/chat-modals' as *;
+@use './helpers/chat-members' as *;
+@use './helpers/chat-mobile' as *;
+
 :host {
   display: flex;
   justify-content: space-between;
@@ -11,17 +24,3 @@
   min-height: 0;
   position: relative;
 }
-
-/* Import partials */
-@import './helpers/chat-header';
-@import './helpers/chat-body';
-@import './helpers/chat-messages';
-@import './helpers/chat-actions';
-@import './helpers/chat-composer';
-@import './helpers/chat-edit';
-@import './helpers/chat-reactions';
-@import './helpers/chat-emoji';
-@import './helpers/chat-mentions';
-@import './helpers/chat-modals';
-@import './helpers/chat-members';
-@import './helpers/chat-mobile';

@@ -1,7 +1,7 @@
 /* Global Styles - Main Entry Point */
-@import 'styles/variables';
-@import 'styles/base';
-@import 'styles/fonts';
-@import 'styles/responsive';
-@import 'styles/emoji';
-@import 'styles/ui-components';
+@use 'styles/variables' as *;
+@use 'styles/base' as *;
+@use 'styles/fonts' as *;
+@use 'styles/responsive' as *;
+@use 'styles/emoji' as *;
+@use 'styles/ui-components' as *;

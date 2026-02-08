@@ -1,5 +1,5 @@
 /* Emoji Picker Styles (ngx-emoji-mart) */
-@import '@ctrl/ngx-emoji-mart/picker';
+@use '@ctrl/ngx-emoji-mart/picker' as *;
 
 /* Hover-Hintergrund vollständig neutralisieren */
 .emoji-mart .emoji-mart-emoji,

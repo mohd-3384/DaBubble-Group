@@ -1,4 +1,15 @@
 /* Thread Component Main Styles */
+@use 'helpers/thread-header' as *;
+@use 'helpers/thread-body' as *;
+@use 'helpers/thread-messages' as *;
+@use 'helpers/thread-own-messages' as *;
+@use 'helpers/thread-actions' as *;
+@use 'helpers/thread-edit' as *;
+@use 'helpers/thread-reactions' as *;
+@use 'helpers/thread-composer' as *;
+@use 'helpers/thread-popovers' as *;
+@use 'helpers/thread-responsive' as *;
+
 :host {
   position: relative;
   display: flex;
@@ -8,14 +19,3 @@
   flex-grow: 1;
   width: 100%;
 }
-
-@import 'helpers/thread-header';
-@import 'helpers/thread-body';
-@import 'helpers/thread-messages';
-@import 'helpers/thread-own-messages';
-@import 'helpers/thread-actions';
-@import 'helpers/thread-edit';
-@import 'helpers/thread-reactions';
-@import 'helpers/thread-composer';
-@import 'helpers/thread-popovers';
-@import 'helpers/thread-responsive';
