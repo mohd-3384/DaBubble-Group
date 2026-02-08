@@ -176,6 +176,7 @@ export class ModalCoordinatorHelper {
     const profile = await this.userProfileHelper.openUserProfile(userIdFromList);
     if (profile) {
       this.state.userProfile = profile;
+      this.state.userProfileId = profile.id;
       this.state.userProfileOpen = true;
     }
   }
@@ -185,5 +186,6 @@ export class ModalCoordinatorHelper {
    */
   closeUserProfileModal(): void {
     this.state.userProfileOpen = false;
+    this.state.userProfileId = null;
   }
 }

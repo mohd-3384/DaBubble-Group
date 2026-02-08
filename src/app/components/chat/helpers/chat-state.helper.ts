@@ -68,7 +68,8 @@ export class ChatStateHelper {
 
   // User Profile Modal
   userProfileOpen = false;
-  userProfile: { name: string; email?: string; avatarUrl: string; status?: string } | null = null;
+  userProfileId: string | null = null;
+  userProfile: { id: string; name: string; email?: string; avatarUrl: string; status?: string } | null = null;
 
   // Reaction Hover
   hoveredReaction: { msgId: string; emoji: string } | null = null;

@@ -102,7 +102,7 @@ export class ChatComponent {
   channelNameError!: string;
   membersModalOpen!: boolean; membersModalPos!: any; addMembersOpen!: boolean;
   addMembersModalPos!: any; addMemberInput!: string; showAddMemberSuggest!: boolean;
-  addMemberSelected!: any; userProfileOpen!: boolean; userProfile!: any;
+  addMemberSelected!: any; userProfileOpen!: boolean; userProfileId!: string | null; userProfile!: any;
   hoveredReaction!: any;
   private lastConversationId: string | null = null;
 
@@ -525,6 +525,20 @@ export class ChatComponent {
    */
   closeUserProfileModal(): void {
     this.modalCoordinator.closeUserProfileModal();
+  }
+
+  /**
+   * Opens a direct message with the profile user
+   */
+  onUserProfileMessageClick(): void {
+    const targetId = this.state.userProfileId;
+    if (!targetId || targetId === this.state.currentUser?.id) {
+      this.closeUserProfileModal();
+      return;
+    }
+
+    this.closeUserProfileModal();
+    this.router.navigate(['/dm', targetId]);
   }
 
   /**

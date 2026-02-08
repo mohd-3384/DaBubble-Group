@@ -21,6 +21,7 @@ export class UserProfileHelper {
     async openUserProfile(
         userIdFromList?: string
     ): Promise<{
+        id: string;
         name: string;
         email?: string;
         avatarUrl: string;
@@ -41,6 +42,7 @@ export class UserProfileHelper {
                 }
 
                 resolve({
+                    id,
                     name: raw.name ?? raw.displayName ?? 'Unbekannt',
                     avatarUrl: fixAvatar(raw.avatarUrl),
                     email: raw.email ?? '',
