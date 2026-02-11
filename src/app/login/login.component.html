@@ -22,9 +22,6 @@
     <app-password-reset *ngIf="showReset()" (success)="onPasswordResetSuccess()"></app-password-reset>
 
     <app-enter-new-password *ngIf="showEnterPassword()" (success)="onEnterPasswordSuccess()"></app-enter-new-password>
-
-    <!-- optional: Link/Button "zurück zum Login" -->
-    <button *ngIf="showReset()" (click)="backToLogin()">Zurück</button>
   </main>
 
   <div class="user-successful-container" [class.visible]="successMessage()">

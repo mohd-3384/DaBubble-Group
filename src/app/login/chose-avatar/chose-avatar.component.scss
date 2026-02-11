@@ -1,9 +1,9 @@
 mat-card {
-    width: 340px;
-    max-width: 70vw;
+    width: 420px;
+    max-width: 80vw;
     margin: auto;
     margin-top: 16px;
-    padding: 10px;
+    padding: 16px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 30px;
     background-color: white;
@@ -17,24 +17,96 @@ mat-card-title {
     justify-content: center;
     color: rgba(68, 77, 242, 1);
     font-family: 'Nunito', sans-serif;
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+mat-card-subtitle {
+    display: flex;
+    justify-content: center;
+    color: rgba(68, 77, 242, 1);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
     font-weight: 700;
 }
 
 mat-form-field {
-    width: 85%;
+    width: 82%;
     margin-top: 12px;
 }
 
-@media (max-width: 1024px) {
+input {
+    font-size: 14px;
+}
+
+@media (max-width: 760px) {
     mat-card {
         width: 95vw;
-        max-width: 320px;
-        padding: 10px;
+        max-width: 380px;
+        padding: 14px;
     }
 
     mat-card-title {
         font-size: 16px;
+    }
+
+    mat-card-subtitle {
+        padding-top: 10px !important;
+        font-size: 12px;
+    }
+
+    mat-form-field {
+        width: 82%;
+        margin-top: 12px;
+    }
+
+    .avatar-container {
+        width: 82%;
+        padding-top: 25px;
+    }
+
+    .chosen-avatar-container img {
+        width: 110px;
+        height: 110px;
+    }
+
+    .pick-avatar-container > h2 {
+        font-size: 16px;
+        padding-top: 10px;
+        padding: 10px;
+    }
+
+    .avatar-img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .button-container {
+        width: 82%;
+        padding-top: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        gap: 12px;
+    }
+
+    input {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 1024px) {
+    mat-card {
+        max-width: 400px;
+        padding: 14px;
+    }
+
+    mat-card-title {
+        font-size: 18px;
+    }
+
+    mat-card-subtitle {
+        padding-top: 12px !important;
+        font-size: 13px;
     }
 
     mat-form-field {
@@ -44,12 +116,12 @@ mat-form-field {
 
     .avatar-container {
         width: 85%;
-        padding-top: 20px;
+        padding-top: 15px;
     }
 
     .chosen-avatar-container img {
-        width: 100px;
-        height: 100px;
+        width: 90px;
+        height: 90px;
     }
 
     .pick-avatar-container > h2 {
@@ -59,19 +131,26 @@ mat-form-field {
     }
 
     .avatar-img {
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
     }
 
     .button-container {
         width: 85%;
         padding-top: 10px;
+        margin-top: 6px;
+        margin-bottom: 4px;
+        gap: 4px;
+    }
+
+    input {
+        font-size: 15px;
     }
 }
 
 .avatar-container {
-    width: 85%;
-    padding-top: 20px;
+    width: 82%;
+    padding-top: 25px;
     display: flex;
     flex-direction: column;
 }
@@ -82,8 +161,8 @@ mat-form-field {
 }
 
 .chosen-avatar-container img {
-    width: 100px;
-    height: 100px;
+    width: 110px;
+    height: 110px;
     border-radius: 50%;
     object-fit: cover;
     border: 6px solid transparent;
@@ -121,8 +200,8 @@ mat-form-field {
 }
 
 .avatar-img {
-    width: 44px;
-    height: 44px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     border: 4px solid transparent;
     transition: all 0.14s ease-in-out;
@@ -136,24 +215,24 @@ mat-form-field {
 }
 
 .button-container {
-    width: 85%;
+    width: 82%;
     padding-top: 12px;
-    margin-top: 10px;
-    margin-bottom: 8px;
+    margin-top: 12px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 12px;
 }
 
 button {
-    width: 100px;
-    height: 30px;
+    width: 110px;
+    height: 32px;
     border: none;
     border-radius: 20px;
     background-color: rgba(68, 77, 242, 1);
     color: white;
     font-family: 'Nunito', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     transition:
         filter 0.3s ease-in-out,

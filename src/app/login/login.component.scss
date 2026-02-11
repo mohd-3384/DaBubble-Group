@@ -122,11 +122,22 @@ footer {
         text-decoration: none;
         color: rgba(121, 126, 243, 1);
         font-family: 'Nunito', sans-serif;
-        font-size: 18px;
+        font-size: 13px;
         transition: transform 0.3s ease-in-out;
 
         &:hover {
             transform: scale(1.1);
+        }
+    }
+}
+
+@media (max-width: 760px) {
+    footer {
+        margin-top: 30px;
+        gap: 15px;
+
+        >a {
+            font-size: 12px;
         }
     }
 }
@@ -137,7 +148,7 @@ footer {
         gap: 15px;
 
         >a {
-            font-size: 16px;
+            font-size: 12px;
         }
     }
 }

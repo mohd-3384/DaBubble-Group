@@ -1,9 +1,9 @@
 mat-card {
-    width: 340px;
-    max-width: 70vw;
+    width: 420px;
+    max-width: 80vw;
     margin: auto;
     margin-top: 16px;
-    padding: 10px;
+    padding: 16px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 30px;
     background-color: white;
@@ -17,7 +17,7 @@ mat-card-title {
     justify-content: center;
     color: rgba(68, 77, 242, 1);
     font-family: 'Nunito', sans-serif;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
 }
 
@@ -25,17 +25,17 @@ mat-card-subtitle {
     display: flex;
     text-align: center;
     font-family: 'Nunito', sans-serif;
-    padding-top: 8px !important;
+    padding-top: 12px !important;
     font-weight: 400;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.25;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 760px) {
     mat-card {
         width: 95vw;
-        max-width: 320px;
-        padding: 10px;
+        max-width: 380px;
+        padding: 14px;
     }
 
     mat-card-title {
@@ -43,53 +43,68 @@ mat-card-subtitle {
     }
 
     mat-card-subtitle {
-        padding-top: 8px !important;
+        padding-top: 10px !important;
         font-size: 12px;
-    }
-
-    .input-container {
-        width: 85%;
-        gap: 12px;
-    }
-
-    mat-form-field {
-        width: 85%;
-    }
-
-    .button-container {
-        width: 85%;
-    }
-
-    .name-input,
-    .password-input,
-    .email-input {
-        padding: 6px;
-        gap: 8px;
     }
 
     input {
         font-size: 14px;
     }
+
+    span {
+        font-size: 12px;
+    }
+
+    .privacy-policy {
+        .checkbox-container {
+            input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                min-width: 16px;
+                min-height: 16px;
+            }
+        }
+    }
+}
+
+@media (max-width: 1024px) {
+    mat-card {
+        max-width: 400px;
+        padding: 14px;
+    }
+
+    mat-card-title {
+        font-size: 18px;
+    }
+
+    mat-card-subtitle {
+        padding-top: 12px !important;
+        font-size: 13px;
+    }
+
+    input {
+        font-size: 15px;
+    }
 }
 
 .button-container {
-    width: 85%;
-    margin-top: 10px;
-    margin-bottom: 8px;
+    width: 82%;
+    margin-top: 12px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 12px;
 }
 
 button {
-    width: 100px;
-    height: 30px;
+    width: 110px;
+    height: 32px;
     border: none;
     border-radius: 20px;
     background-color: rgba(68, 77, 242, 1);
     color: white;
     font-family: 'Nunito', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     transition: filter 0.3s ease-in-out, transform 0.15s ease, box-shadow 0.2s ease;
     box-shadow: 0 4px 10px rgba(68, 77, 242, 0.25);
@@ -143,7 +158,7 @@ button {
 }
 
 mat-form-field {
-    width: 80%;
+    width: 82%;
     margin-top: 15px;
 }
 
@@ -157,9 +172,9 @@ form {
 .input-container {
     display: flex;
     flex-direction: column;
-    width: 80%;
-    gap: 15px;
-    margin-top: 15px;
+    width: 82%;
+    gap: 16px;
+    margin-top: 16px;
 }
 
 .name-input,
@@ -171,7 +186,7 @@ form {
     border: 1px solid transparent;
     background-color: rgba(236, 238, 254, 1);
     border-radius: 30px;
-    padding: 6px;
+    padding: 8px;
     min-height: 38px;
     transition: border-color 0.4s ease-in-out;
 
@@ -189,7 +204,7 @@ input {
     border: none;
     background-color: rgba(236, 238, 254, 1);
     outline: none;
-    font-size: 22px;
+    font-size: 16px;
     flex: 1;
     font-family: 'Nunito', sans-serif;
     cursor: pointer;
@@ -202,7 +217,7 @@ input {
 .privacy-policy {
     width: 80%;
     margin-top: 20px;
-    font-size: 18px;
+    font-size: 14px;
     display: flex;
     font-family: 'Open Sans', sans-serif !important;
     align-items: start;
@@ -211,37 +226,34 @@ input {
     .checkbox-container {
         display: flex;
         align-items: center;
-        justify-content: start;
-        gap: 10px;
+        gap: 8px;
 
         input[type="checkbox"] {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(68, 77, 242, 1);
-            border-radius: 4px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
             position: relative;
             outline: none;
             background-color: #fff;
+            border: 3px solid rgba(68, 77, 242, 1);
+            border-radius: 4px;
             transition: background-color 0.3s, border-color 0.3s;
+            appearance: none;
+            -webkit-appearance: none;
 
             &:checked {
-                background-color: white;
+                background-color: #fff;
                 border-color: rgba(68, 77, 242, 1);
             }
 
             &:checked::after {
                 content: "✓";
                 position: absolute;
-                top: -7px;
-                left: 0px;
+                top: -8px;
+                left: 1px;
                 color: rgba(68, 77, 242, 1);
-                font-size: 18px;
-                font-weight: bolder;
+                font-size: 16px;
+                font-weight: bold;
             }
 
             &:focus {
