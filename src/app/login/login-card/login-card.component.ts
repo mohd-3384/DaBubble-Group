@@ -54,7 +54,7 @@ export class LoginCardComponent {
         status: 'active',
       });
 
-      await this.router.navigate(['/channel', 'Entwicklerteam']);
+      await this.router.navigate(['/channel', 'new']);
     } catch (err: any) {
       console.error('Login fehlgeschlagen', err);
       this.authErrorCode = err?.code ?? 'unknown';
@@ -81,7 +81,7 @@ export class LoginCardComponent {
       console.log('Google-Login erfolgreich:', user.uid);
 
       // Weiterleitung
-      await this.router.navigate(['/channel', 'Entwicklerteam']);
+      await this.router.navigate(['/channel', 'new']);
 
     } catch (err: any) {
       console.error('Google-Login fehlgeschlagen:', err);
@@ -126,7 +126,7 @@ export class LoginCardComponent {
         status: 'active',
       });
 
-      await this.router.navigate(['/channel', 'Entwicklerteam']);
+      await this.router.navigate(['/channel', 'new']);
     } catch (err: any) {
       console.error('Guest-Login fehlgeschlagen', err);
       this.authErrorCode = err?.code ?? 'unknown';

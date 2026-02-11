@@ -18,6 +18,8 @@ header {
     padding-top: 16px;
     padding-left: 16px;
     padding-right: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .logo {
@@ -49,6 +51,64 @@ header {
     }
 }
 
+/* Responsive: Tablet und kleinere Screens */
+@media (max-width: 768px) {
+    header {
+        padding-top: 12px;
+        padding-left: 12px;
+        padding-right: 12px;
+        gap: 8px;
+    }
+
+    .logo {
+        gap: 4px;
+
+        >.logo-img {
+            width: 50px;
+            height: 50px;
+        }
+
+        >.logo-name {
+            height: 12px;
+            max-width: 100px;
+        }
+    }
+
+    .right-header-container {
+        gap: 6px;
+        font-size: 14px;
+    }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 480px) {
+    header {
+        padding-top: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        gap: 5px;
+    }
+
+    .logo {
+        gap: 3px;
+
+        >.logo-img {
+            width: 40px;
+            height: 40px;
+        }
+
+        >.logo-name {
+            height: 10px;
+            max-width: 80px;
+        }
+    }
+
+    .right-header-container {
+        gap: 5px;
+        font-size: 12px;
+    }
+}
+
 
 footer {
     margin-top: 40px;
@@ -56,6 +116,7 @@ footer {
     display: flex;
     justify-content: center;
     gap: 20px;
+    flex-wrap: wrap;
 
     >a {
         text-decoration: none;
@@ -66,6 +127,28 @@ footer {
 
         &:hover {
             transform: scale(1.1);
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    footer {
+        margin-top: 30px;
+        gap: 15px;
+
+        >a {
+            font-size: 16px;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    footer {
+        margin-top: 20px;
+        gap: 10px;
+
+        >a {
+            font-size: 14px;
         }
     }
 }
@@ -97,7 +180,7 @@ main {
 }
 
 .user-successful-container {
-    position: absolute;
+    position: fixed;
     right: 20px;
     bottom: 60px;
     padding: 20px;
@@ -110,6 +193,7 @@ main {
     font-size: 20px;
     font-weight: 600;
     color: white;
+    z-index: 1000;
 
     opacity: 0;
     transform: translate(150%);
@@ -118,5 +202,24 @@ main {
     &.visible {
         opacity: 1;
         transform: translate(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .user-successful-container {
+        right: 10px;
+        bottom: 50px;
+        padding: 15px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-successful-container {
+        right: 10px;
+        bottom: 40px;
+        left: 10px;
+        padding: 15px;
+        font-size: 14px;
     }
 }

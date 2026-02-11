@@ -1,15 +1,15 @@
 mat-card {
-    width: 600px;
+    width: 340px;
+    max-width: 70vw;
     margin: auto;
     margin-top: 16px;
-    padding: 20px;
+    padding: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 30px;
     background-color: white;
     display: flex;
     flex-direction: column;
     align-items: center;
-
 }
 
 mat-card-title {
@@ -17,7 +17,7 @@ mat-card-title {
     justify-content: center;
     color: rgba(68, 77, 242, 1);
     font-family: 'Nunito', sans-serif;
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 700;
 }
 
@@ -25,9 +25,85 @@ mat-card-subtitle {
     display: flex;
     text-align: center;
     font-family: 'Nunito', sans-serif;
-    padding-top: 30px !important;
+    padding-top: 8px !important;
     font-weight: 400;
-    font-size: 20px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Tablets und kleine Laptops (iPad, 11-13 Zoll) */
+@media (max-width: 1024px) {
+    mat-card {
+        width: 320px;
+        max-width: 320px;
+        padding: 10px;
+    }
+
+    mat-card-title {
+        font-size: 16px;
+    }
+
+    mat-card-subtitle {
+        padding-top: 8px !important;
+        font-size: 12px;
+    }
+
+    .input-container {
+        width: 85%;
+        gap: 12px;
+    }
+
+    .google-login,
+    .oder-container {
+        width: 85%;
+    }
+
+    input {
+        font-size: 14px;
+    }
+
+    .button-container {
+        > .button_1,
+        > .button_2 {
+            width: 100px;
+            font-size: 12px;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    mat-card {
+        width: 95vw;
+        padding: 16px;
+        margin-top: 12px;
+    }
+
+    mat-card-title {
+        font-size: 20px;
+    }
+
+    mat-card-subtitle {
+        padding-top: 20px !important;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    mat-card {
+        width: 95vw;
+        padding: 14px;
+        margin-top: 10px;
+        border-radius: 20px;
+    }
+
+    mat-card-title {
+        font-size: 18px;
+    }
+
+    mat-card-subtitle {
+        padding-top: 16px !important;
+        font-size: 14px;
+    }
 }
 
 mat-form-field {
@@ -45,9 +121,9 @@ form {
 .input-container {
     display: flex;
     flex-direction: column;
-    width: 80%;
-    gap: 40px;
-    margin-top: 40px;
+    width: 85%;
+    gap: 12px;
+    margin-top: 12px;
 }
 
 .mail-input,
@@ -59,6 +135,8 @@ form {
     background-color: rgba(236, 238, 254, 1);
     border-radius: 30px;
     padding: 10px;
+    min-width: 0;
+    min-height: 44px;
     transition: border-color 0.4s ease-in-out;
 
     &:hover {
@@ -75,10 +153,12 @@ input {
     border: none;
     background-color: rgba(236, 238, 254, 1);
     outline: none;
-    font-size: 22px;
+    font-size: 14px;
     flex: 1;
     font-family: 'Nunito', sans-serif;
     cursor: pointer;
+    min-width: 0;
+    min-height: 44px;
 
     &:focus::placeholder {
         color: transparent;
@@ -86,11 +166,11 @@ input {
 }
 
 .forgot-password {
-    margin-top: 40px;
+    margin-top: 8px;
     color: rgba(121, 126, 243, 1);
     cursor: pointer;
     font-family: 'Nunito', sans-serif;
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 400;
 }
 
@@ -98,7 +178,7 @@ input {
     display: flex;
     align-items: baseline;
     width: 90%;
-    margin-top: 40px;
+    margin-top: 8px;
     gap: 10px;
 
     .line {
@@ -110,7 +190,7 @@ input {
 
     .oder-text {
         font-family: 'Nunito', sans-serif;
-        font-size: 18px;
+        font-size: 12px;
         color: black;
         font-weight: 400;
     }
@@ -121,16 +201,16 @@ input {
     background-color: rgba(236, 238, 254, 1);
     border: 1px solid transparent;
     border-radius: 40px;
-    margin-top: 40px;
+    margin-top: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    padding: 6px;
     gap: 10px;
     cursor: pointer;
     transition: border 0.3s ease-in-out, transform 0.3s ease-in-out, font-weight 0.3s ease-in-out;
     font-family: 'Nunito', sans-serif;
-    font-size: 18px;
+    font-size: 12px;
     color: rgba(68, 77, 242, 1);
     font-weight: 400;
 
@@ -143,12 +223,12 @@ input {
 }
 
 .button-container {
-    margin-top: 30px;
-    margin-bottom: 20px;
+    margin-top: 10px;
+    margin-bottom: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
 
     >.button_1,
     >.button_2 {
@@ -160,14 +240,14 @@ input {
     }
 
     >.button_1 {
-        width: 150px;
-        height: 40px;
+        width: 100px;
+        height: 30px;
         border: none;
         border-radius: 20px;
         background-color: rgba(68, 77, 242, 1);
         color: white;
         font-family: 'Nunito', sans-serif;
-        font-size: 18px;
+        font-size: 12px;
         cursor: pointer;
 
         &:hover {
@@ -184,14 +264,14 @@ input {
     }
 
     >.button_2 {
-        width: 150px;
-        height: 40px;
+        width: 100px;
+        height: 30px;
         border: 1px solid rgba(68, 77, 242, 1);
         border-radius: 20px;
         background-color: white;
         color: rgba(68, 77, 242, 1);
         font-family: 'Nunito', sans-serif;
-        font-size: 18px;
+        font-size: 12px;
         cursor: pointer;
 
         transition:
@@ -219,4 +299,75 @@ input {
     font-size: 14px;
     margin-top: 5px;
     font-family: 'Nunito', sans-serif;
+}
+
+@media (max-width: 375px) {
+    mat-card {
+        padding: 12px;
+    }
+
+    mat-card-title {
+        font-size: 16px;
+    }
+
+    mat-card-subtitle {
+        font-size: 12px;
+        padding-top: 12px !important;
+    }
+
+    .input-container {
+        width: 100%;
+    }
+
+    mat-form-field {
+        width: 100%;
+    }
+
+    .mail-input,
+    .password-input {
+        min-height: 40px;
+        padding: 8px;
+    }
+
+    input {
+        font-size: 16px;
+        min-height: 40px;
+    }
+
+    .forgot-password {
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+    .oder-container {
+        margin-top: 20px;
+
+        .oder-text {
+            font-size: 14px;
+        }
+    }
+
+    .google-login {
+        width: 100%;
+        font-size: 14px;
+        padding: 8px;
+        min-height: 40px;
+
+        span {
+            display: none;
+        }
+    }
+
+    .button-container {
+        margin-top: 20px;
+        margin-bottom: 12px;
+        gap: 10px;
+
+        > .button_1,
+        > .button_2 {
+            width: 120px;
+            height: 40px;
+            font-size: 14px;
+        }
+    }
 }
