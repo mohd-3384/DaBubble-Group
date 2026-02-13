@@ -75,6 +75,7 @@ export class ChannelDataHelper {
           ) as Observable<any[]>)
           : of<any[]>([])
       ),
+      catchError(() => of<any[]>([])),
       startWith<any[]>([])
     );
     return combineLatest([channelDoc$, firstMessage$]).pipe(
