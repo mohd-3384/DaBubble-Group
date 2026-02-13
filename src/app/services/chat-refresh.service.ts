@@ -15,7 +15,6 @@ export class ChatRefreshService {
    * Triggers a general chat refresh by incrementing the trigger counter
    */
   refresh() {
-    console.log('[ChatRefreshService] Triggering refresh');
     this.refreshTrigger$.next(this.refreshTrigger$.value + 1);
   }
 
@@ -23,7 +22,6 @@ export class ChatRefreshService {
    * Triggers a reactions-specific refresh
    */
   refreshReactions() {
-    console.log('[ChatRefreshService] Refreshing reactions');
     this.refresh();
   }
 }

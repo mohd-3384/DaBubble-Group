@@ -20,12 +20,9 @@ export class HeaderProfileHelper {
    * @returns Promise resolving when update is complete
    */
   async updateUserName(uid: string, name: string): Promise<void> {
-    console.log('[Profile] uid:', uid);
-
     try {
       const uref = doc(this.fs, `users/${uid}`);
       await updateDoc(uref, { name });
-      console.log('[Profile] update ok');
     } catch (e: any) {
       console.error('[Profile] update failed:', e?.code, e);
       throw e;
@@ -39,12 +36,9 @@ export class HeaderProfileHelper {
    * @returns Promise resolving when update is complete
    */
   async updateUserAvatar(uid: string, avatarUrl: string): Promise<void> {
-    console.log('[Profile] Updating avatar for uid:', uid);
-
     try {
       const uref = doc(this.fs, `users/${uid}`);
       await updateDoc(uref, { avatarUrl });
-      console.log('[Profile] Avatar update ok');
     } catch (e: any) {
       console.error('[Profile] Avatar update failed:', e?.code, e);
       throw e;
