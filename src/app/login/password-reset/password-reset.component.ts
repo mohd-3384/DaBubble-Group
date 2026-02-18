@@ -24,6 +24,7 @@ import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
 })
 export class PasswordResetComponent {
   @Output() success = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
 
   private fb = inject(FormBuilder);
   private auth = inject(Auth);

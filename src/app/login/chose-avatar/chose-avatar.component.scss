@@ -261,12 +261,17 @@ mat-card-header {
     flex-direction: row-reverse;
 }
 
+mat-card-header {
+    position: relative;
+    width: 100%;
+}
+
 .back-arrow {
     position: absolute;
-    left: -140px;
-    width: 24px;
-    height: 24px;
-    margin-right: auto;
+    top: 20px;
+    left: 16px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
 
     &:hover {
@@ -343,12 +348,6 @@ mat-card-header {
         height: 36px;
         font-size: 16px;
     }
-
-    .back-arrow {
-        left: -100px;
-        width: 20px;
-        height: 20px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -400,12 +399,6 @@ mat-card-header {
         font-size: 14px;
         margin-bottom: 15px;
     }
-
-    .back-arrow {
-        left: -60px;
-        width: 18px;
-        height: 18px;
-    }
 }
 
 /* Große Laptops und Desktops 1400px+ */
@@ -453,12 +446,6 @@ mat-card-header {
         width: 140px;
         height: 40px;
         font-size: 13px;
-    }
-
-    .back-arrow {
-        left: -170px;
-        width: 28px;
-        height: 28px;
     }
 
     .user-successful-container {
@@ -513,12 +500,6 @@ mat-card-header {
         width: 90px;
         height: 28px;
         font-size: 11px;
-    }
-
-    .back-arrow {
-        left: -100px;
-        width: 18px;
-        height: 18px;
     }
 
     .user-successful-container {

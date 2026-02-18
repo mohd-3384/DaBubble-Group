@@ -31,6 +31,28 @@ mat-card-subtitle {
     line-height: 1.25;
 }
 
+mat-card-header {
+    position: relative;
+    width: 100%;
+}
+
+.back-arrow {
+    position: absolute;
+    top: 20px;
+    left: 16px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
 @media (max-width: 760px) {
     mat-card {
         width: 95vw;
@@ -137,6 +159,12 @@ button {
         padding-top: 20px !important;
         font-size: 16px;
     }
+
+    .back-arrow {
+        left: 12px;
+        width: 20px;
+        height: 20px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -156,6 +184,7 @@ button {
         font-size: 14px;
     }
 }
+
 
 mat-form-field {
     width: 82%;

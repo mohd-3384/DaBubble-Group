@@ -20,6 +20,7 @@ import { Auth, verifyPasswordResetCode, confirmPasswordReset } from '@angular/fi
 })
 export class EnterNewPasswordComponent {
   @Output() success = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
 
   private auth = inject(Auth);
   private fb = inject(FormBuilder);

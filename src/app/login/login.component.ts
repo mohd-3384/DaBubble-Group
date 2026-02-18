@@ -41,6 +41,7 @@ import { EnterNewPasswordComponent } from './enter-new-password/enter-new-passwo
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit, AfterViewInit {
+  showSplash = signal(true);
   showLoginCard = signal(true);
   showRegisterCard = signal(false);
   showAvatar = signal(false);
@@ -54,30 +55,37 @@ export class LoginComponent implements OnInit, AfterViewInit {
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
-    
+    this.scheduleSplashAnimation();
+    this.setupRouterSubscription();
+    this.checkIfResetPasswordPage();
+    setTimeout(() => this.checkIfResetPasswordPage(), 100);
+    this.setupQueryParamsSubscription();
+  }
+
+  private scheduleSplashAnimation() {
+    setTimeout(() => {
+      this.showSplash.set(false);
+    }, 5000);
+  }
+
+  private setupRouterSubscription() {
     this.router.events.subscribe(() => {
       this.checkIfResetPasswordPage();
     });
-    
-    
-    this.checkIfResetPasswordPage();
-    setTimeout(() => this.checkIfResetPasswordPage(), 100);
-    
-    
+  }
+
+  private setupQueryParamsSubscription() {
     this.route.queryParams.subscribe((params) => {
-      console.log('queryParams.subscribe triggered:', params);
-      const hasOob = !!params['oobCode'];
-      console.log('hasOob from queryParams:', hasOob);
-      if (hasOob) {
-        console.log('Setting showEnterPassword from queryParams');
-        this.showEnterPassword.set(true);
-        this.showLoginCard.set(false);
-        this.showRegisterCard.set(false);
-        this.showAvatar.set(false);
-        this.showReset.set(false);
-        this.cdr.markForCheck();
+      if (params['oobCode']) {
+        this.showEnterPasswordRoute();
       }
     });
+  }
+
+  private showEnterPasswordRoute() {
+    this.showEnterPassword.set(true);
+    this.resetAllCardsExcept('enterPassword');
+    this.cdr.markForCheck();
   }
 
   ngAfterViewInit() {
@@ -86,46 +94,53 @@ export class LoginComponent implements OnInit, AfterViewInit {
   }
 
   private checkIfResetPasswordPage() {
-    const isEnterNewPasswordRoute = this.router.url === '/enter-new-password' || this.router.url.startsWith('/enter-new-password?');
+    const isEnterNewPasswordRoute = this.isEnterPasswordRoute();
     const hasOobCode = this.route.snapshot.queryParams['oobCode'];
     
-    console.log('checkIfResetPasswordPage - URL:', this.router.url);
-    console.log('checkIfResetPasswordPage - isEnterNewPasswordRoute:', isEnterNewPasswordRoute);
-    console.log('checkIfResetPasswordPage - hasOobCode:', hasOobCode);
-    
     if (isEnterNewPasswordRoute || hasOobCode) {
-      console.log('Setting showEnterPassword to true');
-      this.showEnterPassword.set(true);
-      this.showLoginCard.set(false);
-      this.showRegisterCard.set(false);
-      this.showAvatar.set(false);
-      this.showReset.set(false);
-      this.cdr.markForCheck();
+      this.showEnterPasswordRoute();
     }
   }
 
-  openRegisterCard() {
-    this.showLoginCard.set(false);
-    this.showRegisterCard.set(true);
-    this.showAvatar.set(false);
-    this.showReset.set(false);
+  private isEnterPasswordRoute(): boolean {
+    const url = this.router.url;
+    return url === '/enter-new-password' || url.startsWith('/enter-new-password?');
   }
 
+  openRegisterCard() {
+    this.resetAllCardsExcept('register');
+  }
 
   openPasswordReset() {
+    this.resetAllCardsExcept('reset');
+  }
+
+  private resetAllCardsExcept(type: 'register' | 'reset' | 'enterPassword') {
+    this.resetAllCards();
+    switch (type) {
+      case 'register':
+        this.showRegisterCard.set(true);
+        break;
+      case 'reset':
+        this.showReset.set(true);
+        break;
+      case 'enterPassword':
+        this.showEnterPassword.set(true);
+        break;
+    }
+  }
+
+  private resetAllCards() {
     this.showLoginCard.set(false);
-    this.showReset.set(true);
     this.showRegisterCard.set(false);
     this.showAvatar.set(false);
+    this.showReset.set(false);
     this.showEnterPassword.set(false);
   }
 
   backToLogin() {
+    this.resetAllCards();
     this.showLoginCard.set(true);
-    this.showRegisterCard.set(false);
-    this.showAvatar.set(false);
-    this.showReset.set(false);
-    this.showEnterPassword.set(false);
   }
 
   // RegisterCard -> "Weiter" => Avatar Picker
@@ -140,29 +155,28 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.showRegisterCard.set(true);
   }
 
-  // Avatar gespeichert -> zurück zum Login
   onRegistrationSuccess() {
-    console.log('onRegistrationSuccess aufgerufen');
-
-    this.successMessage.set(true);
-
-    setTimeout(() => {
-      console.log('Timeout – zurück zum Login');
-      this.successMessage.set(false);
-      this.backToLogin();
-    }, 3000);
+    this.showSuccessMessage();
+    this.scheduleNavigation(3000);
   }
 
   onPasswordResetSuccess() {
-    setTimeout(() => {
-      this.backToLogin(); 
-    }, 3000);
+    this.scheduleNavigation(3000);
   }
 
   onEnterPasswordSuccess() {
+    this.scheduleNavigation(3000);
+  }
+
+  private showSuccessMessage() {
+    this.successMessage.set(true);
+  }
+
+  private scheduleNavigation(delayMs: number) {
     setTimeout(() => {
+      this.successMessage.set(false);
       this.backToLogin();
-    }, 3000);
+    }, delayMs);
   }
 }
 

@@ -33,6 +33,7 @@ import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore
 })
 export class RegisterCardComponent {
   @Output() nextstep = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
 
   private auth = inject(Auth);
   private fb = inject(FormBuilder);
@@ -51,42 +52,47 @@ export class RegisterCardComponent {
 
   async onSubmit() {
     if (this.form.invalid) return;
-
-    const name = String(this.form.value.name ?? '').trim();
-    const email = String(this.form.value.email ?? '').trim();
-    const password = String(this.form.value.password ?? '');
-
     try {
-      // 1) Firebase Auth user anlegen
-      const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-      const user = userCredential.user;
-
-      // 2) DisplayName setzen (optional aber gut)
-      await updateProfile(user, { displayName: name });
-
-      // 3) Firestore user doc (OHNE Passwort!)
-      await setDoc(doc(this.firestore, 'users', user.uid), {
-        uid: user.uid,
-        name,
-        email,
-        avatarUrl: '/public/images/avatars/avatar-default.svg',
-        role: 'member',
-        status: 'active',
-        online: true,
-        createdAt: serverTimestamp(),
-        lastSeen: serverTimestamp(),
-      }, { merge: true });
-
+      const userCredential = await this.createFirebaseUser();
+      await this.createFirestoreUser(userCredential.user);
       this.nextstep.emit();
     } catch (error: any) {
-      console.error('Registrierung fehlgeschlagen:', error);
-
-      let message = 'Etwas ist schiefgelaufen';
-      if (error?.code === 'auth/email-already-in-use') message = 'Diese E-Mail-Adresse ist bereits registriert';
-      else if (error?.code === 'auth/invalid-email') message = 'Ungültige E-Mail-Adresse';
-      else if (error?.code === 'auth/weak-password') message = 'Passwort ist zu schwach';
-
-      alert(message);
+      this.handleRegistrationError(error);
     }
+  }
+
+  private async createFirebaseUser() {
+    const { name, email, password } = this.form.value;
+    const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
+    return userCredential;
+  }
+
+  private async createFirestoreUser(user: any) {
+    await setDoc(doc(this.firestore, 'users', user.uid), {
+      uid: user.uid,
+      name: String(this.form.value.name).trim(),
+      email: String(this.form.value.email).trim(),
+      avatarUrl: '/public/images/avatars/avatar-default.svg',
+      role: 'member',
+      status: 'active',
+      online: true,
+      createdAt: serverTimestamp(),
+      lastSeen: serverTimestamp(),
+    }, { merge: true });
+  }
+
+  private handleRegistrationError(error: any) {
+    const message = this.getRegistrationErrorMessage(error?.code);
+    alert(message);
+  }
+
+  private getRegistrationErrorMessage(code: string): string {
+    const messages: { [key: string]: string } = {
+      'auth/email-already-in-use': 'Diese E-Mail ist bereits registriert',
+      'auth/invalid-email': 'Ungültige E-Mail-Adresse',
+      'auth/weak-password': 'Passwort ist zu schwach',
+    };
+    return messages[code] || 'Registrierung fehlgeschlagen';
   }
 }

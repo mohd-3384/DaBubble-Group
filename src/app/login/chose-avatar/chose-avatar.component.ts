@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, OnDestroy } from '@angular/core';
+import { Component, Output, EventEmitter, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,7 +30,7 @@ import { Firestore, doc, updateDoc, serverTimestamp } from '@angular/fire/firest
   templateUrl: './chose-avatar.component.html',
   styleUrl: './chose-avatar.component.scss',
 })
-export class ChoseAvatarComponent {
+export class ChoseAvatarComponent implements OnInit {
   @Output() back = new EventEmitter<void>();
   @Output() success = new EventEmitter<void>();
 
@@ -38,7 +38,7 @@ export class ChoseAvatarComponent {
   private firestore = inject(Firestore);
   private router = inject(Router);
 
-
+  userName = signal<string>('Benutzer');
   avatarlist = [
     '/public/images/avatars/avatar1.svg',
     '/public/images/avatars/avatar2.svg',
@@ -51,7 +51,16 @@ export class ChoseAvatarComponent {
   chosenAvatarSrc = '/public/images/avatars/avatar-default.svg';
   selectedIndex = -1;
 
+  ngOnInit() {
+    this.loadUserName();
+  }
 
+  private loadUserName() {
+    const user = this.auth.currentUser;
+    if (user?.displayName) {
+      this.userName.set(user.displayName);
+    }
+  }
 
   selectAvatar(src: string, index: number) {
     this.chosenAvatarSrc = src;
@@ -66,28 +75,33 @@ export class ChoseAvatarComponent {
       return;
     }
 
-    if (this.chosenAvatarSrc === '/public/images/avatars/avatar-default.svg') {
+    if (this.isDefaultAvatar()) {
       alert('Bitte wähle einen Avatar aus!');
       return;
     }
 
+    await this.updateAvatarForUser(user);
+  }
+
+  private isDefaultAvatar(): boolean {
+    return this.chosenAvatarSrc === '/public/images/avatars/avatar-default.svg';
+  }
+
+  private async updateAvatarForUser(user: any) {
     try {
-      const userRef = doc(this.firestore, 'users', user.uid);
-
-      await updateDoc(userRef, {
-        avatarUrl: this.chosenAvatarSrc,
-        lastSeen: serverTimestamp(),
-      });
-
+      await this.updateUserDocument(user.uid);
       await updateProfile(user, { photoURL: this.chosenAvatarSrc });
-
-      console.log('Avatar gespeichert – Erfolg!');
-
       this.success.emit();
-
     } catch (error) {
-      console.error('Fehler beim Speichern des Avatars:', error);
       alert('Avatar konnte nicht gespeichert werden.');
     }
+  }
+
+  private async updateUserDocument(uid: string) {
+    const userRef = doc(this.firestore, 'users', uid);
+    await updateDoc(userRef, {
+      avatarUrl: this.chosenAvatarSrc,
+      lastSeen: serverTimestamp(),
+    });
   }
 }
