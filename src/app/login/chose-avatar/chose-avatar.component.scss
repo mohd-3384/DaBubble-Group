@@ -407,3 +407,123 @@ mat-card-header {
         height: 18px;
     }
 }
+
+/* Große Laptops und Desktops 1400px+ */
+@media (min-width: 1400px) {
+    mat-card {
+        width: 550px;
+        padding: 28px;
+    }
+
+    mat-form-field {
+        width: 85%;
+        margin-top: 24px;
+    }
+
+    .avatar-container {
+        width: 85%;
+        padding-top: 35px;
+    }
+
+    .chosen-avatar-container img {
+        width: 150px;
+        height: 150px;
+    }
+
+    .pick-avatar-container > h2 {
+        font-size: 32px;
+        padding: 20px;
+        padding-top: 40px;
+    }
+
+    .avatar-img {
+        width: 70px;
+        height: 70px;
+    }
+
+    .button-container {
+        width: 85%;
+        padding-top: 20px;
+        margin-top: 20px;
+        margin-bottom: 14px;
+        gap: 16px;
+    }
+
+    button {
+        width: 140px;
+        height: 40px;
+        font-size: 13px;
+    }
+
+    .back-arrow {
+        left: -170px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .user-successful-container {
+        right: 40px;
+        padding: 24px;
+        font-size: 18px;
+    }
+}
+
+/* Kleine Bildschirmhöhe */
+@media (max-height: 800px) {
+    mat-card {
+        width: 350px;
+        padding: 12px;
+    }
+
+    mat-form-field {
+        width: 80%;
+        margin-top: 10px;
+    }
+
+    .avatar-container {
+        width: 80%;
+        padding-top: 12px;
+    }
+
+    .chosen-avatar-container img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .pick-avatar-container > h2 {
+        font-size: 16px;
+        padding: 10px;
+        padding-top: 12px;
+    }
+
+    .avatar-img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .button-container {
+        width: 80%;
+        padding-top: 10px;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        gap: 8px;
+    }
+
+    button {
+        width: 90px;
+        height: 28px;
+        font-size: 11px;
+    }
+
+    .back-arrow {
+        left: -100px;
+        width: 18px;
+        height: 18px;
+    }
+
+    .user-successful-container {
+        right: 20px;
+        padding: 12px;
+        font-size: 12px;
+    }
+}

@@ -459,3 +459,130 @@ input {
         }
     }
 }
+
+/* Große Laptops und Desktops 1400px+ */
+@media (min-width: 1400px) {
+    mat-card {
+        width: 550px;
+        padding: 28px;
+    }
+
+    mat-form-field {
+        width: 85%;
+        margin-top: 50px;
+    }
+
+    .input-container {
+        width: 85%;
+        gap: 22px;
+        margin-top: 24px;
+    }
+
+    .mail-input,
+    .password-input {
+        padding: 12px;
+        min-height: 50px;
+    }
+
+    input {
+        font-size: 15px;
+    }
+
+    .forgot-password {
+        margin-top: 20px;
+        font-size: 13px;
+    }
+
+    .oder-container {
+        width: 90%;
+        margin-top: 24px;
+        gap: 12px;
+    }
+
+    .google-login {
+        width: 85%;
+        padding: 12px;
+        margin-top: 24px;
+        font-size: 13px;
+        min-height: 50px;
+    }
+
+    .button-container {
+        margin-top: 20px;
+        margin-bottom: 14px;
+        gap: 16px;
+
+        > .button_1,
+        > .button_2 {
+            width: 140px;
+            height: 40px;
+            font-size: 13px;
+        }
+    }
+}
+
+/* Kleine Bildschirmhöhe */
+@media (max-height: 800px) {
+    mat-card {
+        width: 350px;
+        padding: 12px;
+        margin-top: 8px;
+    }
+
+    mat-form-field {
+        width: 80%;
+        margin-top: 16px;
+    }
+
+    .input-container {
+        width: 80%;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .mail-input,
+    .password-input {
+        padding: 6px;
+        min-height: 35px;
+    }
+
+    input {
+        font-size: 14px;
+    }
+
+    .forgot-password {
+        margin-top: 8px;
+        font-size: 12px;
+    }
+
+    .oder-container {
+        width: 85%;
+        margin-top: 10px;
+        gap: 8px;
+
+        .oder-text {
+            font-size: 12px;
+        }
+    }
+
+    .google-login {
+        width: 80%;
+        padding: 6px;
+        margin-top: 10px;
+        font-size: 12px;
+        min-height: 35px;
+    }
+
+    .button-container {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        gap: 8px;
+
+        > .button_1,
+        > .button_2 {
+            width: 90px;
+            height: 28px;
+            font-size: 11px;
+        }
+    }
+}

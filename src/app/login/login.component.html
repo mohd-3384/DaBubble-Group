@@ -4,11 +4,10 @@
       <img class="logo-img" src="./public/images/dabubble-logo.svg" alt="DA-Bubble Logo">
       <img class="logo-name" src="./public/images/Logo name.svg" alt="DA-Bubble Logo Name">
     </div>
-    <div class="right-header-container">
+    <div class="right-header-container" *ngIf="showLoginCard()">
       <span>Neu bei DABubble?</span>
       <a (click)="openRegisterCard()">Konto erstellen</a>
     </div>
-
   </header>
 
   <main>

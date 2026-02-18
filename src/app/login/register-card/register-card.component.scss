@@ -330,3 +330,101 @@ input {
     margin-top: 5px;
     font-family: 'Nunito', sans-serif;
 }
+
+/* Große Laptops und Desktops 1400px+ */
+@media (min-width: 1400px) {
+    mat-card {
+        width: 550px;
+        padding: 28px;
+    }
+
+    mat-form-field {
+        width: 85%;
+        margin-top: 24px;
+    }
+
+    .input-container {
+        width: 85%;
+        gap: 22px;
+        margin-top: 24px;
+    }
+
+    .name-input,
+    .password-input,
+    .email-input {
+        padding: 12px;
+        min-height: 50px;
+    }
+
+    input {
+        font-size: 15px;
+    }
+
+    .privacy-policy {
+        width: 85%;
+        margin-top: 28px;
+        font-size: 14px;
+    }
+
+    .button-container {
+        width: 85%;
+        margin-top: 24px;
+        margin-bottom: 14px;
+        gap: 16px;
+
+        > .button_1 {
+            width: 140px;
+            height: 40px;
+            font-size: 13px;
+        }
+    }
+}
+
+/* Kleine Bildschirmhöhe */
+@media (max-height: 800px) {
+    mat-card {
+        width: 350px;
+        padding: 12px;
+    }
+
+    mat-form-field {
+        width: 80%;
+        margin-top: 10px;
+    }
+
+    .input-container {
+        width: 80%;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .name-input,
+    .password-input,
+    .email-input {
+        padding: 6px;
+        min-height: 35px;
+    }
+
+    input {
+        font-size: 14px;
+    }
+
+    .privacy-policy {
+        width: 80%;
+        margin-top: 12px;
+        font-size: 12px;
+    }
+
+    .button-container {
+        width: 80%;
+        margin-top: 12px;
+        margin-bottom: 8px;
+        gap: 8px;
+
+        > .button_1 {
+            width: 90px;
+            height: 28px;
+            font-size: 11px;
+        }
+    }
+}
