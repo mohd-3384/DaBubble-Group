@@ -36,6 +36,7 @@ export class PasswordResetComponent {
   successVisible = false;
   errorMessage = '';
 
+  /** Validates email and sends password reset link via Firebase authentication. */
   async onSubmit() {
     if (this.resetForm.invalid) {
       this.resetForm.markAllAsTouched();
@@ -46,10 +47,12 @@ export class PasswordResetComponent {
     await this.sendReset(email);
   }
 
+  /** Extracts and trims email value from the reset form. */
   private getEmailValue(): string {
     return String(this.resetForm.value.email || '').trim();
   }
 
+  /** Sends password reset email and handles success or error response. */
   private async sendReset(email: string) {
     try {
       await this.sendPasswordResetEmail(email);
@@ -59,6 +62,7 @@ export class PasswordResetComponent {
     }
   }
 
+  /** Sends Firebase password reset email with action code settings for email verification. */
   private async sendPasswordResetEmail(email: string) {
     const actionCodeSettings = {
       url: `${window.location.origin}/enter-new-password`,
@@ -67,6 +71,7 @@ export class PasswordResetComponent {
     await sendPasswordResetEmail(this.auth, email, actionCodeSettings);
   }
 
+  /** Displays success message, clears form, and schedules message to hide after timeout. */
   private handleResetSuccess() {
     this.errorMessage = '';
     this.successVisible = true;
@@ -75,6 +80,7 @@ export class PasswordResetComponent {
     this.resetForm.reset();
   }
 
+  /** Handles reset email error by logging and displaying error message to user. */
   private handleResetError(err: any) {
     console.error('[PasswordReset] Fehler:', err);
     this.errorMessage = this.getErrorMessage(err?.code);
@@ -82,6 +88,7 @@ export class PasswordResetComponent {
     this.scheduleHideMessage(5000);
   }
 
+  /** Returns user-friendly error message mapped from Firebase error code. */
   private getErrorMessage(code: string): string {
     const errorMap: { [key: string]: string } = {
       'auth/invalid-email': 'Ungültige E-Mail-Adresse',
@@ -91,6 +98,7 @@ export class PasswordResetComponent {
     return errorMap[code] || 'Fehler beim Senden der E-Mail';
   }
 
+  /** Hides success/error message after specified delay in milliseconds. */
   private scheduleHideMessage(delayMs: number) {
     setTimeout(() => {
       this.successVisible = false;

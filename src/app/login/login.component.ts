@@ -54,6 +54,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
 
+  /** Initializes the component, animations, router subscriptions, and query params. */
   ngOnInit() {
     this.scheduleSplashAnimation();
     this.setupRouterSubscription();
@@ -62,18 +63,21 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.setupQueryParamsSubscription();
   }
 
+  /** Hides splash screen after 5 seconds animation delay. */
   private scheduleSplashAnimation() {
     setTimeout(() => {
       this.showSplash.set(false);
     }, 5000);
   }
 
+  /** Subscribes to router events and checks if current route is password reset page. */
   private setupRouterSubscription() {
     this.router.events.subscribe(() => {
       this.checkIfResetPasswordPage();
     });
   }
 
+  /** Subscribes to query params and shows password reset form if oobCode is present. */
   private setupQueryParamsSubscription() {
     this.route.queryParams.subscribe((params) => {
       if (params['oobCode']) {
@@ -82,17 +86,20 @@ export class LoginComponent implements OnInit, AfterViewInit {
     });
   }
 
+  /** Displays the enter-new-password card and marks component for change detection. */
   private showEnterPasswordRoute() {
     this.showEnterPassword.set(true);
     this.resetAllCardsExcept('enterPassword');
     this.cdr.markForCheck();
   }
 
+  /** Angular lifecycle hook that checks if reset password page and triggers change detection. */
   ngAfterViewInit() {
     this.checkIfResetPasswordPage();
     this.cdr.markForCheck();
   }
 
+  /** Checks if the current route is password reset page or has oobCode query parameter. */
   private checkIfResetPasswordPage() {
     const isEnterNewPasswordRoute = this.isEnterPasswordRoute();
     const hasOobCode = this.route.snapshot.queryParams['oobCode'];
@@ -102,19 +109,23 @@ export class LoginComponent implements OnInit, AfterViewInit {
     }
   }
 
+  /** Returns true if the current URL is enter-new-password route. */
   private isEnterPasswordRoute(): boolean {
     const url = this.router.url;
     return url === '/enter-new-password' || url.startsWith('/enter-new-password?');
   }
 
+  /** Displays the registration card and hides all other cards. */
   openRegisterCard() {
     this.resetAllCardsExcept('register');
   }
 
+  /** Displays the password reset card and hides all other cards. */
   openPasswordReset() {
     this.resetAllCardsExcept('reset');
   }
 
+  /** Resets all cards and displays the specified card type (register, reset, or enterPassword). */
   private resetAllCardsExcept(type: 'register' | 'reset' | 'enterPassword') {
     this.resetAllCards();
     switch (type) {
@@ -130,6 +141,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     }
   }
 
+  /** Hides all login cards (login, register, avatar, reset, enterPassword). */
   private resetAllCards() {
     this.showLoginCard.set(false);
     this.showRegisterCard.set(false);
@@ -138,40 +150,46 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.showEnterPassword.set(false);
   }
 
+  /** Resets all cards and displays the login card. */
   backToLogin() {
     this.resetAllCards();
     this.showLoginCard.set(true);
   }
 
-  // RegisterCard -> "Weiter" => Avatar Picker
+  /** Navigates from registration to avatar selection screen. */
   goToAvatarPicker() {
     this.showRegisterCard.set(false);
     this.showAvatar.set(true);
   }
 
-  // Avatar Picker -> Zurück
+  /** Returns from avatar selection back to the registration card. */
   backToRegister() {
     this.showAvatar.set(false);
     this.showRegisterCard.set(true);
   }
 
+  /** Displays success message and navigates back to login after registration completion. */
   onRegistrationSuccess() {
     this.showSuccessMessage();
     this.scheduleNavigation(3000);
   }
 
+  /** Navigates back to login after password reset email is sent. */
   onPasswordResetSuccess() {
     this.scheduleNavigation(3000);
   }
 
+  /** Navigates back to login after new password is confirmed successfully. */
   onEnterPasswordSuccess() {
     this.scheduleNavigation(3000);
   }
 
+  /** Displays the success message to the user. */
   private showSuccessMessage() {
     this.successMessage.set(true);
   }
 
+  /** Hides success message and navigates back to login after specified delay in milliseconds. */
   private scheduleNavigation(delayMs: number) {
     setTimeout(() => {
       this.successMessage.set(false);

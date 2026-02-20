@@ -51,10 +51,12 @@ export class ChoseAvatarComponent implements OnInit {
   chosenAvatarSrc = '/public/images/avatars/avatar-default.svg';
   selectedIndex = -1;
 
+  /** Angular lifecycle hook that initializes the component by loading the user's name. */
   ngOnInit() {
     this.loadUserName();
   }
 
+  /** Loads the current user's display name from Firebase Auth into the userName signal. */
   private loadUserName() {
     const user = this.auth.currentUser;
     if (user?.displayName) {
@@ -62,11 +64,13 @@ export class ChoseAvatarComponent implements OnInit {
     }
   }
 
+  /** Selects the avatar at the given index and updates the preview. */
   selectAvatar(src: string, index: number) {
     this.chosenAvatarSrc = src;
     this.selectedIndex = index;
   }
 
+  /** Saves the selected avatar and completes registration, emitting success event. */
   async saveAndFinish() {
     const user = this.auth.currentUser;
 
@@ -83,10 +87,12 @@ export class ChoseAvatarComponent implements OnInit {
     await this.updateAvatarForUser(user);
   }
 
+  /** Returns true if the current avatar is the default placeholder avatar. */
   private isDefaultAvatar(): boolean {
     return this.chosenAvatarSrc === '/public/images/avatars/avatar-default.svg';
   }
 
+  /** Updates user's avatar in Firestore and Firebase Auth profile, then emits success event. */
   private async updateAvatarForUser(user: any) {
     try {
       await this.updateUserDocument(user.uid);
@@ -97,6 +103,7 @@ export class ChoseAvatarComponent implements OnInit {
     }
   }
 
+  /** Updates the user document in Firestore with the selected avatar URL. */
   private async updateUserDocument(uid: string) {
     const userRef = doc(this.firestore, 'users', uid);
     await updateDoc(userRef, {

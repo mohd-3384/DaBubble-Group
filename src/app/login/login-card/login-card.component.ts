@@ -40,10 +40,12 @@ export class LoginCardComponent {
   password = '';
   authErrorCode: string | null = null;
 
+  /** Emits the forgotPassword event to display password reset form. */
   onForgotPasswordClick() {
     this.forgotPassword.emit();
   }
 
+  /** Authenticates user with email and password, then navigates to channel. */
   async login() {
     this.authErrorCode = null;
     try {
@@ -55,6 +57,7 @@ export class LoginCardComponent {
     }
   }
 
+  /** Authenticates user with Google provider and creates user document if needed. */
   async loginWithGoogle() {
     this.authErrorCode = null;
     const provider = new GoogleAuthProvider();
@@ -67,6 +70,7 @@ export class LoginCardComponent {
     }
   }
 
+  /** Creates or updates user document in Firestore with Google auth profile data. */
   private async setupGoogleUser(user: any) {
     await this.userSvc.ensureUserDoc({
       name: user.displayName || 'Google-Nutzer',
@@ -76,12 +80,14 @@ export class LoginCardComponent {
     });
   }
 
+  /** Handles Google authentication errors by displaying user-friendly error message. */
   private handleGoogleError(err: any) {
     const message = this.getGoogleErrorMessage(err.code);
     this.authErrorCode = err.code ?? 'unknown';
     alert(message);
   }
 
+  /** Returns a user-friendly error message for Google authentication error codes. */
   private getGoogleErrorMessage(code: string): string {
     const messages: { [key: string]: string } = {
       'auth/popup-closed-by-user': 'Das Anmeldefenster wurde geschlossen.',
@@ -92,6 +98,7 @@ export class LoginCardComponent {
     return messages[code] || 'Etwas ist schiefgelaufen. Bitte versuche es erneut.';
   }
 
+  /** Authenticates as guest user and navigates to channel without registration. */
   async loginAsGuest() {
     this.authErrorCode = null;
     try {

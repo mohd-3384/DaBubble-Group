@@ -50,6 +50,7 @@ export class RegisterCardComponent {
     });
   }
 
+  /** Validates form and creates new user in Firebase Auth and Firestore, then emits nextstep. */
   async onSubmit() {
     if (this.form.invalid) return;
     try {
@@ -61,6 +62,7 @@ export class RegisterCardComponent {
     }
   }
 
+  /** Creates new user in Firebase Auth with email and password, then updates profile display name. */
   private async createFirebaseUser() {
     const { name, email, password } = this.form.value;
     const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
@@ -68,6 +70,7 @@ export class RegisterCardComponent {
     return userCredential;
   }
 
+  /** Creates user document in Firestore with registration data and default avatar. */
   private async createFirestoreUser(user: any) {
     await setDoc(doc(this.firestore, 'users', user.uid), {
       uid: user.uid,
@@ -82,11 +85,13 @@ export class RegisterCardComponent {
     }, { merge: true });
   }
 
+  /** Displays user-friendly error message based on registration exception code. */
   private handleRegistrationError(error: any) {
     const message = this.getRegistrationErrorMessage(error?.code);
     alert(message);
   }
 
+  /** Maps Firebase error codes to German error messages for user display. */
   private getRegistrationErrorMessage(code: string): string {
     const messages: { [key: string]: string } = {
       'auth/email-already-in-use': 'Diese E-Mail ist bereits registriert',
