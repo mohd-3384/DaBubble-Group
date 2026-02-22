@@ -16,8 +16,7 @@
     <div class="message-row root" *ngIf="rootMessage as rm" [class.own]="isOwnMessage(rm)"
       [class.is-editing]="ui.editingMessageId === rm.id" [class.is-active]="ui.isRowActive(rm.id)"
       (mouseenter)="hover.onRowEnter(rm.id)" (mouseleave)="hover.onRowLeave(rm.id)">
-      <img class="avatar" [src]="rm.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
-        [alt]="rm.author.name" />
+      <img class="avatar" [src]="display.getUserAvatar(rm.author.id, users)" [alt]="rm.author.name" />
 
       <div class="message-col">
         <div class="header">
@@ -133,8 +132,7 @@
       <div class="message-row" *ngFor="let r of replies; trackBy: trackReply" [class.own]="isOwnMessage(r)"
         [class.is-editing]="ui.editingMessageId === r.id" [class.is-active]="ui.isRowActive(r.id)"
         (mouseenter)="hover.onRowEnter(r.id)" (mouseleave)="hover.onRowLeave(r.id)">
-        <img class="avatar" [src]="r.author.avatarUrl || '/public/images/avatars/avatar-default.svg'"
-          [alt]="r.author.name" />
+        <img class="avatar" [src]="display.getUserAvatar(r.author.id, users)" [alt]="r.author.name" />
 
         <div class="message-col">
           <div class="header">
