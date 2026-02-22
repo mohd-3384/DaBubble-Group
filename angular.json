@@ -32,6 +32,11 @@
               "src/dabubble-logo.ico",
               "src/assets",
               {
+                "glob": ".htaccess",
+                "input": "src",
+                "output": "/"
+              },
+              {
                 "glob": "**/*",
                 "input": "public",
                 "output": "/public/"
