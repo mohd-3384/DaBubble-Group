@@ -97,7 +97,7 @@
         <!-- VIEW: Profil anzeigen -->
         <div class="ui-modal__body profile-modal__content" *ngIf="profileView === 'view'">
           <div class="profile-modal__avatar">
-            <img [src]="user.avatarUrl" alt="Avatar" (click)="openAvatarSelection(user)" />
+            <img [src]="user.avatarUrl" alt="Avatar" />
           </div>
 
           <div class="profile-modal__row">
@@ -144,8 +144,8 @@
 
         <!-- EDIT: Profil bearbeiten (gleiche Box, anderer Inhalt) -->
         <div class="ui-modal__body profile-edit__content" *ngIf="profileView === 'edit'">
-          <div class="profile-modal__avatar">
-            <img [src]="user.avatarUrl" alt="Avatar" />
+          <div class="profile-modal__avatar" (click)="openAvatarSelection(user)">
+            <img [src]="user.avatarUrl" alt="Avatar zum Ändern" />
           </div>
 
           <label class="profile-edit__label">
@@ -158,6 +158,10 @@
 
             <input class="profile-edit__input" type="text" [value]="editName"
               (input)="editName = $any($event.target).value" placeholder=" " />
+
+            @if ((editName || '').trim().length > 0 && (editName || '').trim().length < 3) { <span
+              class="profile-edit__error">Mindestens 3 Zeichen erforderlich.</span>
+              }
           </label>
 
           <div class="profile-edit__actions">
@@ -165,7 +169,8 @@
               Abbrechen
             </button>
 
-            <button type="button" class="profile-edit__btn primary" (click)="saveProfile(user)">
+            <button type="button" class="profile-edit__btn primary" (click)="saveProfile(user)"
+              [disabled]="(editName || '').trim().length < 3">
               Speichern
             </button>
           </div>

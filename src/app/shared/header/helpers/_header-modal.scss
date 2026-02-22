@@ -41,6 +41,20 @@
 
 .profile-modal__content {
   padding: 0 26px 26px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--background-color);
+    border-radius: 999px;
+  }
 }
 
 .profile-modal__avatar {
@@ -50,18 +64,61 @@
   transition: var(--transition15);
 
   img {
-    cursor: pointer;
     width: 180px;
     height: 180px;
     border-radius: 50%;
     object-fit: cover;
     transition: var(--transition15);
-
-    &:hover {
-      transform: scale(1.05);
-      box-shadow: var(--shadow-popover);
-    }
   }
+}
+
+.profile-modal__avatar.editable img {
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-popover);
+  }
+}
+
+/* Avatar anklickbar im Edit-Mode */
+.profile-edit__content .profile-modal__avatar {
+  cursor: pointer;
+
+  img:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-popover);
+  }
+}
+
+.profile-edit__content {
+  padding: 0 26px 26px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--background-color);
+    border-radius: 999px;
+  }
+}
+
+.profile-edit__label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-edit__error {
+  color: #ff4444;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
 }
 
 .profile-modal__row {
@@ -282,18 +339,16 @@
   overflow-x: hidden;
 
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
   }
 
   &::-webkit-scrollbar-track {
-    background: var(--background-color);
-    border-radius: 999px;
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
     background: var(--background-color);
     border-radius: 999px;
-    background-clip: padding-box;
   }
 }
 

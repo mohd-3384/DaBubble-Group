@@ -44,7 +44,7 @@ export class RegisterCardComponent {
 
   constructor() {
     this.form = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.pattern('^[a-zA-Z -]+$')]],
+      name: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z -]+$')]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern('^(?=.*[A-Z])(?=.*[!@#$&*]).{6,}$')]],
       terms: [false, [Validators.requiredTrue]],

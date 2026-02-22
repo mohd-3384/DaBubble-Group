@@ -194,7 +194,7 @@ export class HeaderComponent {
    */
   async saveProfile(user: HeaderUser) {
     const name = (this.editName || '').trim();
-    if (!name) return;
+    if (!name || name.length < 3) return;
     const authUser = this.auth.currentUser;
     if (!authUser) return;
 
