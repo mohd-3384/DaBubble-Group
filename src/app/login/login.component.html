@@ -10,27 +10,32 @@
   </div>
 
   <header>
-    <div class="logo" [class.splash-animating]="showSplash()">
-      <img class="logo-img" src="./public/images/dabubble-logo.svg" alt="DA-Bubble Logo">
-      <img class="logo-name" src="./public/images/Logo name.svg" alt="DA-Bubble Logo Name">
-    </div>
-    <div class="right-header-container" [class.splash-hiding]="showSplash()" *ngIf="showLoginCard()">
-      <span>Neu bei DABubble?</span>
-      <a (click)="openRegisterCard()">Konto erstellen</a>
+    <div class="header-content">
+      <div class="logo" [class.splash-animating]="showSplash()">
+        <img class="logo-img" src="./public/images/dabubble-logo.svg" alt="DA-Bubble Logo">
+        <img class="logo-name" src="./public/images/Logo name.svg" alt="DA-Bubble Logo Name">
+      </div>
+      <div class="right-header-container" [class.splash-hiding]="showSplash()" *ngIf="showLoginCard()">
+        <span>Neu bei DABubble?</span>
+        <a (click)="openRegisterCard()">Konto erstellen</a>
+      </div>
     </div>
   </header>
 
   <main>
     <app-login-card *ngIf="showLoginCard()" (forgotPassword)="openPasswordReset()"></app-login-card>
 
-    <app-register-card *ngIf="showRegisterCard()" (nextstep)="goToAvatarPicker()" (back)="backToLogin()"></app-register-card>
+    <app-register-card *ngIf="showRegisterCard()" (nextstep)="goToAvatarPicker()"
+      (back)="backToLogin()"></app-register-card>
 
     <app-chose-avatar *ngIf="showAvatar()" (back)="backToRegister()"
       (success)="onRegistrationSuccess()"></app-chose-avatar>
 
-    <app-password-reset *ngIf="showReset()" (success)="onPasswordResetSuccess()" (back)="backToLogin()"></app-password-reset>
+    <app-password-reset *ngIf="showReset()" (success)="onPasswordResetSuccess()"
+      (back)="backToLogin()"></app-password-reset>
 
-    <app-enter-new-password *ngIf="showEnterPassword()" (success)="onEnterPasswordSuccess()" (back)="backToLogin()"></app-enter-new-password>
+    <app-enter-new-password *ngIf="showEnterPassword()" (success)="onEnterPasswordSuccess()"
+      (back)="backToLogin()"></app-enter-new-password>
   </main>
 
   <div class="user-successful-container" [class.visible]="successMessage()">

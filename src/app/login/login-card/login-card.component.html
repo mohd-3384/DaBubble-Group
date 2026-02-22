@@ -31,8 +31,8 @@
           <span class="wrong-password" *ngIf="password.length > 0 && password.length < 6">
             Das Passwort muss mindestens 6 Zeichen lang sein.
           </span>
-          <span class="wrong-password" *ngIf="authErrorCode && authErrorCode !== 'auth/invalid-email'">
-            Das Passwort oder die E-Mail-Adresse ist leider ungültig. Bitte versuchen Sie es erneut.
+          <span class="wrong-password" *ngIf="loginErrorMessage">
+            {{ loginErrorMessage }}
           </span>
         </div>
       </div>
@@ -49,6 +49,7 @@
         <img src="./public/images/google-icon.svg" alt="google-icon">
         <span>Anmelden mit Google</span>
       </button>
+      <span class="wrong-password" *ngIf="googleErrorMessage">{{ googleErrorMessage }}</span>
 
       <div class="button-container">
         <button class="button_1" type="submit" [disabled]="f.invalid">

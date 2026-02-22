@@ -74,6 +74,9 @@
       @if (form.get('terms')?.touched && form.get('terms')?.invalid) {
       <span class="wrong-password">Du musst der Datenschutzerklärung zustimmen.</span>
       }
+      @if (registrationError()) {
+      <span class="wrong-password">{{ registrationError() }}</span>
+      }
 
       <div class="button-container">
         <button class="button_1" type="submit" [disabled]="form.invalid">Weiter</button>

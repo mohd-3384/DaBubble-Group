@@ -1,510 +1,531 @@
 mat-card {
-    width: 420px;
-    max-width: 80vw;
-    margin: auto;
-    margin-top: 16px;
-    padding: 16px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 30px;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  width: 420px;
+  max-width: 80vw;
+  margin: auto;
+  margin-top: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 30px;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 mat-card-title {
-    display: flex;
-    justify-content: center;
-    color: rgba(68, 77, 242, 1);
-    font-family: 'Nunito', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
+  display: flex;
+  justify-content: center;
+  color: rgba(68, 77, 242, 1);
+  font-family: 'Nunito', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 mat-card-subtitle {
-    display: flex;
-    justify-content: center;
-    color: rgba(68, 77, 242, 1);
-    font-family: 'Nunito', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
+  display: flex;
+  justify-content: center;
+  color: rgba(68, 77, 242, 1);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 mat-form-field {
-    width: 82%;
-    margin-top: 12px;
+  width: 82%;
+  margin-top: 12px;
 }
 
 input {
-    font-size: 14px;
+  font-size: 14px;
+}
+
+@media (max-width: 375px) {
+  mat-card {
+    width: 95vw !important;
+    max-width: 90vw !important;
+  }
 }
 
 @media (max-width: 760px) {
-    mat-card {
-        width: 95vw;
-        max-width: 380px;
-        padding: 14px;
-    }
+  mat-card {
+    width: 95vw;
+    max-width: 380px;
+    padding: 14px;
+  }
 
-    mat-card-title {
-        font-size: 16px;
-    }
+  mat-card-title {
+    font-size: 16px;
+  }
 
-    mat-card-subtitle {
-        padding-top: 10px !important;
-        font-size: 12px;
-    }
+  mat-card-subtitle {
+    padding-top: 10px !important;
+    font-size: 12px;
+  }
 
-    mat-form-field {
-        width: 82%;
-        margin-top: 12px;
-    }
+  mat-form-field {
+    width: 82%;
+    margin-top: 12px;
+  }
 
-    .avatar-container {
-        width: 82%;
-        padding-top: 25px;
-    }
+  .avatar-container {
+    width: 82%;
+    padding-top: 25px;
+  }
 
-    .chosen-avatar-container img {
-        width: 110px;
-        height: 110px;
-    }
+  .chosen-avatar-container img {
+    width: 110px;
+    height: 110px;
+  }
 
-    .pick-avatar-container > h2 {
-        font-size: 16px;
-        padding-top: 10px;
-        padding: 10px;
-    }
+  .pick-avatar-container>h2 {
+    font-size: 16px;
+    padding-top: 10px;
+    padding: 10px;
+  }
 
-    .avatar-img {
-        width: 50px;
-        height: 50px;
-    }
+  .avatar-img {
+    width: 50px;
+    height: 50px;
+  }
 
-    .button-container {
-        width: 82%;
-        padding-top: 10px;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        gap: 12px;
-    }
+  .button-container {
+    width: 82%;
+    padding-top: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    gap: 12px;
+  }
 
-    input {
-        font-size: 14px;
-    }
+  input {
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 1024px) {
-    mat-card {
-        max-width: 400px;
-        padding: 14px;
-    }
+  mat-card {
+    max-width: 400px;
+    padding: 14px;
+  }
 
-    mat-card-title {
-        font-size: 18px;
-    }
+  mat-card-title {
+    font-size: 18px;
+  }
 
-    mat-card-subtitle {
-        padding-top: 12px !important;
-        font-size: 13px;
-    }
+  mat-card-subtitle {
+    padding-top: 12px !important;
+    font-size: 13px;
+  }
 
-    mat-form-field {
-        width: 85%;
-        margin-top: 12px;
-    }
+  mat-form-field {
+    width: 85%;
+    margin-top: 12px;
+  }
 
-    .avatar-container {
-        width: 85%;
-        padding-top: 15px;
-    }
+  .avatar-container {
+    width: 85%;
+    padding-top: 15px;
+  }
 
-    .chosen-avatar-container img {
-        width: 90px;
-        height: 90px;
-    }
+  .chosen-avatar-container img {
+    width: 90px;
+    height: 90px;
+  }
 
-    .pick-avatar-container > h2 {
-        font-size: 24px;
-        padding-top: 20px;
-        padding: 10px;
-    }
+  .pick-avatar-container>h2 {
+    font-size: 24px;
+    padding-top: 20px;
+    padding: 10px;
+  }
 
-    .avatar-img {
-        width: 40px;
-        height: 40px;
-    }
+  .avatar-img {
+    width: 40px;
+    height: 40px;
+  }
 
-    .button-container {
-        width: 85%;
-        padding-top: 10px;
-        margin-top: 6px;
-        margin-bottom: 4px;
-        gap: 4px;
-    }
+  .button-container {
+    width: 85%;
+    padding-top: 10px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    gap: 4px;
+  }
 
-    input {
-        font-size: 15px;
-    }
+  input {
+    font-size: 15px;
+  }
 }
 
 .avatar-container {
-    width: 82%;
-    padding-top: 25px;
-    display: flex;
-    flex-direction: column;
+  width: 82%;
+  padding-top: 25px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chosen-avatar-container {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 .chosen-avatar-container img {
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 6px solid transparent;
-    transition: all 0.2s ease-out;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 6px solid transparent;
+  transition: all 0.2s ease-out;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .chosen-avatar-container img:not([src*="avatar-default"]) {
-    border-color: rgba(68, 77, 242, 1);
-    box-shadow: 0 12px 32px rgba(68, 77, 242, 0.25);
+  border-color: rgba(68, 77, 242, 1);
+  box-shadow: 0 12px 32px rgba(68, 77, 242, 0.25);
 }
 
 .pick-avatar-container {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    >h2 {
-        font-family: 'Nunito', sans-serif;
-        font-size: 32px;
-        font-weight: 700;
-        display: flex;
-        justify-content: center;
-        margin: 0;
-        padding: 14px;
-        padding-top: 32px;
-    }
+  >h2 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 14px;
+    padding-top: 32px;
+  }
 }
 
 .avatar-selection {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 16px;
 }
 
 .avatar-img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 4px solid transparent;
-    transition: all 0.14s ease-in-out;
-    transform: translateZ(0);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  transition: all 0.14s ease-in-out;
+  transform: translateZ(0);
 
-    &:hover {
-        cursor: pointer;
-        border: 4px solid rgb(168, 167, 223);
-        transform: scale(1.12);
-    }
+  &:hover {
+    cursor: pointer;
+    border: 4px solid rgb(168, 167, 223);
+    transform: scale(1.12);
+  }
 }
 
 .button-container {
-    width: 82%;
-    padding-top: 12px;
-    margin-top: 12px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+  width: 82%;
+  padding-top: 12px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 button {
-    width: 110px;
-    height: 32px;
-    border: none;
-    border-radius: 20px;
-    background-color: rgba(68, 77, 242, 1);
-    color: white;
-    font-family: 'Nunito', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    transition:
-        filter 0.3s ease-in-out,
-        transform 0.15s ease,
-        box-shadow 0.2s ease;
-    box-shadow: 0 4px 10px rgba(68, 77, 242, 0.15);
+  width: 110px;
+  height: 32px;
+  border: none;
+  border-radius: 20px;
+  background-color: rgba(68, 77, 242, 1);
+  color: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    filter 0.3s ease-in-out,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(68, 77, 242, 0.15);
 
-    &:hover {
-        filter: brightness(150%);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 12px rgba(68, 77, 242, 0.25);
-    }
+  &:hover {
+    filter: brightness(150%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(68, 77, 242, 0.25);
+  }
 
-    &:active {
-        transform: translateY(1px) scale(0.98);
-        filter: brightness(105%);
-        box-shadow: 0 2px 6px rgba(68, 77, 242, 0.2);
-    }
+  &:active {
+    transform: translateY(1px) scale(0.98);
+    filter: brightness(105%);
+    box-shadow: 0 2px 6px rgba(68, 77, 242, 0.2);
+  }
 }
 
 mat-card-header {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row-reverse;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row-reverse;
 }
 
 mat-card-header {
-    position: relative;
-    width: 100%;
+  position: relative;
+  width: 100%;
 }
 
 .back-arrow {
-    position: absolute;
-    top: 20px;
-    left: 16px;
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
+  position: absolute;
+  top: 20px;
+  left: 16px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 
-    &:hover {
-        transform: scale(1.1);
-    }
+  &:hover {
+    transform: scale(1.1);
+  }
 
-    &:active {
-        transform: scale(0.95);
-    }
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .user-successful-container {
-    position: absolute;
-    right: 20px;
-    padding: 20px;
-    border-radius: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(68, 77, 242, 1);
-    font-family: 'Nunito', sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: white;
+  position: absolute;
+  right: 20px;
+  padding: 20px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(68, 77, 242, 1);
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
 
-    opacity: 0;
-    transform: translate(150%);
-    transition: all 0.5s ease-in-out;
+  opacity: 0;
+  transform: translate(150%);
+  transition: all 0.5s ease-in-out;
 
-    &.visible {
-        opacity: 1;
-        transform: translate(0);
-    }
+  &.visible {
+    opacity: 1;
+    transform: translate(0);
+  }
 }
 
 @media (max-width: 768px) {
-    mat-card {
-        width: 95vw;
-        padding: 16px;
-        margin-top: 12px;
-    }
+  mat-card {
+    width: 95vw;
+    padding: 16px;
+    margin-top: 12px;
+  }
 
-    mat-card-title {
-        font-size: 20px;
-    }
+  mat-card-title {
+    font-size: 20px;
+  }
 
-    .avatar-container {
-        width: 85%;
-        padding-top: 40px;
-    }
+  .avatar-container {
+    width: 85%;
+    padding-top: 40px;
+  }
 
-    .chosen-avatar-container img {
-        width: 120px;
-        height: 120px;
-    }
+  .chosen-avatar-container img {
+    width: 120px;
+    height: 120px;
+  }
 
-    .pick-avatar-container > h2 {
-        font-size: 24px;
-        padding-top: 20px;
-    }
+  .pick-avatar-container>h2 {
+    font-size: 24px;
+    padding-top: 20px;
+  }
 
-    .avatar-img {
-        width: 50px;
-        height: 50px;
-    }
+  .avatar-img {
+    width: 50px;
+    height: 50px;
+  }
 
-    .button-container {
-        width: 85%;
-        padding-top: 30px;
-    }
+  .button-container {
+    width: 85%;
+    padding-top: 30px;
+  }
 
-    button {
-        width: 120px;
-        height: 36px;
-        font-size: 16px;
-    }
+  button {
+    width: 120px;
+    height: 36px;
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
-    mat-card {
-        width: 95vw;
-        padding: 14px;
-        margin-top: 10px;
-        border-radius: 20px;
-    }
+  mat-card {
+    width: 95vw;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 20px;
+  }
 
-    mat-card-title {
-        font-size: 18px;
-    }
+  mat-card-title {
+    font-size: 18px;
+  }
 
-    .avatar-container {
-        width: 90%;
-        padding-top: 30px;
-    }
+  .avatar-container {
+    width: 90%;
+    padding-top: 30px;
+  }
 
-    .chosen-avatar-container img {
-        width: 100px;
-        height: 100px;
-    }
+  .chosen-avatar-container img {
+    width: 100px;
+    height: 100px;
+  }
 
-    .pick-avatar-container > h2 {
-        font-size: 20px;
-        padding: 10px;
-        padding-top: 16px;
-    }
+  .pick-avatar-container>h2 {
+    font-size: 20px;
+    padding: 10px;
+    padding-top: 16px;
+  }
 
-    .avatar-img {
-        width: 44px;
-        height: 44px;
+  .avatar-img {
+    width: 44px;
+    height: 44px;
 
-        &:hover {
-            transform: scale(1.08);
-        }
+    &:hover {
+      transform: scale(1.08);
     }
+  }
 
-    .button-container {
-        width: 90%;
-        padding-top: 20px;
-        justify-content: center;
-    }
+  .button-container {
+    width: 90%;
+    padding-top: 20px;
+    justify-content: center;
+  }
 
-    button {
-        width: 100px;
-        height: 32px;
-        font-size: 14px;
-        margin-bottom: 15px;
-    }
+  button {
+    width: 100px;
+    height: 32px;
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
 }
 
 /* Große Laptops und Desktops 1400px+ */
 @media (min-width: 1400px) {
-    mat-card {
-        width: 550px;
-        padding: 28px;
-    }
+  mat-card {
+    width: 550px;
+    padding: 28px;
+  }
 
-    mat-form-field {
-        width: 85%;
-        margin-top: 24px;
-    }
+  mat-form-field {
+    width: 85%;
+    margin-top: 24px;
+  }
 
-    .avatar-container {
-        width: 85%;
-        padding-top: 35px;
-    }
+  .avatar-container {
+    width: 85%;
+    padding-top: 35px;
+  }
 
-    .chosen-avatar-container img {
-        width: 150px;
-        height: 150px;
-    }
+  .chosen-avatar-container img {
+    width: 150px;
+    height: 150px;
+  }
 
-    .pick-avatar-container > h2 {
-        font-size: 32px;
-        padding: 20px;
-        padding-top: 40px;
-    }
+  .pick-avatar-container>h2 {
+    font-size: 32px;
+    padding: 20px;
+    padding-top: 40px;
+  }
 
-    .avatar-img {
-        width: 70px;
-        height: 70px;
-    }
+  .avatar-img {
+    width: 70px;
+    height: 70px;
+  }
 
-    .button-container {
-        width: 85%;
-        padding-top: 20px;
-        margin-top: 20px;
-        margin-bottom: 14px;
-        gap: 16px;
-    }
+  .button-container {
+    width: 85%;
+    padding-top: 20px;
+    margin-top: 20px;
+    margin-bottom: 14px;
+    gap: 16px;
+  }
 
-    button {
-        width: 140px;
-        height: 40px;
-        font-size: 13px;
-    }
+  button {
+    width: 140px;
+    height: 40px;
+    font-size: 13px;
+  }
 
-    .user-successful-container {
-        right: 40px;
-        padding: 24px;
-        font-size: 18px;
-    }
+  .user-successful-container {
+    right: 40px;
+    padding: 24px;
+    font-size: 18px;
+  }
 }
 
 /* Kleine Bildschirmhöhe */
 @media (max-height: 800px) {
-    mat-card {
-        width: 350px;
-        padding: 12px;
-    }
+  mat-card {
+    width: 350px;
+    padding: 12px;
+  }
 
-    mat-form-field {
-        width: 80%;
-        margin-top: 10px;
-    }
+  mat-form-field {
+    width: 80%;
+    margin-top: 10px;
+  }
 
-    .avatar-container {
-        width: 80%;
-        padding-top: 12px;
-    }
+  .avatar-container {
+    width: 80%;
+    padding-top: 12px;
+  }
 
-    .chosen-avatar-container img {
-        width: 80px;
-        height: 80px;
-    }
+  .chosen-avatar-container img {
+    width: 80px;
+    height: 80px;
+  }
 
-    .pick-avatar-container > h2 {
-        font-size: 16px;
-        padding: 10px;
-        padding-top: 12px;
-    }
+  .pick-avatar-container>h2 {
+    font-size: 16px;
+    padding: 10px;
+    padding-top: 12px;
+  }
 
-    .avatar-img {
-        width: 40px;
-        height: 40px;
-    }
+  .avatar-img {
+    width: 40px;
+    height: 40px;
+  }
 
-    .button-container {
-        width: 80%;
-        padding-top: 10px;
-        margin-top: 10px;
-        margin-bottom: 8px;
-        gap: 8px;
-    }
+  .button-container {
+    width: 80%;
+    padding-top: 10px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
 
-    button {
-        width: 90px;
-        height: 28px;
-        font-size: 11px;
-    }
+  button {
+    width: 90px;
+    height: 28px;
+    font-size: 11px;
+  }
 
-    .user-successful-container {
-        right: 20px;
-        padding: 12px;
-        font-size: 12px;
-    }
+  .user-successful-container {
+    right: 20px;
+    padding: 12px;
+    font-size: 12px;
+  }
+}
+
+.error-message {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.wrong-password {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+  font-family: 'Nunito', sans-serif;
 }

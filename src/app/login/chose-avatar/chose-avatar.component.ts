@@ -50,6 +50,7 @@ export class ChoseAvatarComponent implements OnInit {
 
   chosenAvatarSrc = '/public/images/avatars/avatar-default.svg';
   selectedIndex = -1;
+  errorMessage = signal<string>('');
 
   /** Angular lifecycle hook that initializes the component by loading the user's name. */
   ngOnInit() {
@@ -73,14 +74,15 @@ export class ChoseAvatarComponent implements OnInit {
   /** Saves the selected avatar and completes registration, emitting success event. */
   async saveAndFinish() {
     const user = this.auth.currentUser;
+    this.errorMessage.set('');
 
     if (!user) {
-      alert('Kein angemeldeter Benutzer gefunden. Bitte neu einloggen.');
+      this.errorMessage.set('Kein angemeldeter Benutzer gefunden. Bitte neu einloggen.');
       return;
     }
 
     if (this.isDefaultAvatar()) {
-      alert('Bitte wähle einen Avatar aus!');
+      this.errorMessage.set('Bitte wähle einen Avatar aus!');
       return;
     }
 
@@ -99,7 +101,7 @@ export class ChoseAvatarComponent implements OnInit {
       await updateProfile(user, { photoURL: this.chosenAvatarSrc });
       this.success.emit();
     } catch (error) {
-      alert('Avatar konnte nicht gespeichert werden.');
+      this.errorMessage.set('Avatar konnte nicht gespeichert werden.');
     }
   }
 

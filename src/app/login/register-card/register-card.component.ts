@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -40,6 +40,7 @@ export class RegisterCardComponent {
   private firestore = inject(Firestore);
 
   form: FormGroup;
+  registrationError = signal<string>('');
 
   constructor() {
     this.form = this.fb.group({
@@ -53,6 +54,7 @@ export class RegisterCardComponent {
   /** Validates form and creates new user in Firebase Auth and Firestore, then emits nextstep. */
   async onSubmit() {
     if (this.form.invalid) return;
+    this.registrationError.set('');
     try {
       const userCredential = await this.createFirebaseUser();
       await this.createFirestoreUser(userCredential.user);
@@ -88,7 +90,7 @@ export class RegisterCardComponent {
   /** Displays user-friendly error message based on registration exception code. */
   private handleRegistrationError(error: any) {
     const message = this.getRegistrationErrorMessage(error?.code);
-    alert(message);
+    this.registrationError.set(message);
   }
 
   /** Maps Firebase error codes to German error messages for user display. */

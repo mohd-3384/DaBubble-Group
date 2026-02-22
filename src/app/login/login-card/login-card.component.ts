@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, Output, EventEmitter } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Output, EventEmitter } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,10 +35,13 @@ export class LoginCardComponent {
   private userSvc = inject(UserService);
   private auth = inject(Auth);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   email = '';
   password = '';
   authErrorCode: string | null = null;
+  googleErrorMessage = '';
+  loginErrorMessage = '';
 
   /** Emits the forgotPassword event to display password reset form. */
   onForgotPasswordClick() {
@@ -48,18 +51,23 @@ export class LoginCardComponent {
   /** Authenticates user with email and password, then navigates to channel. */
   async login() {
     this.authErrorCode = null;
+    this.googleErrorMessage = '';
+    this.loginErrorMessage = '';
     try {
       await signInWithEmailAndPassword(this.auth, this.email, this.password);
       await this.userSvc.ensureUserDoc({ role: 'member', status: 'active' });
       await this.router.navigate(['/channel', 'new']);
     } catch (err: any) {
       this.authErrorCode = err?.code ?? 'unknown';
+      this.loginErrorMessage = this.getLoginErrorMessage(err?.code);
+      this.cdr.markForCheck();
     }
   }
 
   /** Authenticates user with Google provider and creates user document if needed. */
   async loginWithGoogle() {
     this.authErrorCode = null;
+    this.googleErrorMessage = '';
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(this.auth, provider);
@@ -84,7 +92,8 @@ export class LoginCardComponent {
   private handleGoogleError(err: any) {
     const message = this.getGoogleErrorMessage(err.code);
     this.authErrorCode = err.code ?? 'unknown';
-    alert(message);
+    this.googleErrorMessage = message;
+    this.cdr.markForCheck();
   }
 
   /** Returns a user-friendly error message for Google authentication error codes. */
@@ -101,6 +110,8 @@ export class LoginCardComponent {
   /** Authenticates as guest user and navigates to channel without registration. */
   async loginAsGuest() {
     this.authErrorCode = null;
+    this.googleErrorMessage = '';
+    this.loginErrorMessage = '';
     try {
       await signInWithEmailAndPassword(this.auth, 'guest@dabubble.de', 'guest123');
       await this.userSvc.ensureUserDoc({ name: 'Guest', role: 'guest', status: 'active' });
@@ -108,5 +119,18 @@ export class LoginCardComponent {
     } catch (err: any) {
       this.authErrorCode = err?.code ?? 'unknown';
     }
+  }
+
+  /** Returns a user-friendly error message for login error codes. */
+  private getLoginErrorMessage(code: string): string {
+    const messages: { [key: string]: string } = {
+      'auth/invalid-email': 'Ungültige E-Mail-Adresse.',
+      'auth/user-disabled': 'Dieses Konto wurde deaktiviert.',
+      'auth/user-not-found': 'Diese E-Mail-Adresse ist nicht registriert.',
+      'auth/wrong-password': 'Ungültiges Passwort.',
+      'auth/invalid-credential': 'Die E-Mail-Adresse oder das Passwort ist falsch.',
+      'auth/too-many-requests': 'Zu viele fehlgeschlagene Versuche. Bitte später erneut versuchen.',
+    };
+    return messages[code] || 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
   }
 }

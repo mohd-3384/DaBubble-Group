@@ -1,414 +1,466 @@
 body {
-    margin: 0;
-    font-family: 'Nunito', Courier, monospace;
+  margin: 0;
+  font-family: 'Nunito', Courier, monospace;
 }
 
 /* Splash Screen Animation */
 @keyframes splashBackgroundFade {
-    0% {
-        opacity: 1;
-    }
-    85% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
+  0% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes logoShiftLeft {
-    0%, 20% {
-        transform: translateX(0);
-    }
-    35% {
-        transform: translateX(-20px);
-    }
-    100% {
-        transform: translateX(-20px);
-    }
+
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+
+  35% {
+    transform: translateX(-20px);
+  }
+
+  100% {
+    transform: translateX(-20px);
+  }
 }
 
 @keyframes logoNameSlideIn {
-    0%, 40% {
-        transform: translateX(-100px);
-        opacity: 0;
-    }
-    45% {
-        opacity: 1;
-    }
-    50% {
-        transform: translateX(-20px);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(-20px);
-        opacity: 1;
-    }
+
+  0%,
+  40% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateX(-20px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(-20px);
+    opacity: 1;
+  }
 }
 
 @keyframes containerToCorner {
-    0%, 70% {
-        transform: translate(0, 0) scale(1);
-        gap: 20px;
-    }
-    100% {
-        transform: translate(-70px, -70px) scale(1);
-        gap: 6px;
-    }
+
+  0%,
+  70% {
+    transform: translate(0, 0) scale(1);
+    gap: 20px;
+  }
+
+  100% {
+    transform: translate(-70px, -70px) scale(1);
+    gap: 6px;
+  }
+}
+
+@keyframes containerToTop {
+
+  0%,
+  70% {
+    transform: translate(0, 0) scale(1);
+    gap: 20px;
+  }
+
+  100% {
+    transform: translate(0, -70px) scale(1);
+    gap: 6px;
+  }
 }
 
 .splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(49, 58, 229, 1) 0%, rgba(121, 126, 243, 1) 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    animation: splashBackgroundFade 5s ease-out forwards;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(49, 58, 229, 1) 0%, rgba(121, 126, 243, 1) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: splashBackgroundFade 5s ease-out forwards;
 }
 
 .splash-content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    width: 100%;
-    height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .splash-logo-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    width: fit-content;
-    animation: containerToCorner 5s ease-out forwards;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  animation: containerToCorner 5s ease-out forwards;
 }
 
 .splash-logo {
-    width: 120px;
-    height: 120px;
-    animation: logoShiftLeft 5s ease-out forwards;
-    flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  animation: logoShiftLeft 5s ease-out forwards;
+  flex-shrink: 0;
 }
 
 .splash-logo-name {
-    height: 40px;
-    width: auto;
-    animation: logoNameSlideIn 5s ease-out forwards;
-    filter: brightness(0) invert(1);
-    flex-shrink: 0;
+  height: 40px;
+  width: auto;
+  animation: logoNameSlideIn 5s ease-out forwards;
+  filter: brightness(0) invert(1);
+  flex-shrink: 0;
 }
 
 section {
-    width: 100%;
-    height: 100vh;
-    background-color: rgb(236, 238, 254);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
+  width: 100%;
+  height: 100vh;
+  background-color: rgb(236, 238, 254);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 16px;
-    padding-left: 16px;
-    padding-right: 16px;
-    flex-wrap: wrap;
-    gap: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1440px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .logo {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
 
-    >.logo-img {
-        width: 70px;
-        height: 70px;
-    }
+  >.logo-img {
+    width: 70px;
+    height: 70px;
+  }
 
-    >.logo-name {
-        height: 16px;
-    }
+  >.logo-name {
+    height: 16px;
+  }
 }
 
 .logo.splash-animating {
-    position: fixed;
-    z-index: 9998;
-    animation: headerLogoFromCenter 5s ease-out forwards;
+  position: fixed;
+  z-index: 9998;
+  animation: headerLogoFromCenter 5s ease-out forwards;
 }
 
 @keyframes headerLogoFromCenter {
-    0% {
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1.5);
-    }
-    60% {
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1.5);
-    }
-    100% {
-        top: 16px;
-        left: 16px;
-        transform: translate(0, 0) scale(1);
-    }
+  0% {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+
+  60% {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+
+  100% {
+    top: 16px;
+    left: 16px;
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 .right-header-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    animation: fadeInContainer 0.8s ease-in forwards;
-    opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: fadeInContainer 0.8s ease-in forwards;
+  opacity: 0;
 
-    >a {
-        text-decoration: none;
-        color: blue;
-        cursor: pointer;
-    }
+  >a {
+    text-decoration: none;
+    color: blue;
+    cursor: pointer;
+  }
 }
 
 .right-header-container.splash-hiding {
-    animation: none;
-    opacity: 0;
-    pointer-events: none;
+  animation: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
 @keyframes fadeInContainer {
-    to {
-        opacity: 1;
-    }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Responsive: Tablet und kleinere Screens */
 @media (max-width: 768px) {
-    header {
-        padding-top: 12px;
-        padding-left: 12px;
-        padding-right: 12px;
-        gap: 8px;
+  header {
+    padding-top: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    gap: 8px;
+  }
+
+  .logo {
+    gap: 4px;
+
+    >.logo-img {
+      width: 50px;
+      height: 50px;
     }
 
-    .logo {
-        gap: 4px;
-
-        >.logo-img {
-            width: 50px;
-            height: 50px;
-        }
-
-        >.logo-name {
-            height: 12px;
-            max-width: 100px;
-        }
+    >.logo-name {
+      height: 12px;
+      max-width: 100px;
     }
+  }
 
-    .right-header-container {
-        gap: 6px;
-        font-size: 14px;
-    }
+  .right-header-container {
+    gap: 6px;
+    font-size: 14px;
+  }
 }
 
 /* Responsive: Mobile */
 @media (max-width: 500px) {
-    section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 30px;
+  .splash-logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .splash-logo-name {
+    height: 25px;
+  }
+
+  .splash-logo-container {
+    animation: containerToTop 5s ease-out forwards;
+  }
+
+  section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+
+  header {
+    padding-top: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .logo {
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+
+    >.logo-img {
+      width: 60px;
+      height: 60px;
     }
 
-    header {
-        padding-top: 30px;
-        padding-left: 30px;
-        padding-right: 30px;
-        gap: 30px;
-        justify-content: center;
-        flex-wrap: wrap;
-        width: 100%;
+    >.logo-name {
+      height: 18px;
+      max-width: 120px;
     }
+  }
 
-    .logo {
-        gap: 8px;
-        width: 100%;
-        justify-content: center;
+  .right-header-container {
+    position: fixed;
+    bottom: 200px;
+    left: 30px;
+    right: 30px;
+    gap: 10px;
+    font-size: 13px;
+    width: calc(100% - 60px);
+    justify-content: center;
+    z-index: 100;
+  }
 
-        >.logo-img {
-            width: 60px;
-            height: 60px;
-        }
-
-        >.logo-name {
-            height: 18px;
-            max-width: 120px;
-        }
-    }
-
-    .right-header-container {
-        position: fixed;
-        bottom: 200px;
-        left: 30px;
-        right: 30px;
-        gap: 10px;
-        font-size: 13px;
-        width: calc(100% - 60px);
-        justify-content: center;
-        z-index: 100;
-    }
-
-    main {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-    }
-
-    .footer-container {
-        display: none;
-    }
+  main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 /* Responsive: Mobile mit kleiner Höhe */
 @media (max-width: 500px) and (max-height: 700px) {
-    .right-header-container {
-        bottom: 60px;
-    }
+  .right-header-container {
+    bottom: 60px;
+  }
 }
 
 
 footer {
-    margin-top: 40px;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
+  margin-top: 40px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
 
-    >a {
-        text-decoration: none;
-        color: rgba(121, 126, 243, 1);
-        font-family: 'Nunito', sans-serif;
-        font-size: 13px;
-        transition: transform 0.3s ease-in-out;
+  >a {
+    text-decoration: none;
+    color: rgba(121, 126, 243, 1);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    transition: transform 0.3s ease-in-out;
 
-        &:hover {
-            transform: scale(1.1);
-        }
+    &:hover {
+      transform: scale(1.1);
     }
+  }
 }
 
 @media (max-width: 760px) {
-    footer {
-        margin-top: 30px;
-        gap: 15px;
+  footer {
+    margin-top: 30px;
+    gap: 15px;
 
-        >a {
-            font-size: 12px;
-        }
+    >a {
+      font-size: 12px;
     }
+  }
 }
 
 @media (max-width: 768px) {
-    footer {
-        margin-top: 30px;
-        gap: 15px;
+  footer {
+    margin-top: 30px;
+    gap: 15px;
 
-        >a {
-            font-size: 12px;
-        }
+    >a {
+      font-size: 12px;
     }
+  }
 }
 
-@media (max-width: 480px) {
-    footer {
-        margin-top: 20px;
-        gap: 10px;
+@media (max-width: 500px) {
+  footer {
+    position: fixed;
+    bottom: 10px;
+    left: 30px;
+    right: 30px;
+    width: calc(100% - 60px);
+    margin-top: 0;
+    gap: 10px;
 
-        >a {
-            font-size: 14px;
-        }
+    >a {
+      font-size: 14px;
     }
+  }
 }
 
 main {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-    app-login-card,
-    app-register-card,
-    app-chose-avatar,
-    app-password-reset {
-        animation: fadeIn 0.35s ease;
+  app-login-card,
+  app-register-card,
+  app-chose-avatar,
+  app-password-reset {
+    animation: fadeIn 0.35s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
     }
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(8px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
 }
 
 .user-successful-container {
-    position: fixed;
-    right: 20px;
-    bottom: 60px;
-    padding: 20px;
-    border-radius: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(68, 77, 242, 1);
-    font-family: 'Nunito', sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: white;
-    z-index: 1000;
+  position: fixed;
+  right: 20px;
+  bottom: 60px;
+  padding: 20px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(68, 77, 242, 1);
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  z-index: 1000;
 
-    opacity: 0;
-    transform: translate(150%);
-    transition: all 0.5s ease-in-out;
+  opacity: 0;
+  transform: translate(150%);
+  transition: all 0.5s ease-in-out;
 
-    &.visible {
-        opacity: 1;
-        transform: translate(0);
-    }
+  &.visible {
+    opacity: 1;
+    transform: translate(0);
+  }
 }
 
 @media (max-width: 768px) {
-    .user-successful-container {
-        right: 10px;
-        bottom: 50px;
-        padding: 15px;
-        font-size: 16px;
-    }
+  .user-successful-container {
+    right: 10px;
+    bottom: 50px;
+    padding: 15px;
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
-    .user-successful-container {
-        right: 10px;
-        bottom: 40px;
-        left: 10px;
-        padding: 15px;
-        font-size: 14px;
-    }
+  .user-successful-container {
+    right: 10px;
+    bottom: 40px;
+    left: 10px;
+    padding: 15px;
+    font-size: 14px;
+  }
 }
