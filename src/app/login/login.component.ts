@@ -41,7 +41,7 @@ import { EnterNewPasswordComponent } from './enter-new-password/enter-new-passwo
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit, AfterViewInit {
-  showSplash = signal(true);
+  showSplash = signal(this.shouldShowSplash());
   showLoginCard = signal(true);
   showRegisterCard = signal(false);
   showAvatar = signal(false);
@@ -56,18 +56,114 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   /** Initializes the component, animations, router subscriptions, and query params. */
   ngOnInit() {
-    this.scheduleSplashAnimation();
+    if (this.showSplash()) this.scheduleSplashAnimation();
     this.setupRouterSubscription();
     this.checkIfResetPasswordPage();
     setTimeout(() => this.checkIfResetPasswordPage(), 100);
     this.setupQueryParamsSubscription();
   }
 
-  /** Hides splash screen after 5 seconds animation delay. */
+  /** Hides splash screen after 5 seconds animation delay. Shows animation on every page load. */
   private scheduleSplashAnimation() {
-    setTimeout(() => {
-      this.showSplash.set(false);
-    }, 5000);
+    this.waitForSplashImages().then(() => {
+      const container = document.querySelector('.splash-logo-container') as HTMLElement;
+      if (container) {
+        container.style.opacity = '1';
+        void container.offsetWidth;
+        container.classList.add('splash-ready');
+      }
+      this.runFinalLogoAnimation();
+      setTimeout(() => this.showSplash.set(false), 6500);
+    });
+  }
+
+  /** Returns true if the splash should be shown (first visit or page reload). */
+  private shouldShowSplash(): boolean {
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const isReload = navEntry?.type === 'reload';
+    const isFirstVisit = !sessionStorage.getItem('splashShown');
+    if (isReload || isFirstVisit) {
+      sessionStorage.setItem('splashShown', '1');
+      return true;
+    }
+    return false;
+  }
+
+  /** Resolves once both splash images are loaded (or immediately if already cached). */
+  private waitForSplashImages(): Promise<void> {
+    const imgs = Array.from(
+      document.querySelectorAll('.splash-logo, .splash-logo-name')
+    ) as HTMLImageElement[];
+    const promises = imgs.map(
+      (img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              img.addEventListener('load', () => resolve(), { once: true });
+              img.addEventListener('error', () => resolve(), { once: true });
+            })
+    );
+    return Promise.all(promises).then(() => {});
+  }
+
+  /**
+   * At the 75% mark of the splash (4875ms), measures exact header logo position
+   * and uses WAAPI to precisely animate the splash container to that position.
+   */
+  private runFinalLogoAnimation() {
+    const phase1End = 6500 * 0.75;
+    const phase2Duration = 6500 - phase1End;
+    setTimeout(() => this.moveSplashToHeader(phase2Duration), phase1End);
+  }
+
+  /** Queries splash elements and triggers the WAAPI move to header position. */
+  private moveSplashToHeader(duration: number) {
+    const container = document.querySelector('.splash-logo-container') as HTMLElement;
+    const splashImg = document.querySelector('.splash-logo') as HTMLElement;
+    const headerImg = document.querySelector('.logo .logo-img') as HTMLElement;
+    if (!container || !splashImg || !headerImg) return;
+    const { dx, dy, scale, endGap } = this.calcTargetTransform(headerImg, container, splashImg);
+    this.resetContainerAnimation(container);
+    this.animateContainerToHeader(container, dx, dy, scale, endGap, duration);
+  }
+
+  /** Calculates the dx, dy, scale and gap needed to land the splash logo on the header logo. */
+  private calcTargetTransform(headerImg: HTMLElement, container: HTMLElement, splashImg: HTMLElement) {
+    const hRect = headerImg.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const sRect = splashImg.getBoundingClientRect();
+    const cCX = cRect.left + cRect.width / 2;
+    const cCY = cRect.top + cRect.height / 2;
+    const scale = hRect.width / sRect.width;
+    const offsetX = (sRect.left + sRect.width / 2) - cCX;
+    const offsetY = (sRect.top + sRect.height / 2) - cCY;
+    return {
+      dx: (hRect.left + hRect.width / 2) - cCX - offsetX * scale,
+      dy: (hRect.top + hRect.height / 2) - cCY - offsetY * scale,
+      scale,
+      endGap: `${(6 / scale).toFixed(1)}px`,
+    };
+  }
+
+  /** Cancels the CSS animation on the container and resets its transform. */
+  private resetContainerAnimation(container: HTMLElement) {
+    container.style.animation = 'none';
+    container.style.transform = 'translate(0, 0) scale(1)';
+    container.style.gap = '20px';
+    void container.offsetWidth;
+  }
+
+  /** Runs the WAAPI animation moving the splash container to the header logo position. */
+  private animateContainerToHeader(
+    container: HTMLElement, dx: number, dy: number, scale: number, endGap: string, duration: number
+  ) {
+    container.animate(
+      [
+        { transform: 'translate(0, 0) scale(1)', gap: '20px' },
+        { transform: `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) scale(${scale.toFixed(4)})`, gap: endGap },
+      ],
+      { duration, easing: 'ease-in-out', fill: 'forwards' }
+    );
   }
 
   /** Subscribes to router events and checks if current route is password reset page. */

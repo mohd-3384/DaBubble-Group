@@ -1,11 +1,11 @@
 <section>
-  <!-- Splash Screen Animation -->
-  <div class="splash-screen" *ngIf="showSplash()">
-    <div class="splash-content">
-      <div class="splash-logo-container">
-        <img class="splash-logo" src="./public/images/dabubble-logo.svg" alt="DaBubble Logo">
-        <img class="splash-logo-name" src="./public/images/Logo name.svg" alt="DaBubble Logo Name">
-      </div>
+  <!-- Splash Background (fades out independently) -->
+  <div class="splash-screen" *ngIf="showSplash()"></div>
+  <!-- Splash Logo (separate from fading bg → not affected by parent opacity) -->
+  <div class="splash-content" *ngIf="showSplash()">
+    <div class="splash-logo-container">
+      <img class="splash-logo" src="./public/images/dabubble-logo.svg" alt="DaBubble Logo">
+      <img class="splash-logo-name" src="./public/images/Logo name.svg" alt="DaBubble Logo Name">
     </div>
   </div>
 

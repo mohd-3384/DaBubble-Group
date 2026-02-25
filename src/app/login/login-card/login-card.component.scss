@@ -17,7 +17,7 @@ mat-card-title {
   justify-content: center;
   color: rgba(68, 77, 242, 1);
   font-family: 'Nunito', sans-serif;
-  font-size: 18px;
+  font-size: 22px !important;
   font-weight: 700;
 }
 
@@ -27,7 +27,7 @@ mat-card-subtitle {
   font-family: 'Nunito', sans-serif;
   padding-top: 12px !important;
   font-weight: 400;
-  font-size: 13px;
+  font-size: 16px !important;
   line-height: 1.35;
 }
 
@@ -40,42 +40,46 @@ mat-card-subtitle {
   }
 
   mat-card-title {
-    font-size: 16px;
+    font-size: 18px !important;
   }
 
   mat-card-subtitle {
     padding-top: 10px !important;
-    font-size: 12px;
+    font-size: 16px !important;
   }
 
   .input-container {
-    width: 85%;
+    width: 90%;
     gap: 12px;
-    margin-top: 10px;
+    margin-top: 16px;
   }
 
   .google-login,
   .oder-container {
-    margin-top: 10px;
+    margin-top: 16px;
   }
 
   input {
-    font-size: 14px;
+    font-size: 16px !important;
+  }
+
+  input::placeholder {
+    font-size: 16px !important;
   }
 
   .forgot-password {
-    margin-top: 10px;
-    font-size: 12px;
+    margin-top: 16px;
+    font-size: 16px !important;
   }
 
   .oder-container {
     .oder-text {
-      font-size: 12px;
+      font-size: 16px !important;
     }
   }
 
   .google-login {
-    font-size: 12px;
+    font-size: 16px !important;
   }
 
   .button-container {
@@ -85,9 +89,9 @@ mat-card-subtitle {
 
     >.button_1,
     >.button_2 {
-      width: 100px;
-      height: 30px;
-      font-size: 12px;
+      width: 105px;
+      height: 32px;
+      font-size: 16px !important;
     }
   }
 }
@@ -100,16 +104,16 @@ mat-card-subtitle {
   }
 
   mat-card-title {
-    font-size: 18px;
+    font-size: 20px !important;
   }
 
   mat-card-subtitle {
     padding-top: 12px !important;
-    font-size: 13px;
+    font-size: 16px !important;
   }
 
   .input-container {
-    width: 82%;
+    width: 90%;
     gap: 16px;
     margin-top: 16px;
   }
@@ -122,39 +126,43 @@ mat-card-subtitle {
 
   .google-login,
   .oder-container {
-    margin-top: 14px;
+    margin-top: 16px;
   }
 
   input {
-    font-size: 15px;
+    font-size: 16px !important;
+  }
+
+  input::placeholder {
+    font-size: 16px !important;
   }
 
   .forgot-password {
     margin-top: 14px;
-    font-size: 13px;
+    font-size: 16px !important;
   }
 
   .oder-container {
     .oder-text {
-      font-size: 13px;
+      font-size: 16px !important;
     }
   }
 
   .google-login {
-    font-size: 13px;
+    font-size: 16px !important;
     padding: 8px;
   }
 
   .button-container {
-    margin-top: 12px;
+    margin-top: 16px;
     margin-bottom: 10px;
     gap: 12px;
 
     >.button_1,
     >.button_2 {
-      width: 110px;
+      width: 105px;
       height: 32px;
-      font-size: 13px;
+      font-size: 16px !important;
     }
   }
 }
@@ -167,12 +175,12 @@ mat-card-subtitle {
   }
 
   mat-card-title {
-    font-size: 20px;
+    font-size: 20px !important;
   }
 
   mat-card-subtitle {
     padding-top: 20px !important;
-    font-size: 16px;
+    font-size: 16px !important;
   }
 }
 
@@ -185,18 +193,26 @@ mat-card-subtitle {
   }
 
   mat-card-title {
-    font-size: 18px;
+    font-size: 18px !important;
   }
 
   mat-card-subtitle {
     padding-top: 16px !important;
-    font-size: 14px;
+    font-size: 16px !important;
   }
 }
 
 mat-form-field {
   width: 80%;
   margin-top: 40px;
+}
+
+input {
+  font-size: 16px !important;
+}
+
+input::placeholder {
+  font-size: 16px !important;
 }
 
 form {
@@ -209,7 +225,7 @@ form {
 .input-container {
   display: flex;
   flex-direction: column;
-  width: 82%;
+  width: 90%;
   gap: 16px;
   margin-top: 16px;
 }
@@ -254,11 +270,11 @@ input {
 }
 
 .forgot-password {
-  margin-top: 14px;
+  margin-top: 16px;
   color: rgba(121, 126, 243, 1);
   cursor: pointer;
   font-family: 'Nunito', sans-serif;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 400;
 }
 
@@ -285,11 +301,11 @@ input {
 }
 
 .google-login {
-  width: 80%;
+  width: 90%;
   background-color: rgba(236, 238, 254, 1);
   border: 1px solid transparent;
   border-radius: 40px;
-  margin-top: 14px;
+  margin-top: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -328,14 +344,14 @@ input {
   }
 
   >.button_1 {
-    width: 110px;
+    width: 105px;
     height: 32px;
     border: none;
     border-radius: 20px;
     background-color: rgba(68, 77, 242, 1);
     color: white;
     font-family: 'Nunito', sans-serif;
-    font-size: 13px;
+    font-size: 16px !important;
     cursor: pointer;
 
     &:hover {
@@ -352,14 +368,14 @@ input {
   }
 
   >.button_2 {
-    width: 110px;
+    width: 105px;
     height: 32px;
     border: 1px solid rgba(68, 77, 242, 1);
     border-radius: 20px;
     background-color: white;
     color: rgba(68, 77, 242, 1);
     font-family: 'Nunito', sans-serif;
-    font-size: 13px;
+    font-size: 16px !important;
     cursor: pointer;
 
     transition:
@@ -407,7 +423,7 @@ mat-card-subtitle {
 }
 
 .input-container {
-  width: 100%;
+  width: 90%;
 }
 
 mat-form-field {
@@ -426,7 +442,7 @@ input {
 }
 
 .forgot-password {
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 20px;
 }
 
@@ -439,13 +455,14 @@ input {
 }
 
 .google-login {
-  width: 100%;
+  width: 90%;
   font-size: 14px;
   padding: 8px;
   min-height: 40px;
 
   span {
-    display: none;
+    display: block;
+    font-size: 16px !important;
   }
 }
 
@@ -462,6 +479,48 @@ input {
   }
 }
 
+/* Große Bildschirme 1200px+ - Alle Fonts 20px */
+@media (min-width: 1200px) {
+  mat-card-title {
+    font-size: 20px !important;
+  }
+
+  mat-card-subtitle {
+    font-size: 20px !important;
+  }
+
+  input {
+    font-size: 20px !important;
+  }
+
+  input::placeholder {
+    font-size: 20px !important;
+  }
+
+  .forgot-password {
+    font-size: 20px !important;
+  }
+
+  .oder-container .oder-text {
+    font-size: 20px !important;
+  }
+
+  .google-login {
+    font-size: 20px !important;
+
+    span {
+      font-size: 20px !important;
+    }
+  }
+
+  .button-container > .button_1,
+  .button-container > .button_2 {
+    width: 140px;
+    height: 40px;
+    font-size: 20px !important;
+  }
+}
+
 /* Große Laptops und Desktops 1400px+ */
 @media (min-width: 1400px) {
   mat-card {
@@ -475,7 +534,7 @@ input {
   }
 
   .input-container {
-    width: 85%;
+    width: 90%;
     gap: 22px;
     margin-top: 24px;
   }
@@ -492,7 +551,7 @@ input {
 
   .forgot-password {
     margin-top: 20px;
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .oder-container {
@@ -502,9 +561,9 @@ input {
   }
 
   .google-login {
-    width: 85%;
+    width: 90%;
     padding: 12px;
-    margin-top: 24px;
+    margin-top: 16px;
     font-size: 13px;
     min-height: 50px;
   }
@@ -537,7 +596,7 @@ input {
   }
 
   .input-container {
-    width: 80%;
+    width: 90%;
     gap: 10px;
     margin-top: 10px;
   }
@@ -554,7 +613,7 @@ input {
 
   .forgot-password {
     margin-top: 8px;
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .oder-container {
@@ -568,22 +627,22 @@ input {
   }
 
   .google-login {
-    width: 80%;
+    width: 90%;
     padding: 6px;
-    margin-top: 10px;
+    margin-top: 16px;
     font-size: 12px;
     min-height: 35px;
   }
 
   .button-container {
-    margin-top: 8px;
+    margin-top: 16px;
     margin-bottom: 8px;
     gap: 8px;
 
     >.button_1,
     >.button_2 {
-      width: 90px;
-      height: 28px;
+      width: 105px;
+      height: 32px;
       font-size: 11px;
     }
   }

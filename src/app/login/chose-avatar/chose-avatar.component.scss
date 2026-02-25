@@ -17,7 +17,7 @@ mat-card-title {
   justify-content: center;
   color: rgba(68, 77, 242, 1);
   font-family: 'Nunito', sans-serif;
-  font-size: 18px;
+  font-size: 20px !important;
   font-weight: 700;
 }
 
@@ -26,7 +26,7 @@ mat-card-subtitle {
   justify-content: center;
   color: rgba(68, 77, 242, 1);
   font-family: 'Nunito', sans-serif;
-  font-size: 12px;
+  font-size: 16px !important;
   font-weight: 700;
 }
 
@@ -36,7 +36,7 @@ mat-form-field {
 }
 
 input {
-  font-size: 14px;
+  font-size: 16px !important;
 }
 
 @media (max-width: 375px) {
@@ -54,12 +54,12 @@ input {
   }
 
   mat-card-title {
-    font-size: 16px;
+    font-size: 18px !important;
   }
 
   mat-card-subtitle {
     padding-top: 10px !important;
-    font-size: 12px;
+    font-size: 16px !important;
   }
 
   mat-form-field {
@@ -78,7 +78,7 @@ input {
   }
 
   .pick-avatar-container>h2 {
-    font-size: 16px;
+    font-size: 18px !important;
     padding-top: 10px;
     padding: 10px;
   }
@@ -97,7 +97,11 @@ input {
   }
 
   input {
-    font-size: 14px;
+    font-size: 16px !important;
+  }
+
+  input::placeholder {
+    font-size: 16px !important;
   }
 }
 
@@ -108,12 +112,12 @@ input {
   }
 
   mat-card-title {
-    font-size: 18px;
+    font-size: 20px !important;
   }
 
   mat-card-subtitle {
     padding-top: 12px !important;
-    font-size: 13px;
+    font-size: 16px !important;
   }
 
   mat-form-field {
@@ -132,7 +136,7 @@ input {
   }
 
   .pick-avatar-container>h2 {
-    font-size: 24px;
+    font-size: 24px !important;
     padding-top: 20px;
     padding: 10px;
   }
@@ -151,7 +155,7 @@ input {
   }
 
   input {
-    font-size: 15px;
+    font-size: 16px !important;
   }
 }
 
@@ -188,7 +192,7 @@ input {
 
   >h2 {
     font-family: 'Nunito', sans-serif;
-    font-size: 32px;
+    font-size: 32px !important;
     font-weight: 700;
     display: flex;
     justify-content: center;
@@ -232,14 +236,14 @@ input {
 }
 
 button {
-  width: 110px;
+  width: 105px;
   height: 32px;
   border: none;
   border-radius: 20px;
   background-color: rgba(68, 77, 242, 1);
   color: white;
   font-family: 'Nunito', sans-serif;
-  font-size: 13px;
+  font-size: 16px !important;
   cursor: pointer;
   transition:
     filter 0.3s ease-in-out,
@@ -351,12 +355,36 @@ mat-card-header {
   }
 
   button {
-    width: 120px;
-    height: 36px;
+    width: 105px;
+    height: 32px;
     font-size: 16px;
   }
 }
+/* Große Bildschirme 1200px+ - Alle Fonts 20px */
+@media (min-width: 1200px) {
+  mat-card-title {
+    font-size: 20px !important;
+  }
 
+  mat-card-subtitle {
+    font-size: 20px !important;
+  }
+
+  input {
+    font-size: 20px !important;
+  }
+
+  input::placeholder {
+    font-size: 20px !important;
+  }
+
+  .button-container > .button_1,
+  .button-container > .button_2 {
+    width: 140px;
+    height: 40px;
+    font-size: 20px !important;
+  }
+}
 @media (max-width: 480px) {
   mat-card {
     width: 95vw;
@@ -401,7 +429,7 @@ mat-card-header {
   }
 
   button {
-    width: 100px;
+    width: 105px;
     height: 32px;
     font-size: 14px;
     margin-bottom: 15px;
@@ -504,8 +532,8 @@ mat-card-header {
   }
 
   button {
-    width: 90px;
-    height: 28px;
+    width: 105px;
+    height: 32px;
     font-size: 11px;
   }
 

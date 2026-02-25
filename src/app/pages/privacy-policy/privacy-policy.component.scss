@@ -72,13 +72,13 @@
 
   h2 {
     margin: 22px 0 10px;
-    font-size: 18px;
+    font-size: 18px !important;
     font-weight: 800;
   }
 
   h3 {
     margin: 18px 0 8px;
-    font-size: 15px;
+    font-size: 16px !important;
     font-weight: 800;
   }
 
@@ -198,17 +198,17 @@
 
     h2 {
       margin: 18px 0 8px;
-      font-size: 16px;
+      font-size: 16px !important;
     }
 
     h3 {
       margin: 14px 0 6px;
-      font-size: 14px;
+      font-size: 16px !important;
     }
 
     p {
       margin: 8px 0;
-      font-size: 14px;
+      font-size: 16px !important;
       line-height: 1.55;
     }
 
@@ -217,12 +217,12 @@
 
       li {
         margin: 5px 0;
-        font-size: 14px;
+        font-size: 16px !important;
       }
     }
 
     .seal {
-      font-size: 12px;
+      font-size: 16px !important;
     }
   }
 }
@@ -249,16 +249,16 @@
 
   .content {
     h2 {
-      font-size: 15px;
+      font-size: 16px !important;
     }
 
     h3 {
-      font-size: 13px;
+      font-size: 16px !important;
     }
 
     p,
     ul li {
-      font-size: 13px;
+      font-size: 16px !important;
     }
   }
 }
