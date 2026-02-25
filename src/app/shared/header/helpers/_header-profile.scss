@@ -164,6 +164,19 @@
   transition: var(--transition15);
   border: 1.5px solid transparent;
 
+  &:disabled,
+  &.is-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &:disabled:hover,
+  &.is-disabled:hover {
+    background: inherit;
+    color: var(--surface-bg);
+    transform: none;
+  }
+
   &.outline {
     background: transparent;
     border-color: var(--primary-color);

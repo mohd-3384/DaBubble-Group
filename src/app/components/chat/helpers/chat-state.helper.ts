@@ -45,6 +45,9 @@ export class ChatStateHelper {
   // Members Panel
   showMembers = false;
 
+  // Join Channel Popup
+  showJoinChannelPopup = false;
+
   // Channel Info Modal
   channelInfoOpen = false;
   channelNameEdit = false;

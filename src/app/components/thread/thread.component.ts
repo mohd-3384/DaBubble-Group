@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, HostListener, ElementRef } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
@@ -22,7 +22,7 @@ import { ThreadEditHelper } from './helpers/thread-edit.helper';
   styleUrl: './thread.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ThreadComponent {
+export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChanges {
   /**
    * Creates an instance of ThreadComponent
    * @param host - Reference to the host element
@@ -67,6 +67,15 @@ export class ThreadComponent {
   trackReply = (_: number, r: Message) => r.id;
   trackUser = (_: number, u: MentionUser) => u.id;
 
+  @ViewChild('messagesScroll') set messagesScroll(el: ElementRef<HTMLElement> | undefined) {
+    this.messagesScrollEl = el?.nativeElement;
+    if (this.messagesScrollEl && this.pendingScroll) this.scheduleAutoScroll();
+  }
+  private messagesScrollEl?: HTMLElement;
+  private shouldAutoScroll = true;
+  private pendingScroll = false;
+  private lastReplyCount = 0;
+
   /**
    * Handles document click events to close open popovers
    * @param ev - The mouse event
@@ -77,6 +86,51 @@ export class ThreadComponent {
     if (!target) return;
     if (this.host.nativeElement.contains(target)) return;
     this.ui.closePopovers();
+  }
+
+  ngAfterViewInit(): void {
+    this.pendingScroll = true;
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.pendingScroll) return;
+    this.pendingScroll = false;
+    this.tryAutoScroll();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['rootMessage']) {
+      this.pendingScroll = true;
+    }
+
+    if (changes['replies']) {
+      const nextCount = this.replies?.length ?? 0;
+      if (nextCount !== this.lastReplyCount) {
+        this.lastReplyCount = nextCount;
+        this.pendingScroll = true;
+      }
+    }
+  }
+
+  onMessagesScroll(): void {
+    const el = this.messagesScrollEl;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.shouldAutoScroll = distance < 80;
+  }
+
+  private tryAutoScroll(): void {
+    if (!this.shouldAutoScroll) return;
+    this.scheduleAutoScroll();
+  }
+
+  private scheduleAutoScroll(): void {
+    if (!this.shouldAutoScroll) return;
+    const el = this.messagesScrollEl;
+    if (!el || typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
   }
 
   /**
@@ -117,6 +171,9 @@ export class ThreadComponent {
     const text = this.composer.getTrimmedDraft();
     if (!text) return;
 
+    this.shouldAutoScroll = true;
+    this.pendingScroll = true;
+
     this.send.emit(text);
     this.composer.clearDraft();
     this.ui.closePopovers();
@@ -146,6 +203,19 @@ export class ThreadComponent {
    */
   startEdit(m: Message) {
     this.message.startEdit(m, this.currentUserId);
+  }
+
+  /**
+   * Deletes a message
+   * @param m - The message to delete
+   */
+  async deleteMessage(m: Message) {
+    if (!this.isOwnMessage(m)) return;
+    const isRoot = m.id === this.rootMessage.id;
+    await this.threadActions.deleteMessage(m.id, this.rootMessage.id, this.channelId, this.isDM, isRoot);
+    this.ui.closePopovers();
+    this.ui.cancelEdit(m.id);
+    if (isRoot) this.close.emit();
   }
 
   /**

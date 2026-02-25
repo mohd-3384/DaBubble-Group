@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, doc, updateDoc, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, doc, updateDoc, serverTimestamp, deleteDoc } from '@angular/fire/firestore';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Vm } from '../../../interfaces/allInterfaces.interface';
 import { AuthReadyService } from '../../../services/auth-ready.service';
@@ -68,6 +68,37 @@ export class MessageEditHelper {
     }
 
     /**
+     * Deletes a message
+     * @param message - Message to delete
+     * @param vm - View model with context
+     * @param currentUserId - Current user ID
+     */
+    async deleteMessage(
+        message: any,
+        vm: Vm,
+        currentUserId: string | null
+    ): Promise<boolean> {
+        if (!isOwnMessage(message, currentUserId)) return false;
+
+        const id = this.route.snapshot.paramMap.get('id')!;
+        const authUser = await this.authReady.requireUser();
+
+        try {
+            if (vm.kind === 'dm') {
+                await this.deleteDMMessage(id, message.id, authUser.uid);
+            } else {
+                await this.deleteChannelMessage(id, message.id);
+            }
+
+            this.thread.close();
+            return true;
+        } catch (err) {
+            console.error('[Chat] Fehler beim Loeschen der Message:', err);
+            return false;
+        }
+    }
+
+    /**
      * Updates a channel message
      * @param channelId - Channel ID
      * @param messageId - Message ID
@@ -104,5 +135,27 @@ export class MessageEditHelper {
             text,
             editedAt: serverTimestamp(),
         });
+    }
+
+    /**
+     * Deletes a channel message
+     * @param channelId - Channel ID
+     * @param messageId - Message ID
+     */
+    private async deleteChannelMessage(channelId: string, messageId: string): Promise<void> {
+        const ref = doc(this.fs, `channels/${channelId}/messages/${messageId}`);
+        await deleteDoc(ref);
+    }
+
+    /**
+     * Deletes a DM message
+     * @param otherUserId - Other user ID
+     * @param messageId - Message ID
+     * @param meUid - Current user ID
+     */
+    private async deleteDMMessage(otherUserId: string, messageId: string, meUid: string): Promise<void> {
+        const convId = makeConvId(meUid, otherUserId);
+        const ref = doc(this.fs, `conversations/${convId}/messages/${messageId}`);
+        await deleteDoc(ref);
     }
 }

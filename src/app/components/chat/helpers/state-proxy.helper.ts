@@ -13,7 +13,8 @@ export function createStateProxies(state: ChatStateHelper, target: any): void {
         'channelInfoOpen', 'channelNameEdit', 'channelDescEdit', 'editChannelName',
         'editChannelDesc', 'channelTopic', 'channelNameError', 'membersModalOpen', 'membersModalPos',
         'addMembersOpen', 'addMembersModalPos', 'addMemberInput', 'showAddMemberSuggest',
-        'addMemberSelected', 'userProfileOpen', 'userProfileId', 'userProfile', 'hoveredReaction'
+        'addMemberSelected', 'userProfileOpen', 'userProfileId', 'userProfile', 'hoveredReaction',
+        'showJoinChannelPopup'
     ];
 
     props.forEach(prop => {

@@ -97,8 +97,10 @@
         </div>
 
         <!-- SEND (Compose) -->
-        <span class="send-btn" role="button" aria-label="Senden" [class.send-btn--disabled]="!composeTarget"
-          (click)="composeTarget && sendFromCompose()"></span>
+        <span class="send-btn" role="button" aria-label="Senden"
+          [class.send-btn--disabled]="!composeTarget || !(draft || '').trim()"
+          [attr.aria-disabled]="!composeTarget || !(draft || '').trim()"
+          (click)="composeTarget && (draft || '').trim() && sendFromCompose()"></span>
       </div>
     </div>
 
@@ -121,7 +123,7 @@
     <section class="chat-body">
 
       <!-- SCROLLBEREICH NUR FÜR NACHRICHTEN -->
-      <div class="messages-scroll" (scroll)="closeAllPopovers()">
+      <div #messagesScroll class="messages-scroll" (scroll)="onMessagesScroll()">
 
         <!-- CHANNEL leer -->
         <ng-container *ngIf="vm.kind === 'channel' && (isEmpty$ | async); else hasMessages">
@@ -183,6 +185,9 @@
                   (click)="$event.stopPropagation()">
                   <button type="button" class="msg-more-item" (click)="startEdit(m)">
                     Nachricht bearbeiten
+                  </button>
+                  <button type="button" class="msg-more-item" (click)="deleteMessage(m, vm)">
+                    Nachricht löschen
                   </button>
                 </div>
 
@@ -299,8 +304,13 @@
           </div>
 
           <!-- SEND normal -->
-          <span class="send-btn" role="button" aria-label="Senden" (click)="send(vm)"></span>
+          <span class="send-btn" role="button" aria-label="Senden" [class.send-btn--disabled]="!(draft || '').trim()"
+            [attr.aria-disabled]="!(draft || '').trim()" (click)="(draft || '').trim() && send(vm)"></span>
         </div>
+      </div>
+
+      <div class="chat-join-snackbar" *ngIf="showJoinChannelPopup" aria-live="polite">
+        Du musst dem Channel beitreten, bevor du Nachrichten senden kannst.
       </div>
 
       <!-- Backdrop für Popovers -->

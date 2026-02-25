@@ -10,7 +10,7 @@ import {
   collectionData,
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { UserDoc } from '../interfaces/allInterfaces.interface';
 
 /**
@@ -101,5 +101,38 @@ export class UserService {
       online,
       lastSeen: serverTimestamp(),
     });
+  }
+
+  /**
+   * Checks if a user name already exists (case-insensitive)
+   * @param name - Name to check
+   * @param excludeId - Optional user ID to exclude
+   * @returns True if a duplicate exists
+   */
+  async isUserNameTaken(name: string, excludeId?: string): Promise<boolean> {
+    const normalized = this.normalizeName(name);
+    if (!normalized) return false;
+    try {
+      const ref = collection(this.fs, 'users');
+      const list = await firstValueFrom(
+        collectionData(ref, { idField: 'id' }) as Observable<UserDoc[]>
+      );
+      return list.some(
+        (u) =>
+          this.normalizeName(String(u.name ?? '')) === normalized &&
+          (!excludeId || u.id !== excludeId)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Normalizes user names for comparison
+   * @param name - User name
+   * @returns Normalized name
+   */
+  private normalizeName(name: string): string {
+    return String(name || '').trim().toLowerCase();
   }
 }

@@ -9,6 +9,7 @@ import {
   collection,
   addDoc,
   collectionData,
+  getDoc,
 } from '@angular/fire/firestore';
 import { Observable, map, firstValueFrom } from 'rxjs';
 import { ChannelDoc } from '../interfaces/allInterfaces.interface';
@@ -104,6 +105,22 @@ export class ChannelService {
         tx.update(chRef, { memberCount: increment(-1) });
       }
     });
+  }
+
+  /**
+   * Checks whether the current user is a member of a channel
+   * @param channelId - ID of the channel
+   * @returns True if member document exists
+   */
+  async isCurrentUserMember(channelId: string): Promise<boolean> {
+    try {
+      const user = await this.authReady.requireUser();
+      const memRef = doc(this.fs, `channels/${channelId}/members/${user.uid}`);
+      const memSnap = await getDoc(memRef);
+      return memSnap.exists();
+    } catch {
+      return false;
+    }
   }
 
   /**

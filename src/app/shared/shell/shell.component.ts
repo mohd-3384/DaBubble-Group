@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Input } from '@angular/core';
+import { Component, computed, effect, inject, Input, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, ActivatedRoute, ParamMap, Router, NavigationStart, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
@@ -9,10 +9,12 @@ import { ChatRefreshService } from '../../services/chat-refresh.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { MentionUser, UserDoc } from '../../interfaces/allInterfaces.interface';
 import { PresenceService } from '../../services/presence.service';
+import { ChannelService } from '../../services/channel.service';
+import { ChannelJoinNoticeService } from '../../services/channel-join-notice.service';
 import { ShellThreadHelper } from './helpers/shell-thread.helper';
 import { ShellNavigationHelper } from './helpers/shell-navigation.helper';
 import { ShellUserHelper } from './helpers/shell-user.helper';
@@ -35,7 +37,7 @@ import { ShellUserHelper } from './helpers/shell-user.helper';
     ]),
   ],
 })
-export class ShellComponent {
+export class ShellComponent implements OnDestroy {
   private thread = inject(ThreadService);
   private chatRefresh = inject(ChatRefreshService);
   vm = computed(() => this.thread.vm());
@@ -44,6 +46,8 @@ export class ShellComponent {
   private route = inject(ActivatedRoute);
   private auth = inject(Auth);
   private presence = inject(PresenceService);
+  private channelService = inject(ChannelService);
+  private joinNotice = inject(ChannelJoinNoticeService);
   private threadHelper = inject(ShellThreadHelper);
   private navHelper = inject(ShellNavigationHelper);
   private userHelper = inject(ShellUserHelper);
@@ -106,6 +110,14 @@ export class ShellComponent {
     this.initializeRouterSubscription();
     this.initializeServices();
     this.initializeSubscriptions();
+    this.initializeJoinNotice();
+  }
+
+  ngOnDestroy(): void {
+    this.joinNoticeSub?.unsubscribe();
+    if (this.joinSnackbarTimer) {
+      clearTimeout(this.joinSnackbarTimer);
+    }
   }
 
   /**
@@ -144,6 +156,18 @@ export class ShellComponent {
     this.userHelper.getCurrentUserStream().subscribe(u => (this.currentUser = u));
   }
 
+  private initializeJoinNotice(): void {
+    this.joinNoticeSub = this.joinNotice.notice$.subscribe(() => {
+      this.showJoinSnackbar = true;
+      if (this.joinSnackbarTimer) {
+        clearTimeout(this.joinSnackbarTimer);
+      }
+      this.joinSnackbarTimer = setTimeout(() => {
+        this.showJoinSnackbar = false;
+      }, 2600);
+    });
+  }
+
   /**
    * Handles router navigation events
    * @param e - Navigation event (NavigationStart or NavigationEnd)
@@ -155,6 +179,9 @@ export class ShellComponent {
 
   workspaceCollapsed = false;
   shellThreadOpen = false;
+  showJoinSnackbar = false;
+  private joinNoticeSub?: Subscription;
+  private joinSnackbarTimer?: ReturnType<typeof setTimeout>;
 
   /**
    * Toggles the workspace sidebar collapsed state.
@@ -199,6 +226,13 @@ export class ShellComponent {
     const isDM = vm.isDM ?? false;
     const authUser = this.auth.currentUser;
     if (!this.threadHelper.validateAuthUser(authUser)) return;
+    if (!isDM) {
+      const isMember = await this.channelService.isCurrentUserMember(channelId!);
+      if (!isMember) {
+        this.joinNotice.trigger();
+        return;
+      }
+    }
     const authorData = this.threadHelper.getAuthorData(authUser, this.currentUser);
     await this.threadHelper.saveReply(msg, channelId!, messageId, isDM, authorData);
   }
