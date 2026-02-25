@@ -11,7 +11,7 @@
 
 <!-- BODY -->
 <section class="thread-body">
-  <div class="messages-scroll">
+  <div #messagesScroll class="messages-scroll" (scroll)="onMessagesScroll()">
     <!-- ROOT -->
     <div class="message-row root" *ngIf="rootMessage as rm" [class.own]="isOwnMessage(rm)"
       [class.is-editing]="ui.editingMessageId === rm.id" [class.is-active]="ui.isRowActive(rm.id)"
@@ -40,6 +40,9 @@
           (click)="$event.stopPropagation()">
           <button type="button" class="msg-more-item" (click)="startEdit(rm)">
             Nachricht bearbeiten
+          </button>
+          <button type="button" class="msg-more-item" (click)="deleteMessage(rm)">
+            Nachricht löschen
           </button>
         </div>
 
@@ -156,6 +159,9 @@
             (click)="$event.stopPropagation()">
             <button type="button" class="msg-more-item" (click)="startEdit(r)">
               Nachricht bearbeiten
+            </button>
+            <button type="button" class="msg-more-item" (click)="deleteMessage(r)">
+              Nachricht löschen
             </button>
           </div>
 
@@ -281,7 +287,10 @@
         </span>
       </div>
 
-      <span class="send-btn" role="button" aria-label="Senden" (click)="onSendClick($event)"></span>
+      <span class="send-btn" role="button" aria-label="Senden"
+        [class.send-btn--disabled]="!(composer.draft || '').trim()"
+        [attr.aria-disabled]="!(composer.draft || '').trim()"
+        (click)="(composer.draft || '').trim() && onSendClick($event)"></span>
     </div>
   </div>
 

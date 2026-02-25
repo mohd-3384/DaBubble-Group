@@ -103,3 +103,21 @@ $muted: #6c7280;
     background: var(--accent-color);
     margin: 6px 0 8px;
 }
+
+.chat-join-snackbar {
+    position: fixed;
+    left: 50%;
+    bottom: 96px;
+    transform: translateX(-50%);
+    max-width: min(560px, calc(100vw - 32px));
+    padding: 12px 16px;
+    background: var(--primary-color);
+    color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1.4;
+    z-index: 1000;
+    text-align: center;
+    pointer-events: none;
+}

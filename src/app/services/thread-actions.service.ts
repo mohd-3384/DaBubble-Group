@@ -1,5 +1,5 @@
 import { Injectable, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
-import { deleteField, doc, Firestore, increment, runTransaction, updateDoc } from '@angular/fire/firestore';
+import { deleteDoc, deleteField, doc, Firestore, increment, runTransaction, updateDoc } from '@angular/fire/firestore';
 import { Message, ReactionVm, MentionUser } from '../interfaces/allInterfaces.interface';
 import { ChatRefreshService } from './chat-refresh.service';
 
@@ -36,6 +36,27 @@ export class ThreadActionsService {
       editedAt: new Date(),
     });
 
+    this.chatRefresh.refreshReactions();
+  }
+
+  /**
+   * Deletes a message (root or reply)
+   * @param messageId - The ID of the message to delete
+   * @param rootMessageId - The ID of the root message
+   * @param channelId - The channel or conversation ID
+   * @param isDM - Whether this is a direct message
+   * @param isRoot - Whether this is the root message
+   */
+  async deleteMessage(
+    messageId: string,
+    rootMessageId: string,
+    channelId: string,
+    isDM: boolean,
+    isRoot: boolean
+  ): Promise<void> {
+    const ref = this.getMessageRef(messageId, rootMessageId, channelId, isDM, isRoot);
+
+    await deleteDoc(ref);
     this.chatRefresh.refreshReactions();
   }
 

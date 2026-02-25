@@ -109,3 +109,13 @@
   box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.04);
   z-index: 1600;
 }
+
+.send-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+
+  &:hover {
+    background-image: url('/public/images/send.svg');
+    transform: none;
+  }
+}

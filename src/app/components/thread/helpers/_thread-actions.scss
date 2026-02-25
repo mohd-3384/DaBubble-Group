@@ -100,7 +100,8 @@
   border-top-left-radius: 0;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
   padding: 6px;
-  min-width: 240px;
+  max-width: 200px;
+  min-width: 180px;
   margin: 0;
 }
 
@@ -112,7 +113,7 @@
   cursor: pointer;
   padding: 12px 14px;
   border-radius: 16px;
-  text-align: center;
+  text-align: left;
   transition: var(--transition15);
 
   &:hover {

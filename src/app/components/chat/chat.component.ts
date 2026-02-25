@@ -1,11 +1,12 @@
-import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { ChannelDoc, DayGroup, MemberVM, MessageVm, SuggestItem, UserDoc, Vm, UserMini, } from '../../interfaces/allInterfaces.interface';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { ChannelService } from '../../services/channel.service';
+import { ChannelJoinNoticeService } from '../../services/channel-join-notice.service';
 import { MessageSendHelper } from './helpers/message-send.helper';
 import { MessageEditHelper } from './helpers/message-edit.helper';
 import { ReactionHelper } from './helpers/reaction.helper';
@@ -47,7 +48,7 @@ import { ViewModelHelper } from './helpers/view-model.helper';
   providers: [ChatStateHelper, ChatStreamsHelper, ChatRefsHelper, MessageDataHelper, UserDataHelper, MemberDataHelper, ChannelDataHelper, MessageGroupHelper, SuggestHelper, ViewModelHelper, MessageSendHelper, MessageEditHelper, ReactionHelper, EmojiHelper, EmojiPopoverHelper, ModalPositionHelper, ChannelModalHelper, MembersModalHelper, UserProfileHelper, EditMenuHelper, UiStateHelper, ComposeHelper, MentionHelper, ThreadHelper, ViewUtilsHelper, MessageCheckHelper, ModalCoordinatorHelper, EmojiCoordinatorHelper, ReactionCoordinatorHelper,
   ],
 })
-export class ChatComponent {
+export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private chanSvc = inject(ChannelService);
@@ -56,6 +57,7 @@ export class ChatComponent {
   private refs = inject(ChatRefsHelper);
   private messageSend = inject(MessageSendHelper);
   private messageEdit = inject(MessageEditHelper);
+  private joinNotice = inject(ChannelJoinNoticeService);
   private reactionCoordinator = inject(ReactionCoordinatorHelper);
   private modalCoordinator = inject(ModalCoordinatorHelper);
   private emojiCoordinator = inject(EmojiCoordinatorHelper);
@@ -72,6 +74,10 @@ export class ChatComponent {
   @ViewChild('membersBtn') set membersBtn(el: ElementRef<HTMLElement>) { this.refs.setMembersBtn(el); }
   @ViewChild('addMembersBtn') set addMembersBtn(el: ElementRef<HTMLElement>) { this.refs.setAddMembersBtn(el); }
   @ViewChild('msgEmojiPopover') set msgEmojiPopover(el: ElementRef<HTMLElement>) { this.refs.setMsgEmojiPopover(el); }
+  @ViewChild('messagesScroll') set messagesScroll(el: ElementRef<HTMLElement> | undefined) {
+    this.messagesScrollEl = el?.nativeElement;
+    if (this.messagesScrollEl && this.pendingScroll) this.scheduleAutoScroll();
+  }
 
   private streamsData!: ReturnType<typeof this.streams.initializeStreams>;
   vm$!: Observable<Vm>;
@@ -103,8 +109,14 @@ export class ChatComponent {
   membersModalOpen!: boolean; membersModalPos!: any; addMembersOpen!: boolean;
   addMembersModalPos!: any; addMemberInput!: string; showAddMemberSuggest!: boolean;
   addMemberSelected!: any; userProfileOpen!: boolean; userProfileId!: string | null; userProfile!: any;
-  hoveredReaction!: any;
+  hoveredReaction!: any; showJoinChannelPopup!: boolean;
   private lastConversationId: string | null = null;
+  private shouldAutoScroll = true;
+  private pendingScroll = false;
+  private messagesSub?: Subscription;
+  private joinNoticeSub?: Subscription;
+  private joinPopupTimer?: ReturnType<typeof setTimeout>;
+  private messagesScrollEl?: HTMLElement;
 
   constructor() {
     createStateProxies(this.state, this);
@@ -124,6 +136,71 @@ export class ChatComponent {
     this.streams.initializeCurrentUser();
     this.streams.initializeThreadFromRoute(this.vm$);
     this.bindComposerFocusOnChannelSwitch();
+    this.bindAutoScroll();
+    this.bindJoinNotice();
+  }
+
+  ngAfterViewInit(): void {
+    this.pendingScroll = true;
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.pendingScroll) return;
+    this.pendingScroll = false;
+    this.tryAutoScroll();
+  }
+
+  ngOnDestroy(): void {
+    this.messagesSub?.unsubscribe();
+    this.joinNoticeSub?.unsubscribe();
+    if (this.joinPopupTimer) {
+      clearTimeout(this.joinPopupTimer);
+    }
+  }
+
+  private bindJoinNotice(): void {
+    this.joinNoticeSub = this.joinNotice.notice$.subscribe(() => {
+      this.triggerJoinChannelNotice();
+    });
+  }
+
+  private triggerJoinChannelNotice(): void {
+    this.state.showJoinChannelPopup = true;
+    if (this.joinPopupTimer) {
+      clearTimeout(this.joinPopupTimer);
+    }
+    this.joinPopupTimer = setTimeout(() => {
+      this.state.showJoinChannelPopup = false;
+    }, 2400);
+  }
+
+  private bindAutoScroll(): void {
+    this.messagesSub = this.messages$.subscribe(() => {
+      this.pendingScroll = true;
+      this.scheduleAutoScroll();
+    });
+  }
+
+  onMessagesScroll(): void {
+    this.closeAllPopovers();
+    const el = this.messagesScrollEl;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.shouldAutoScroll = distance < 80;
+  }
+
+  private tryAutoScroll(): void {
+    if (!this.shouldAutoScroll) return;
+    this.scheduleAutoScroll();
+  }
+
+  private scheduleAutoScroll(): void {
+    if (!this.shouldAutoScroll) return;
+    const el = this.messagesScrollEl;
+    if (!el || typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
   }
 
   /**
@@ -157,6 +234,18 @@ export class ChatComponent {
    * @param vm - View model containing conversation details
    */
   async send(vm: Vm): Promise<void> {
+    if (vm.kind === 'channel') {
+      const channelId = this.route.snapshot.paramMap.get('id');
+      if (channelId) {
+        const isMember = await this.chanSvc.isCurrentUserMember(channelId);
+        if (!isMember) {
+          this.triggerJoinChannelNotice();
+          return;
+        }
+      }
+    }
+    this.shouldAutoScroll = true;
+    this.pendingScroll = true;
     await this.messageSend.send(vm, this.state.draft, this.state.currentUser);
     this.state.draft = '';
     this.state.showEmoji = false;
@@ -166,6 +255,8 @@ export class ChatComponent {
    * Sends a message from the compose mode (new message)
    */
   async sendFromCompose(): Promise<void> {
+    this.shouldAutoScroll = true;
+    this.pendingScroll = true;
     await this.messageSend.sendFromCompose(this.state.composeTarget, this.state.draft, this.state.currentUser);
     this.state.draft = '';
     this.state.to = '';
@@ -203,6 +294,18 @@ export class ChatComponent {
   async saveEdit(m: any, vm: Vm): Promise<void> {
     await this.messageEdit.saveEdit(m, this.state.editDraft, vm, this.state.currentUser?.id ?? null);
     this.cancelEdit();
+  }
+
+  /**
+   * Deletes a message
+   * @param m - Message to delete
+   * @param vm - View model containing conversation details
+   */
+  async deleteMessage(m: any, vm: Vm): Promise<void> {
+    const ok = await this.messageEdit.deleteMessage(m, vm, this.state.currentUser?.id ?? null);
+    if (!ok) return;
+    if (this.state.editingMessageId === m.id) this.cancelEdit();
+    this.closeAllPopovers();
   }
 
   /**

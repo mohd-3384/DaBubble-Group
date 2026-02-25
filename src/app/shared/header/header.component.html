@@ -72,6 +72,16 @@
         <span>Profil</span>
       </button>
 
+      <button type="button" class="menu-btn menu-btn--imprint" (click)="goToImprint()">
+        <span class="menu-ic" aria-hidden="true"></span>
+        <span>Impressum</span>
+      </button>
+
+      <button type="button" class="menu-btn menu-btn--privacy" (click)="goToPrivacyPolicy()">
+        <span class="menu-ic" aria-hidden="true"></span>
+        <span>Datenschutz</span>
+      </button>
+
       <button type="button" class="menu-btn menu-btn--logout" (click)="logout()">
         <span class="menu-ic" aria-hidden="true"></span>
         <span>Log out</span>
@@ -157,11 +167,12 @@
             </span>
 
             <input class="profile-edit__input" type="text" [value]="editName"
-              (input)="editName = $any($event.target).value" placeholder=" " />
+              (input)="onProfileNameInput($any($event.target).value)" placeholder=" " />
 
-            @if ((editName || '').trim().length > 0 && (editName || '').trim().length < 3) { <span
-              class="profile-edit__error">Mindestens 3 Zeichen erforderlich.</span>
-              }
+            @if ((editName || '').trim().length > 0 && !isValidProfileName(editName)) { <span
+              class="profile-edit__error">Mindestens 3 Buchstaben erforderlich.</span>
+            }
+            @if (profileNameError) { <span class="profile-edit__error">{{ profileNameError }}</span> }
           </label>
 
           <div class="profile-edit__actions">
@@ -170,7 +181,8 @@
             </button>
 
             <button type="button" class="profile-edit__btn primary" (click)="saveProfile(user)"
-              [disabled]="(editName || '').trim().length < 3">
+              [disabled]="!isValidProfileName(editName)" [class.is-disabled]="!isValidProfileName(editName)"
+              [attr.aria-disabled]="!isValidProfileName(editName)">
               Speichern
             </button>
           </div>

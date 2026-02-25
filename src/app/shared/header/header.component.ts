@@ -7,6 +7,7 @@ import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap, startWith, distinctUntilChanged, debounceTime } from 'rxjs/operators';
 import { catchError, shareReplay } from 'rxjs/operators';
 import { HeaderUser, ProfileView, SearchResult } from '../../interfaces/allInterfaces.interface';
+import { UserService } from '../../services/user.service';
 import { HeaderSearchService } from '../../services/header-search.service';
 import { HeaderProfileHelper } from './helpers/header-profile.helper';
 import { HeaderSearchHelper } from './helpers/header-search.helper';
@@ -31,6 +32,7 @@ export class HeaderComponent {
   private searchHelper = inject(HeaderSearchHelper);
   private userHelper = inject(HeaderUserHelper);
   private navHelper = inject(HeaderNavigationHelper);
+  private userService = inject(UserService);
 
   @ViewChild('searchInput', { static: false })
   searchInput?: ElementRef<HTMLInputElement>;
@@ -95,6 +97,7 @@ export class HeaderComponent {
   profileModalOpen = false;
   profileView: ProfileView = 'view';
   editName = '';
+  profileNameError = '';
   selectedAvatar = '';
 
   availableAvatars = [
@@ -144,6 +147,7 @@ export class HeaderComponent {
   openEditProfile(user: HeaderUser) {
     this.profileView = 'edit';
     this.editName = user.name ?? '';
+    this.profileNameError = '';
   }
 
   /**
@@ -194,16 +198,41 @@ export class HeaderComponent {
    */
   async saveProfile(user: HeaderUser) {
     const name = (this.editName || '').trim();
-    if (!name || name.length < 3) return;
+    if (!this.isValidProfileName(name)) return;
     const authUser = this.auth.currentUser;
     if (!authUser) return;
+
+    const duplicate = await this.userService.isUserNameTaken(name, authUser.uid);
+    if (duplicate) {
+      this.profileNameError = 'Name existiert bereits.';
+      return;
+    }
 
     try {
       await this.profileHelper.updateUserName(authUser.uid, name);
       this.profileView = 'view';
+      this.profileNameError = '';
     } catch (e) {
       // Error already logged in helper
     }
+  }
+
+  /**
+   * Ensures the profile name contains at least three letters.
+   */
+  isValidProfileName(name: string): boolean {
+    const trimmed = (name || '').trim();
+    if (!trimmed) return false;
+    const letters = trimmed.match(/\p{L}/gu) ?? [];
+    return letters.length >= 3;
+  }
+
+  /**
+   * Clears duplicate name error on input
+   */
+  onProfileNameInput(value: string) {
+    this.editName = value;
+    this.profileNameError = '';
   }
 
   /**
@@ -222,6 +251,24 @@ export class HeaderComponent {
     this.profileOpen = false;
     this.profileModalOpen = false;
     this.router.navigate(['/profile']);
+  }
+
+  /**
+   * Navigates to the imprint page and closes the profile menu.
+   */
+  goToImprint() {
+    this.profileOpen = false;
+    this.profileModalOpen = false;
+    this.router.navigate(['/imprint']);
+  }
+
+  /**
+   * Navigates to the privacy policy page and closes the profile menu.
+   */
+  goToPrivacyPolicy() {
+    this.profileOpen = false;
+    this.profileModalOpen = false;
+    this.router.navigate(['/privacy-policy']);
   }
 
   /**
