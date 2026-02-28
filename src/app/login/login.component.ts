@@ -41,6 +41,8 @@ import { EnterNewPasswordComponent } from './enter-new-password/enter-new-passwo
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit, AfterViewInit {
+  private static splashAlreadyShown = false;
+
   showSplash = signal(this.shouldShowSplash());
   showLoginCard = signal(true);
   showRegisterCard = signal(false);
@@ -79,14 +81,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   /** Returns true if the splash should be shown (first visit or page reload). */
   private shouldShowSplash(): boolean {
-    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    const isReload = navEntry?.type === 'reload';
-    const isFirstVisit = !sessionStorage.getItem('splashShown');
-    if (isReload || isFirstVisit) {
-      sessionStorage.setItem('splashShown', '1');
-      return true;
-    }
-    return false;
+    if (LoginComponent.splashAlreadyShown) return false;
+    LoginComponent.splashAlreadyShown = true;
+    return true;
   }
 
   /** Resolves once both splash images are loaded (or immediately if already cached). */

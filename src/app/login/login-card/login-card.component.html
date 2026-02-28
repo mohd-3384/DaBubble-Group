@@ -25,8 +25,8 @@
         <!-- Passwort -->
         <div class="span-input">
           <div class="password-input">
-            <img src="./public/images/password-icon.svg" alt="password icon">
-            <input type="password" name="password" [(ngModel)]="password" placeholder="Passwort" required minlength="6">
+            <img src="./public/images/password-icon.svg" alt="password icon" class="password-toggle" (click)="togglePassword()">
+            <input [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password" placeholder="Passwort" required minlength="6">
           </div>
           <span class="wrong-password" *ngIf="password.length > 0 && password.length < 6">
             Das Passwort muss mindestens 6 Zeichen lang sein.

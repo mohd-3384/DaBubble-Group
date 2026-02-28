@@ -352,7 +352,7 @@ header {
 
 
 footer {
-    margin-top: 40px;
+    margin-bottom: 48px;
     padding: 10px;
     display: flex;
     justify-content: center;
@@ -415,6 +415,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex: 1;
 
     app-login-card,
     app-register-card,
@@ -484,18 +485,32 @@ main {
 /* iPhone SE und kleine Handys (max-width: 375px) */
 @media (max-width: 375px) {
     .right-header-container {
-        bottom: 15px;
+        bottom: 0;
     }
 
     footer {
-        bottom: -15px;
+        bottom: -5px;
+    }
+}
+
+/* 375px Breite aber grosse Hoehe (z.B. iPad mini hochkant) */
+@media (max-width: 375px) and (min-height: 1000px) {
+    .right-header-container {
+        bottom: 130px;
     }
 }
 
 /* iPhone XR und ähnliche Modelle (376px - 414px) */
 @media (min-width: 376px) and (max-width: 414px) {
     .right-header-container {
-        bottom: 140px;
+        bottom: 90px;
+    }
+}
+
+/* iPhone 14 Pro Max und ähnliche (415px - 430px) */
+@media (min-width: 415px) and (max-width: 430px) {
+    .right-header-container {
+        bottom: 100px;
     }
 }
 

@@ -249,6 +249,13 @@ form {
   margin-top: 16px;
 }
 
+.password-toggle {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  &:hover { opacity: 1; }
+}
+
 .name-input,
 .password-input,
 .email-input {

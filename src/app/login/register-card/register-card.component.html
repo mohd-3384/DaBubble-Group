@@ -45,19 +45,16 @@
         </div>
         <div class="span-input">
           <div class="password-input">
-            <img src="./public/images/password-icon.svg" alt="password icon">
-            <input type="password" placeholder="Passwort" formControlName="password">
+            <img src="./public/images/password-icon.svg" alt="password icon" class="password-toggle" (click)="togglePassword()">
+            <input [type]="showPassword() ? 'text' : 'password'" placeholder="Passwort" formControlName="password">
           </div>
-          @if (form.get('password')?.touched && form.get('password')?.invalid) {
+          @if (showPwErrors) {
           <span class="wrong-password">
-            @if (form.get('password')?.errors?.['required']) {
-            Bitte geben Sie ein Passwort ein.
-            }
-            @else if (form.get('password')?.errors?.['minlength']) {
-            Das Passwort muss mindestens 6 Zeichen lang sein.
-            }
-            @else if (form.get('password')?.errors?.['pattern']) {
-            Das Passwort muss mindestens einen Großbuchstaben und ein Sonderzeichen enthalten.
+            @if (!pwValue) { Bitte geben Sie ein Passwort ein. }
+            @else {
+              @if (pwTooShort) { Mindestens 6 Zeichen. }
+              @if (pwMissingUpper) { Mindestens ein Großbuchstabe. }
+              @if (pwMissingSpecial) { Mindestens ein Sonderzeichen (!&#64;#$&*). }
             }
           </span>}
         </div>

@@ -1,13 +1,42 @@
 /* ===== Base ===== */
 .legal-logo {
   position: fixed;
-  top: 28px;
-  left: 28px;
-  height: 66px;
-  width: auto;
+  top: 16px;
+  left: 16px;
   z-index: 50;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
   user-select: none;
   pointer-events: none;
+
+  .legal-logo-img {
+    width: 70px;
+    height: 70px;
+  }
+
+  .legal-logo-name {
+    height: 16px;
+    width: auto;
+  }
+}
+
+/* Align with centered header-content (max-width: 1440px) */
+@media (min-width: 1440px) {
+  .legal-logo {
+    left: calc((100vw - 1440px) / 2 + 16px);
+  }
+}
+
+@media (max-width: 768px) {
+  .legal-logo {
+    top: 12px;
+    left: 12px;
+    gap: 4px;
+    .legal-logo-img { width: 50px; height: 50px; }
+    .legal-logo-name { height: 12px; }
+  }
 }
 
 .imprint-page {

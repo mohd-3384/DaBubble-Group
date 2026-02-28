@@ -42,6 +42,10 @@ export class LoginCardComponent {
   authErrorCode: string | null = null;
   googleErrorMessage = '';
   loginErrorMessage = '';
+  showPassword = false;
+
+  /** Toggles password field visibility. */
+  togglePassword() { this.showPassword = !this.showPassword; }
 
   /** Emits the forgotPassword event to display password reset form. */
   onForgotPasswordClick() {

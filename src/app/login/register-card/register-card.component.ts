@@ -41,6 +41,17 @@ export class RegisterCardComponent {
 
   form: FormGroup;
   registrationError = signal<string>('');
+  showPassword = signal(false);
+
+  /** Toggles password field visibility. */
+  togglePassword() { this.showPassword.update(v => !v); }
+
+  get pwValue(): string { return this.form.get('password')?.value ?? ''; }
+  get pwTooShort(): boolean { return this.pwValue.length < 6; }
+  get pwMissingUpper(): boolean { return !/[A-Z]/.test(this.pwValue); }
+  get pwMissingSpecial(): boolean { return !/[!@#$&*]/.test(this.pwValue); }
+  get pwTouched(): boolean { return !!this.form.get('password')?.touched; }
+  get showPwErrors(): boolean { return this.pwTouched && (this.pwTooShort || this.pwMissingUpper || this.pwMissingSpecial || !this.pwValue); }
 
   constructor() {
     this.form = this.fb.group({
