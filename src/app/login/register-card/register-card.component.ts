@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
+import { Component, Output, EventEmitter, inject, signal, OnDestroy } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -6,12 +6,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule, FormBuilder, ReactiveFormsModule, Validators, FormGroup } from '@angular/forms';
+import { FormsModule, FormBuilder, ReactiveFormsModule, Validators, FormGroup, AbstractControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
-import { Auth, createUserWithEmailAndPassword, updateProfile } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, updateProfile, deleteUser } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import { UserService } from '../../services/user.service';
+import { Subject, from, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-register-card',
@@ -31,17 +34,20 @@ import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore
   styleUrls: ['./register-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegisterCardComponent {
+export class RegisterCardComponent implements OnDestroy {
   @Output() nextstep = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
 
   private auth = inject(Auth);
   private fb = inject(FormBuilder);
   private firestore = inject(Firestore);
+  private userSvc = inject(UserService);
 
   form: FormGroup;
   registrationError = signal<string>('');
   showPassword = signal(false);
+  nameStatus = signal<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  private destroy$ = new Subject<void>();
 
   /** Toggles password field visibility. */
   togglePassword() { this.showPassword.update(v => !v); }
@@ -60,6 +66,12 @@ export class RegisterCardComponent {
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern('^(?=.*[A-Z])(?=.*[!@#$&*]).{6,}$')]],
       terms: [false, [Validators.requiredTrue]],
     });
+    this.bindNameCheck();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /** Validates form and creates new user in Firebase Auth and Firestore, then emits nextstep. */
@@ -68,6 +80,15 @@ export class RegisterCardComponent {
     this.registrationError.set('');
     try {
       const userCredential = await this.createFirebaseUser();
+      const name = String(this.form.value.name ?? '').trim();
+      const nameTaken = await this.userSvc.isUserNameTaken(name, userCredential.user.uid);
+      if (nameTaken) {
+        await deleteUser(userCredential.user);
+        this.setDuplicateError(this.form.get('name'), true);
+        this.form.get('name')?.markAsTouched();
+        this.nameStatus.set('taken');
+        return;
+      }
       await this.createFirestoreUser(userCredential.user);
       this.nextstep.emit();
     } catch (error: any) {
@@ -96,6 +117,60 @@ export class RegisterCardComponent {
       createdAt: serverTimestamp(),
       lastSeen: serverTimestamp(),
     }, { merge: true });
+  }
+
+  private bindNameCheck(): void {
+    const ctrl = this.form.get('name');
+    if (!ctrl) return;
+
+    ctrl.valueChanges.pipe(
+      debounceTime(350),
+      distinctUntilChanged(),
+      switchMap((value) => {
+        const name = String(value ?? '').trim();
+        const errors = ctrl.errors ?? {};
+        const hasBaseErrors = Object.keys(errors).some((k) => k !== 'duplicate');
+        if (!name || hasBaseErrors) {
+          this.nameStatus.set('idle');
+          this.setDuplicateError(ctrl, false);
+          return of(null);
+        }
+        this.nameStatus.set('checking');
+        return from(this.userSvc.isUserNameTaken(name)).pipe(
+          map((taken) => ({ taken })),
+          catchError(() => of({ taken: false, error: true }))
+        );
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe((result) => {
+      if (!result) return;
+      if ((result as any).error) {
+        this.nameStatus.set('idle');
+        return;
+      }
+      if (result.taken) {
+        this.setDuplicateError(ctrl, true);
+        ctrl.markAsTouched();
+        this.nameStatus.set('taken');
+        return;
+      }
+      this.setDuplicateError(ctrl, false);
+      this.nameStatus.set('available');
+    });
+  }
+
+  private setDuplicateError(ctrl: AbstractControl | null, isDuplicate: boolean): void {
+    if (!ctrl) return;
+    const errors = ctrl.errors ?? {};
+    if (isDuplicate) {
+      if (!errors['duplicate']) {
+        ctrl.setErrors({ ...errors, duplicate: true });
+      }
+      return;
+    }
+    if (!errors['duplicate']) return;
+    const { duplicate, ...rest } = errors;
+    ctrl.setErrors(Object.keys(rest).length ? rest : null);
   }
 
   /** Displays user-friendly error message based on registration exception code. */

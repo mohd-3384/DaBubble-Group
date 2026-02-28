@@ -76,11 +76,11 @@ mat-card-header {
     font-size: 16px !important;
   }
 
-  input {
+  .input-container input {
     font-size: 16px !important;
   }
 
-  input::placeholder {
+  .input-container input::placeholder {
     font-size: 16px !important;
   }
 
@@ -115,11 +115,11 @@ mat-card-header {
     font-size: 16px !important;
   }
 
-  input {
+  .input-container input {
     font-size: 16px !important;
   }
 
-  input::placeholder {
+  .input-container input::placeholder {
     font-size: 16px !important;
   }
 }
@@ -181,6 +181,7 @@ button {
     height: 20px;
   }
 }
+
 /* Große Bildschirme 1200px+ - Alle Fonts 20px */
 @media (min-width: 1200px) {
   mat-card-title {
@@ -191,11 +192,11 @@ button {
     font-size: 20px !important;
   }
 
-  input {
+  .input-container input {
     font-size: 20px !important;
   }
 
-  input::placeholder {
+  .input-container input::placeholder {
     font-size: 20px !important;
   }
 
@@ -203,13 +204,14 @@ button {
     font-size: 20px !important;
   }
 
-  .button-container > .button_1,
-  .button-container > .button_2 {
+  .button-container>.button_1,
+  .button-container>.button_2 {
     width: 140px;
     height: 40px;
     font-size: 20px !important;
   }
 }
+
 @media (max-width: 480px) {
   mat-card {
     width: 95vw;
@@ -249,11 +251,34 @@ form {
   margin-top: 16px;
 }
 
+.password-icon {
+  opacity: 0.7;
+}
+
 .password-toggle {
+  border: none;
+  background: transparent;
   cursor: pointer;
-  opacity: 0.6;
+  padding: 0;
   transition: opacity 0.2s ease;
-  &:hover { opacity: 1; }
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  width: 20px;
+  height: 20px;
+  line-height: 0;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--primary-color);
+    display: block;
+  }
 }
 
 .name-input,
@@ -277,9 +302,13 @@ form {
   &:focus-within {
     border: 1px solid rgb(68, 77, 242);
   }
+
+  .password-toggle {
+    flex: 0 0 auto;
+  }
 }
 
-input {
+.input-container input {
   border: none;
   background-color: rgba(236, 238, 254, 1);
   outline: none;
@@ -299,40 +328,44 @@ input {
   font-size: 16px !important;
   display: flex;
   font-family: 'Open Sans', sans-serif !important;
-  align-items: start;
+  align-items: flex-start;
 
 
   .checkbox-container {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 10px;
 
     input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
       cursor: pointer;
       position: relative;
       outline: none;
-      background-color: #fff;
-      border: 3px solid rgba(68, 77, 242, 1);
+      background-color: #ffffff;
+      border: 2px solid var(--primary-color);
       border-radius: 4px;
       transition: background-color 0.3s, border-color 0.3s;
       appearance: none;
       -webkit-appearance: none;
+      display: inline-grid;
+      place-content: center;
+      margin-top: 2px;
 
       &:checked {
-        background-color: #fff;
-        border-color: rgba(68, 77, 242, 1);
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
       }
 
       &:checked::after {
-        content: "✓";
-        position: absolute;
-        top: -8px;
-        left: 1px;
-        color: rgba(68, 77, 242, 1);
-        font-size: 16px;
-        font-weight: bold;
+        content: "";
+        width: 10px;
+        height: 6px;
+        border-left: 2px solid #ffffff;
+        border-bottom: 2px solid #ffffff;
+        transform: rotate(-45deg);
+        margin-top: -1px;
       }
 
       &:focus {
@@ -342,6 +375,7 @@ input {
 
     label {
       cursor: pointer;
+      line-height: 1.2;
 
       a {
         color: rgba(68, 77, 242, 1);
@@ -354,6 +388,7 @@ input {
     }
   }
 }
+
 
 
 .button-container {
@@ -435,7 +470,7 @@ input {
     min-height: 50px;
   }
 
-  input {
+  .input-container input {
     font-size: 15px;
   }
 
@@ -484,7 +519,7 @@ input {
     min-height: 35px;
   }
 
-  input {
+  .input-container input {
     font-size: 14px;
   }
 

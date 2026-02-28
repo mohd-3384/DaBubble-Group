@@ -1,18 +1,49 @@
-section {
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.app-content {
+  min-height: 100dvh;
+}
+
+.orientation-lock {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #eceefe;
+  z-index: 9999;
+}
+
+.orientation-lock__card {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
 
-  >.column {
+.orientation-lock__icon {
+  width: 120px;
+  height: auto;
+  fill: #111111;
+}
+
+.orientation-lock__text {
+  font-size: 16px;
+  color: #111111;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .orientation-lock {
     display: flex;
-    flex-direction: column;
-    margin: 16px;
+  }
 
-    >app-channels,
-    app-chat,
-    app-thread {
-      flex: 1;
-      background-color: var(--surface-bg);
-      border-radius: 30px;
-    }
+  .app-content {
+    visibility: hidden;
+    pointer-events: none;
   }
 }

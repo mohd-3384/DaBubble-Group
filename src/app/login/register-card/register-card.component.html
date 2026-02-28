@@ -26,6 +26,9 @@
             @else if (form.get('name')?.errors?.['pattern']) {
             Nur Buchstaben erlaubt.
             }
+            @else if (form.get('name')?.errors?.['duplicate']) {
+            Dieser Name ist bereits vergeben.
+            }
           </span>}
         </div>
         <div class="span-input">
@@ -45,16 +48,27 @@
         </div>
         <div class="span-input">
           <div class="password-input">
-            <img src="./public/images/password-icon.svg" alt="password icon" class="password-toggle" (click)="togglePassword()">
+            <img src="./public/images/password-icon.svg" alt="password icon" class="password-icon">
             <input [type]="showPassword() ? 'text' : 'password'" placeholder="Passwort" formControlName="password">
+            <button type="button" class="password-toggle" (click)="togglePassword()"
+              [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'">
+              <svg *ngIf="!showPassword()" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 5c5.5 0 9.5 5.1 9.5 7s-4 7-9.5 7S2.5 14 2.5 12 6.5 5 12 5zm0 2c-4 0-7 3.9-7 5s3 5 7 5 7-3.9 7-5-3-5-7-5zm0 2.5A2.5 2.5 0 1 1 9.5 12 2.5 2.5 0 0 1 12 9.5z" />
+              </svg>
+              <svg *ngIf="showPassword()" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M3.3 4.7 4.7 3.3l16 16-1.4 1.4-3-3A9.9 9.9 0 0 1 12 19c-5.5 0-9.5-5.1-9.5-7a9.6 9.6 0 0 1 4.1-5.9L3.3 4.7zM8 9.4a4 4 0 0 0 5.6 5.6l-1.5-1.5a2 2 0 0 1-2.6-2.6L8 9.4zm4-4.4c5.5 0 9.5 5.1 9.5 7a9.3 9.3 0 0 1-3 5.1l-1.5-1.5A7.9 7.9 0 0 0 19.5 12c0-1.1-3-5-7.5-5a7.7 7.7 0 0 0-2.6.4L7.9 5.9A9.9 9.9 0 0 1 12 5z" />
+              </svg>
+            </button>
           </div>
           @if (showPwErrors) {
           <span class="wrong-password">
             @if (!pwValue) { Bitte geben Sie ein Passwort ein. }
             @else {
-              @if (pwTooShort) { Mindestens 6 Zeichen. }
-              @if (pwMissingUpper) { Mindestens ein Großbuchstabe. }
-              @if (pwMissingSpecial) { Mindestens ein Sonderzeichen (!&#64;#$&*). }
+            @if (pwTooShort) { Mindestens 6 Zeichen. }
+            @if (pwMissingUpper) { Mindestens ein Großbuchstabe. }
+            @if (pwMissingSpecial) { Mindestens ein Sonderzeichen (!&#64;#$&*). }
             }
           </span>}
         </div>
