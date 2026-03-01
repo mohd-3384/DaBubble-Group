@@ -52,7 +52,8 @@ export class UserDataHelper {
 
         const uref = doc(this.fs, `users/${user.uid}`);
         return docData(uref).pipe(
-          map((raw) => this.mapUserDoc(raw, user))
+          map((raw) => this.mapUserDoc(raw, user)),
+          catchError(() => of(null))
         );
       })
     );

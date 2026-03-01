@@ -61,25 +61,28 @@ export class ThreadHelper {
         }
 
         return new Promise((resolve) => {
-            runInInjectionContext(this.env, () => docData(msgRef)).subscribe((raw: any) => {
-                if (!raw) {
-                    resolve(null);
-                    return;
-                }
+            runInInjectionContext(this.env, () => docData(msgRef)).subscribe({
+                next: (raw: any) => {
+                    if (!raw) {
+                        resolve(null);
+                        return;
+                    }
 
-                resolve({
-                    vm,
-                    msg: {
-                        id: threadId,
-                        text: raw?.text ?? '',
-                        authorId: raw?.authorId ?? '',
-                        authorName: raw?.authorName ?? 'Unbekannt',
-                        authorAvatar: raw?.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
-                        createdAt: toDateMaybe(raw?.createdAt) ?? new Date(),
-                    },
-                    channelId: isDM && authUser ? makeConvId(authUser.uid, id) : id,
-                    isDM,
-                });
+                    resolve({
+                        vm,
+                        msg: {
+                            id: threadId,
+                            text: raw?.text ?? '',
+                            authorId: raw?.authorId ?? '',
+                            authorName: raw?.authorName ?? 'Unbekannt',
+                            authorAvatar: raw?.authorAvatar ?? '/public/images/avatars/avatar-default.svg',
+                            createdAt: toDateMaybe(raw?.createdAt) ?? new Date(),
+                        },
+                        channelId: isDM && authUser ? makeConvId(authUser.uid, id) : id,
+                        isDM,
+                    });
+                },
+                error: () => resolve(null),
             });
         });
     }

@@ -1,8 +1,9 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, ErrorHandler, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { FirebaseErrorHandler } from './services/firebase-error-handler.service';
 
 
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
@@ -24,6 +25,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }),
+    { provide: ErrorHandler, useClass: FirebaseErrorHandler },
 
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
     provideAuth(() => getAuth()),

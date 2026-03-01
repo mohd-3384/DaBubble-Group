@@ -42,7 +42,12 @@ export class PresenceService {
 
     const payload = await this.buildUserPayload(user);
     const ref = doc(this.fs, `users/${user.uid}`);
-    await setDoc(ref, payload, { merge: true });
+    try {
+      await setDoc(ref, payload, { merge: true });
+    } catch (e) {
+      if (this.isPermissionError(e)) return;
+      throw e;
+    }
 
     this.registerUnloadHandler(user.uid);
     this.registerVisibilityHandler(user.uid);
@@ -136,8 +141,19 @@ export class PresenceService {
     const ref = doc(this.fs, `users/${uid}`);
     try {
       await updateDoc(ref, { online, lastSeen: serverTimestamp() });
-    } catch {
-      await setDoc(ref, { online, lastSeen: serverTimestamp() }, { merge: true });
+    } catch (e) {
+      if (this.isPermissionError(e)) return;
+      try {
+        await setDoc(ref, { online, lastSeen: serverTimestamp() }, { merge: true });
+      } catch (inner) {
+        if (this.isPermissionError(inner)) return;
+        throw inner;
+      }
     }
+  }
+
+  private isPermissionError(err: unknown): boolean {
+    const code = (err as any)?.code;
+    return code === 'permission-denied' || code === 'missing-or-insufficient-permissions';
   }
 }

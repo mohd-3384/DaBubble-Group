@@ -292,6 +292,21 @@
   border: 1px solid rgba(99, 102, 242, 0.4);
   box-shadow: var(--shadow-modal);
   z-index: 20;
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-color) transparent;
+}
+
+.add-members__suggest::-webkit-scrollbar {
+  width: 6px;
+}
+
+.add-members__suggest::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.add-members__suggest::-webkit-scrollbar-thumb {
+  background: var(--background-color);
+  border-radius: var(--border-radius9999);
 }
 
 .add-members__suggest-item {

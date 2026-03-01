@@ -57,8 +57,22 @@
       line-height: 1.5;
 
       &.bubble-light {
-        background: var(--background-color);
+        background: var(--surface-bg);
         border-top-left-radius: 0;
+      }
+    }
+
+    .mention-link {
+      border: none;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+
+      &:hover {
+        text-decoration-thickness: 2px;
       }
     }
   }
@@ -66,6 +80,18 @@
 
 .message-row.root {
   margin-top: 0;
+}
+
+.message-row.own {
+  .bubble.bubble-light {
+    background: var(--primary-color) !important;
+    color: var(--surface-bg);
+  }
+
+  .mention-link {
+    color: var(--surface-bg);
+    text-decoration-color: rgba(255, 255, 255, 0.8);
+  }
 }
 
 .message-row.is-editing .message-actions {

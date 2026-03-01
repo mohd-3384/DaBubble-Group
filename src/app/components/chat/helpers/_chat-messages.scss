@@ -96,6 +96,20 @@ $muted: #6c7280;
                 color: $muted;
             }
         }
+
+        .mention-link {
+            border: none;
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+
+            &:hover {
+                text-decoration-thickness: 2px;
+            }
+        }
     }
 
     .message-actions {
@@ -175,6 +189,11 @@ $muted: #6c7280;
     color: var(--surface-bg) !important;
     border-top-right-radius: 0;
     border-top-left-radius: 16px;
+
+    .mention-link {
+        color: var(--surface-bg);
+        text-decoration-color: rgba(255, 255, 255, 0.8);
+    }
 }
 
 .message-row.is-editing .message-actions {

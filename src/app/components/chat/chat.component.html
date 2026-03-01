@@ -73,7 +73,8 @@
 <!-- BODY (Compose/Normal) -->
 <!-- ===================== -->
 
-<section class="chat-body" *ngIf="(composeMode$ | async) as compose; else normalBody">
+<section class="chat-body" *ngIf="(composeMode$ | async) as compose; else normalBody"
+  (click)="closeComposerSuggestFromUi()">
 
   <!-- COMPOSE-BODY -->
   <div *ngIf="compose">
@@ -120,7 +121,7 @@
 <!-- NORMALER BODY -->
 <ng-template #normalBody>
   <ng-container *ngIf="vm$ | async as vm">
-    <section class="chat-body">
+    <section class="chat-body" (click)="closeComposerSuggestFromUi()">
 
       <!-- SCROLLBEREICH NUR FÜR NACHRICHTEN -->
       <div #messagesScroll class="messages-scroll" (scroll)="onMessagesScroll()">
@@ -194,7 +195,13 @@
                 <!-- Normal bubble ODER Edit Mode -->
                 <ng-container *ngIf="editingMessageId !== m.id; else editTpl">
                   <div class="bubble bubble-light" [class.bubble-own]="isOwnMessage(m)">
-                    {{ m.text }}
+                    <ng-container *ngFor="let part of getMessageParts(m.text)">
+                      <span *ngIf="part.kind === 'text'">{{ part.value }}</span>
+                      <button *ngIf="part.kind === 'user' || part.kind === 'channel'" type="button" class="mention-link"
+                        (click)="onMentionClick(part)">
+                        {{ part.value }}
+                      </button>
+                    </ng-container>
                   </div>
 
                   <!-- reactions-row Block -->
@@ -276,7 +283,8 @@
       <!-- COMPOSER FEST UNTEN -->
       <div class="composer composer--sticky">
         <textarea #composerInput class="composer-input" rows="3" [placeholder]="composePlaceholder(vm)"
-          [(ngModel)]="draft" (keydown)="onComposerKeydown($event, vm)"></textarea>
+          [(ngModel)]="draft" (input)="onComposerInput($any($event.target).value)"
+          (keydown)="onComposerKeydown($event, vm)"></textarea>
 
         <div class="composer-actions">
           <div class="actions-left">
@@ -301,6 +309,19 @@
                 </div>
               </ng-container>
             </span>
+          </div>
+
+          <div class="mention-popover" *ngIf="composerSuggestOpen" (click)="$event.stopPropagation()">
+            <div class="mention-item" *ngFor="let s of composerSuggestItems" (click)="selectComposerSuggest(s)">
+              <img *ngIf="composerSuggestKind === 'user'" class="mention-avatar"
+                [src]="s.avatarUrl || '/public/images/avatars/avatar-default.svg'" />
+              <span class="mention-name" *ngIf="composerSuggestKind === 'user'">{{ s.name }}</span>
+              <span class="mention-name" *ngIf="composerSuggestKind === 'channel'"># {{ s.name }}</span>
+            </div>
+
+            <div class="mention-item" *ngIf="composerSuggestItems.length === 0">
+              <span class="mention-name">Keine Treffer</span>
+            </div>
           </div>
 
           <!-- SEND normal -->

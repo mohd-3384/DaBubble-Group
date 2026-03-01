@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { MentionUser, Message, ReactionVm } from '../../interfaces/allInterfaces.interface';
 import { ThreadActionsService } from '../../services/thread-actions.service';
+import { ChannelService } from '../../services/channel.service';
 import { ThreadUiStateHelper } from './helpers/thread-ui-state.helper';
 import { ThreadDisplayHelper } from './helpers/thread-display.helper';
 import { ThreadComposerHelper } from './helpers/thread-composer.helper';
@@ -12,6 +13,7 @@ import { ThreadEmojiHelper } from './helpers/thread-emoji.helper';
 import { ThreadHoverHelper } from './helpers/thread-hover.helper';
 import { ThreadReactionHelper } from './helpers/thread-reaction.helper';
 import { ThreadEditHelper } from './helpers/thread-edit.helper';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-thread',
@@ -40,6 +42,8 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
   constructor(
     private host: ElementRef<HTMLElement>,
     private threadActions: ThreadActionsService,
+    private channelService: ChannelService,
+    private router: Router,
     public ui: ThreadUiStateHelper,
     public display: ThreadDisplayHelper,
     public composer: ThreadComposerHelper,
@@ -79,6 +83,16 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
   private shouldAutoScroll = true;
   private pendingScroll = false;
   private lastReplyCount = 0;
+  private channels: { id: string; name: string }[] = [];
+  composerSuggestOpen = false;
+  composerSuggestKind: 'user' | 'channel' | null = null;
+  composerSuggestItems: Array<{ id: string; name: string; avatarUrl?: string }> = [];
+  private composerSuggestStart = -1;
+  private composerSuggestPrefix: '@' | '#' | null = null;
+  private userNameToId = new Map<string, string>();
+  private channelNameToId = new Map<string, string>();
+  private userMentions: Array<{ id: string; name: string; nameLower: string }> = [];
+  private channelMentions: Array<{ id: string; name: string; nameLower: string }> = [];
 
   /**
    * Handles document click events to close open popovers
@@ -86,6 +100,9 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(ev: MouseEvent) {
+    if (this.composerSuggestOpen) {
+      this.closeComposerSuggest();
+    }
     const target = ev.target as Node | null;
     if (!target) return;
     if (this.host.nativeElement.contains(target)) return;
@@ -95,6 +112,18 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
   ngAfterViewInit(): void {
     this.pendingScroll = true;
     this.focusComposer();
+    this.channelService.channels$().subscribe((list) => {
+      this.channels = (list || []).map((c) => ({ id: c.id || '', name: c.name || '' }));
+      this.channelNameToId = new Map(
+        this.channels
+          .filter((c) => !!c?.id && !!c?.name)
+          .map((c) => [this.normalizeName(c.name), c.id])
+      );
+      this.channelMentions = this.channels
+        .filter((c) => !!c?.id && !!c?.name)
+        .map((c) => ({ id: c.id, name: c.name, nameLower: String(c.name).toLowerCase() }))
+        .sort((a, b) => b.name.length - a.name.length);
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -107,6 +136,16 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
     if (changes['rootMessage']) {
       this.pendingScroll = true;
       this.focusComposer();
+    }
+
+    if (changes['users']) {
+      const validUsers = (this.users || []).filter(this.isMentionUserWithIdName);
+      this.userNameToId = new Map(
+        validUsers.map((u) => [this.normalizeName(u.name), u.id])
+      );
+      this.userMentions = validUsers
+        .map((u) => ({ id: u.id, name: u.name, nameLower: String(u.name).toLowerCase() }))
+        .sort((a, b) => b.name.length - a.name.length);
     }
 
     if (changes['replies']) {
@@ -172,6 +211,152 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
   insertMention(u: MentionUser) {
     this.composer.insertMention(u);
     this.ui.showUsers = false;
+  }
+
+  onComposerInput(value: string): void {
+    this.updateComposerSuggest(value);
+  }
+
+  selectComposerSuggest(item: { id: string; name: string; avatarUrl?: string }): void {
+    if (!this.composerSuggestPrefix || this.composerSuggestStart < 0) return;
+    const prefix = this.composerSuggestPrefix;
+    const before = this.composer.draft.slice(0, this.composerSuggestStart);
+    const after = this.composer.draft.slice(this.composerSuggestStart);
+    const replacement = `${prefix}${item.name} `;
+    const next = before + replacement + after.replace(/^[^\s]*\s*/, '');
+    this.composer.draft = next;
+    this.closeComposerSuggest();
+  }
+
+  getMessageParts(text: string | null | undefined): Array<{ kind: 'text' | 'user' | 'channel'; value: string; id?: string }> {
+    const raw = String(text ?? '');
+    const parts: Array<{ kind: 'text' | 'user' | 'channel'; value: string; id?: string }> = [];
+    const lower = raw.toLowerCase();
+    let index = 0;
+
+    while (index < raw.length) {
+      const nextIndex = this.findNextMentionIndex(raw, index);
+      if (nextIndex < 0) {
+        if (index < raw.length) parts.push({ kind: 'text', value: raw.slice(index) });
+        break;
+      }
+
+      if (nextIndex > index) {
+        parts.push({ kind: 'text', value: raw.slice(index, nextIndex) });
+      }
+
+      const prefix = raw[nextIndex];
+      const kind = prefix === '@' ? 'user' : 'channel';
+      const match = this.matchMentionAt(lower, nextIndex + 1, kind);
+
+      if (match) {
+        const token = raw.slice(nextIndex, nextIndex + 1 + match.name.length);
+        parts.push({ kind, value: token, id: match.id });
+        index = nextIndex + 1 + match.name.length;
+        continue;
+      }
+
+      parts.push({ kind: 'text', value: raw.slice(nextIndex, nextIndex + 1) });
+      index = nextIndex + 1;
+    }
+
+    return parts;
+  }
+
+  onMentionClick(part: { kind: 'text' | 'user' | 'channel'; id?: string }): void {
+    if (!part.id || part.kind === 'text') return;
+    if (part.kind === 'user') {
+      this.router.navigate(['/dm', part.id]);
+      return;
+    }
+    this.router.navigate(['/channel', part.id]);
+  }
+
+  private normalizeName(value: string): string {
+    return String(value || '').trim().replace(/^[@#]/, '').toLowerCase();
+  }
+
+  private isMentionUserWithIdName(user: MentionUser | null | undefined): user is MentionUser & { id: string; name: string } {
+    return !!user?.id && !!user?.name;
+  }
+
+  private findNextMentionIndex(text: string, fromIndex: number): number {
+    const atIndex = text.indexOf('@', fromIndex);
+    const hashIndex = text.indexOf('#', fromIndex);
+    if (atIndex === -1) return hashIndex;
+    if (hashIndex === -1) return atIndex;
+    return Math.min(atIndex, hashIndex);
+  }
+
+  private matchMentionAt(
+    lowerText: string,
+    startIndex: number,
+    kind: 'user' | 'channel'
+  ): { id: string; name: string } | null {
+    const list = kind === 'user' ? this.userMentions : this.channelMentions;
+    for (const item of list) {
+      if (!item.nameLower) continue;
+      if (lowerText.startsWith(item.nameLower, startIndex)) {
+        const endIndex = startIndex + item.name.length;
+        const nextChar = lowerText[endIndex];
+        if (!nextChar || /[\s.,!?;:)\]]/.test(nextChar)) {
+          return { id: item.id, name: item.name };
+        }
+      }
+    }
+    return null;
+  }
+
+  private updateComposerSuggest(draft: string): void {
+    const match = /(^|\s)([@#])([^\s]*)$/.exec(draft);
+    if (!match) {
+      this.closeComposerSuggest();
+      return;
+    }
+
+    const prefix = match[2] as '@' | '#';
+    const query = (match[3] || '').toLowerCase();
+    const startIndex = draft.length - (match[2].length + match[3].length);
+
+    if (prefix === '@') {
+      const list = (this.users || [])
+        .filter((u) => u.name.toLowerCase().includes(query))
+        .slice(0, 8)
+        .map((u) => ({ id: u.id, name: u.name, avatarUrl: u.avatarUrl }));
+      this.setComposerSuggest('user', list, startIndex, prefix);
+      return;
+    }
+
+    const list = this.channels
+      .filter((c) => c.name.toLowerCase().includes(query))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name }));
+    this.setComposerSuggest('channel', list, startIndex, prefix);
+  }
+
+  private setComposerSuggest(
+    kind: 'user' | 'channel',
+    items: Array<{ id: string; name: string; avatarUrl?: string }>,
+    startIndex: number,
+    prefix: '@' | '#'
+  ): void {
+    this.composerSuggestKind = kind;
+    this.composerSuggestItems = items;
+    this.composerSuggestStart = startIndex;
+    this.composerSuggestPrefix = prefix;
+    this.composerSuggestOpen = true;
+  }
+
+  private closeComposerSuggest(): void {
+    this.composerSuggestOpen = false;
+    this.composerSuggestKind = null;
+    this.composerSuggestItems = [];
+    this.composerSuggestStart = -1;
+    this.composerSuggestPrefix = null;
+  }
+
+  closeComposerSuggestFromUi(): void {
+    this.closeComposerSuggest();
   }
 
   /**

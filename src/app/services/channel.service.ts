@@ -13,8 +13,12 @@ import {
   writeBatch,
   getDocs,
   deleteDoc,
+  query,
+  where,
+  limit,
 } from '@angular/fire/firestore';
-import { Observable, map, firstValueFrom } from 'rxjs';
+import { Auth, authState } from '@angular/fire/auth';
+import { Observable, map, firstValueFrom, of, switchMap, catchError, startWith } from 'rxjs';
 import { ChannelDoc, UserDoc } from '../interfaces/allInterfaces.interface';
 import { AuthReadyService } from './auth-ready.service';
 
@@ -24,6 +28,7 @@ import { AuthReadyService } from './auth-ready.service';
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
   private fs = inject(Firestore);
+  private auth = inject(Auth);
   private authReady = inject(AuthReadyService);
 
   /**
@@ -71,6 +76,19 @@ export class ChannelService {
         tx.set(memRef, { role }, { merge: true });
       }
     });
+  }
+
+  /**
+   * Adds the current user as member to a channel by its name (exact match)
+   * @param name - Channel display name
+   */
+  async addMeToChannelByName(name: string): Promise<void> {
+    const snap = await getDocs(
+      query(collection(this.fs, 'channels'), where('name', '==', name), limit(1))
+    );
+    const docSnap = snap.docs[0];
+    if (!docSnap) return;
+    await this.addMeAsMember(docSnap.id, 'member');
   }
 
   /**
@@ -221,12 +239,19 @@ export class ChannelService {
    */
   channels$(): Observable<ChannelDoc[]> {
     const ref = collection(this.fs, 'channels');
-    return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(
-      map((list) =>
-        [...list].sort((a: any, b: any) =>
-          String(a.name ?? '').localeCompare(String(b.name ?? ''), 'de', { sensitivity: 'base' })
-        )
-      )
+    return authState(this.auth).pipe(
+      switchMap((user) => {
+        if (!user) return of([] as ChannelDoc[]);
+        return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(
+          map((list) =>
+            [...list].sort((a: any, b: any) =>
+              String(a.name ?? '').localeCompare(String(b.name ?? ''), 'de', { sensitivity: 'base' })
+            )
+          ),
+          catchError(() => of([] as ChannelDoc[]))
+        );
+      }),
+      startWith([] as ChannelDoc[])
     );
   }
 

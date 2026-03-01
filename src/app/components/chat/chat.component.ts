@@ -122,6 +122,18 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
   private currentMembers: MemberVM[] = [];
   private currentChannelDoc: ChannelDoc | null = null;
   private lastKnownChannelId: string | null = null;
+  private currentChannels: { id: string; name: string }[] = [];
+  private currentUsers: UserMini[] = [];
+  private userNameToId = new Map<string, string>();
+  private channelNameToId = new Map<string, string>();
+  private userMentions: Array<{ id: string; name: string; nameLower: string }> = [];
+  private channelMentions: Array<{ id: string; name: string; nameLower: string }> = [];
+  composerSuggestOpen = false;
+  composerSuggestKind: 'user' | 'channel' | null = null;
+  composerSuggestItems: Array<{ id: string; name: string; avatarUrl?: string }> = [];
+  private composerSuggestStart = -1;
+  private composerSuggestPrefix: '@' | '#' | null = null;
+
 
   constructor() {
     createStateProxies(this.state, this);
@@ -170,6 +182,28 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     this.membersSub = this.members$.subscribe((members) => {
       this.currentMembers = members || [];
     });
+    this.channelsAll$.subscribe((channels) => {
+      this.currentChannels = channels || [];
+      this.channelNameToId = new Map(
+        this.currentChannels
+          .filter((c) => !!c?.id && !!c?.name)
+          .map((c) => [this.normalizeName(c.name), c.id])
+      );
+      this.channelMentions = this.currentChannels
+        .filter((c) => !!c?.id && !!c?.name)
+        .map((c) => ({ id: c.id, name: c.name, nameLower: String(c.name).toLowerCase() }))
+        .sort((a, b) => b.name.length - a.name.length);
+    });
+    this.usersAll$.subscribe((users) => {
+      this.currentUsers = users || [];
+      const validUsers = this.currentUsers.filter(this.isUserWithIdName);
+      this.userNameToId = new Map(
+        validUsers.map((u) => [this.normalizeName(u.name), u.id])
+      );
+      this.userMentions = validUsers
+        .map((u) => ({ id: u.id, name: u.name, nameLower: String(u.name).toLowerCase() }))
+        .sort((a, b) => b.name.length - a.name.length);
+    });
     this.channelDocSub = this.channelDoc$.subscribe((doc) => {
       this.currentChannelDoc = doc ?? null;
       if (doc?.id) {
@@ -190,6 +224,152 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     if (!uid) return false;
     if (this.currentChannelDoc?.createdBy === uid) return true;
     return this.currentMembers.some((m) => m.uid === uid);
+  }
+
+  onComposerInput(value: string): void {
+    this.updateComposerSuggest(value);
+  }
+
+  selectComposerSuggest(item: { id: string; name: string; avatarUrl?: string }): void {
+    if (!this.composerSuggestPrefix || this.composerSuggestStart < 0) return;
+    const prefix = this.composerSuggestPrefix;
+    const before = this.state.draft.slice(0, this.composerSuggestStart);
+    const after = this.state.draft.slice(this.composerSuggestStart);
+    const replacement = `${prefix}${item.name} `;
+    const next = before + replacement + after.replace(/^[^\s]*\s*/, '');
+    this.state.draft = next;
+    this.closeComposerSuggest();
+  }
+
+  private updateComposerSuggest(draft: string): void {
+    const match = /(^|\s)([@#])([^\s]*)$/.exec(draft);
+    if (!match) {
+      this.closeComposerSuggest();
+      return;
+    }
+
+    const prefix = match[2] as '@' | '#';
+    const query = (match[3] || '').toLowerCase();
+    const startIndex = draft.length - (match[2].length + match[3].length);
+
+    if (prefix === '@') {
+      const list = this.currentMembers
+        .filter((m) => m.name.toLowerCase().includes(query))
+        .slice(0, 8)
+        .map((m) => ({ id: m.uid, name: m.name, avatarUrl: m.avatarUrl }));
+      this.setComposerSuggest('user', list, startIndex, prefix);
+      return;
+    }
+
+    const list = this.currentChannels
+      .filter((c) => c.name.toLowerCase().includes(query))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name }));
+    this.setComposerSuggest('channel', list, startIndex, prefix);
+  }
+
+  private setComposerSuggest(
+    kind: 'user' | 'channel',
+    items: Array<{ id: string; name: string; avatarUrl?: string }>,
+    startIndex: number,
+    prefix: '@' | '#'
+  ): void {
+    this.composerSuggestKind = kind;
+    this.composerSuggestItems = items;
+    this.composerSuggestStart = startIndex;
+    this.composerSuggestPrefix = prefix;
+    this.composerSuggestOpen = true;
+  }
+
+  private closeComposerSuggest(): void {
+    this.composerSuggestOpen = false;
+    this.composerSuggestKind = null;
+    this.composerSuggestItems = [];
+    this.composerSuggestStart = -1;
+    this.composerSuggestPrefix = null;
+  }
+
+  closeComposerSuggestFromUi(): void {
+    this.closeComposerSuggest();
+  }
+
+  getMessageParts(text: string | null | undefined): Array<{ kind: 'text' | 'user' | 'channel'; value: string; id?: string }> {
+    const raw = String(text ?? '');
+    const parts: Array<{ kind: 'text' | 'user' | 'channel'; value: string; id?: string }> = [];
+    const lower = raw.toLowerCase();
+    let index = 0;
+
+    while (index < raw.length) {
+      const nextIndex = this.findNextMentionIndex(raw, index);
+      if (nextIndex < 0) {
+        if (index < raw.length) parts.push({ kind: 'text', value: raw.slice(index) });
+        break;
+      }
+
+      if (nextIndex > index) {
+        parts.push({ kind: 'text', value: raw.slice(index, nextIndex) });
+      }
+
+      const prefix = raw[nextIndex];
+      const kind = prefix === '@' ? 'user' : 'channel';
+      const match = this.matchMentionAt(lower, nextIndex + 1, kind);
+
+      if (match) {
+        const token = raw.slice(nextIndex, nextIndex + 1 + match.name.length);
+        parts.push({ kind, value: token, id: match.id });
+        index = nextIndex + 1 + match.name.length;
+        continue;
+      }
+
+      parts.push({ kind: 'text', value: raw.slice(nextIndex, nextIndex + 1) });
+      index = nextIndex + 1;
+    }
+
+    return parts;
+  }
+
+  onMentionClick(part: { kind: 'text' | 'user' | 'channel'; id?: string }): void {
+    if (!part.id || part.kind === 'text') return;
+    if (part.kind === 'user') {
+      this.router.navigate(['/dm', part.id]);
+      return;
+    }
+    this.router.navigate(['/channel', part.id]);
+  }
+
+  private normalizeName(value: string): string {
+    return String(value || '').trim().replace(/^[@#]/, '').toLowerCase();
+  }
+
+  private isUserWithIdName(user: UserMini | null | undefined): user is UserMini & { id: string; name: string } {
+    return !!user?.id && !!user?.name;
+  }
+
+  private findNextMentionIndex(text: string, fromIndex: number): number {
+    const atIndex = text.indexOf('@', fromIndex);
+    const hashIndex = text.indexOf('#', fromIndex);
+    if (atIndex === -1) return hashIndex;
+    if (hashIndex === -1) return atIndex;
+    return Math.min(atIndex, hashIndex);
+  }
+
+  private matchMentionAt(
+    lowerText: string,
+    startIndex: number,
+    kind: 'user' | 'channel'
+  ): { id: string; name: string } | null {
+    const list = kind === 'user' ? this.userMentions : this.channelMentions;
+    for (const item of list) {
+      if (!item.nameLower) continue;
+      if (lowerText.startsWith(item.nameLower, startIndex)) {
+        const endIndex = startIndex + item.name.length;
+        const nextChar = lowerText[endIndex];
+        if (!nextChar || /[\s.,!?;:)\]]/.test(nextChar)) {
+          return { id: item.id, name: item.name };
+        }
+      }
+    }
+    return null;
   }
 
   private bindJoinNotice(): void {
@@ -741,6 +921,9 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
    */
   @HostListener('document:click', ['$event'])
   onDocumentClick(ev: MouseEvent): void {
+    if (this.composerSuggestOpen) {
+      this.closeComposerSuggest();
+    }
     if (this.emojiCoordinator.shouldCloseOnDocumentClick(ev)) {
       this.emojiCoordinator.closeMessageEmojiPopover();
     }

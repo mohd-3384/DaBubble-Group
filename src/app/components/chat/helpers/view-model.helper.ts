@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Firestore, doc, docData } from '@angular/fire/firestore';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { map, switchMap, startWith } from 'rxjs/operators';
+import { map, switchMap, startWith, catchError } from 'rxjs/operators';
 import { Vm } from '../../../interfaces/allInterfaces.interface';
 
 /**
@@ -95,6 +95,7 @@ export class ViewModelHelper {
                 kind: 'channel',
                 title: `# ${ch?.name ?? id}`,
             })),
+            catchError(() => of<Vm>({ kind: 'channel', title: `# ${id}` })),
             startWith({ kind: 'channel', title: `# ${id}` } as Vm)
         );
     }
@@ -118,6 +119,12 @@ export class ViewModelHelper {
                     online,
                 };
             }),
+            catchError(() => of<Vm>({
+                kind: 'dm',
+                title: '',
+                avatarUrl: undefined,
+                online: undefined,
+            } as Vm)),
             startWith({
                 kind: 'dm',
                 title: '',

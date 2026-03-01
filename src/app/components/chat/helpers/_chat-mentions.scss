@@ -16,6 +16,23 @@
   min-width: 240px;
   display: flex;
   flex-direction: column;
+  max-height: 320px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-color) transparent;
+}
+
+.mention-popover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mention-popover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mention-popover::-webkit-scrollbar-thumb {
+  background: var(--background-color);
+  border-radius: var(--border-radius9999);
 }
 
 .mention-item {

@@ -52,7 +52,15 @@ export class ShellComponent implements OnDestroy {
   private navHelper = inject(ShellNavigationHelper);
   private userHelper = inject(ShellUserHelper);
 
-  users$ = collectionData(collection(this.fs, 'users'), { idField: 'id' }) as Observable<MentionUser[]>;
+  users$ = authState(this.auth).pipe(
+    switchMap((user) => {
+      if (!user) return of([] as MentionUser[]);
+      return (collectionData(collection(this.fs, 'users'), { idField: 'id' }) as Observable<MentionUser[]>).pipe(
+        catchError(() => of([] as MentionUser[]))
+      );
+    }),
+    startWith([] as MentionUser[])
+  );
 
   usersAllForMentions$: Observable<MentionUser[]> = authState(this.auth).pipe(
     switchMap(user => {

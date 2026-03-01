@@ -14,7 +14,7 @@
   max-height: 320px;
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-color) transparent;
+  scrollbar-color: var(--background-color) transparent;
   display: flex;
   flex-direction: column;
 }
@@ -28,7 +28,7 @@
 }
 
 .mention-popover::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
+  background: var(--background-color);
   border-radius: 999px;
 }
 

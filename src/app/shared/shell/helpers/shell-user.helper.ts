@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Firestore, doc, docData } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, catchError } from 'rxjs/operators';
 import { UserDoc } from '../../../interfaces/allInterfaces.interface';
 
 /**
@@ -34,7 +34,8 @@ export class ShellUserHelper {
 
     const uref = doc(this.fs, `users/${user.uid}`);
     return docData(uref).pipe(
-      map((raw: any) => this.mapUserData(raw, user))
+      map((raw: any) => this.mapUserData(raw, user)),
+      catchError(() => of(null))
     );
   }
 

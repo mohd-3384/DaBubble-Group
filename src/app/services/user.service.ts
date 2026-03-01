@@ -9,8 +9,8 @@ import {
   collection,
   collectionData,
 } from '@angular/fire/firestore';
-import { Auth } from '@angular/fire/auth';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, of, switchMap, catchError, startWith } from 'rxjs';
+import { Auth, authState } from '@angular/fire/auth';
 import { UserDoc } from '../interfaces/allInterfaces.interface';
 
 /**
@@ -28,7 +28,15 @@ export class UserService {
    */
   users$(): Observable<UserDoc[]> {
     const ref = collection(this.fs, 'users');
-    return collectionData(ref, { idField: 'id' }) as Observable<UserDoc[]>;
+    return authState(this.auth).pipe(
+      switchMap((user) => {
+        if (!user) return of([] as UserDoc[]);
+        return (collectionData(ref, { idField: 'id' }) as Observable<UserDoc[]>).pipe(
+          catchError(() => of([] as UserDoc[]))
+        );
+      }),
+      startWith([] as UserDoc[])
+    );
   }
 
   /**

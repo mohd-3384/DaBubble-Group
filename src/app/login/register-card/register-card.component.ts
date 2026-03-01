@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { Auth, createUserWithEmailAndPassword, updateProfile, deleteUser } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
 import { UserService } from '../../services/user.service';
+import { ChannelService } from '../../services/channel.service';
 import { Subject, from, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
 
@@ -42,6 +43,8 @@ export class RegisterCardComponent implements OnDestroy {
   private fb = inject(FormBuilder);
   private firestore = inject(Firestore);
   private userSvc = inject(UserService);
+  private channelSvc = inject(ChannelService);
+  private readonly welcomeChannelName = 'Willkommen';
 
   form: FormGroup;
   registrationError = signal<string>('');
@@ -91,6 +94,7 @@ export class RegisterCardComponent implements OnDestroy {
         return;
       }
       await this.createFirestoreUser(userCredential.user);
+      await this.joinWelcomeChannel();
       this.nextstep.emit();
     } catch (error: any) {
       this.handleRegistrationError(error);
@@ -118,6 +122,14 @@ export class RegisterCardComponent implements OnDestroy {
       createdAt: serverTimestamp(),
       lastSeen: serverTimestamp(),
     }, { merge: true });
+  }
+
+  private async joinWelcomeChannel(): Promise<void> {
+    try {
+      await this.channelSvc.addMeToChannelByName(this.welcomeChannelName);
+    } catch (e) {
+      console.warn('[Register] join welcome channel failed:', e);
+    }
   }
 
   private bindNameCheck(): void {
