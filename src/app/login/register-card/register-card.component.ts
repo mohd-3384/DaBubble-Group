@@ -74,6 +74,7 @@ export class RegisterCardComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
+
   /** Validates form and creates new user in Firebase Auth and Firestore, then emits nextstep. */
   async onSubmit() {
     if (this.form.invalid) return;

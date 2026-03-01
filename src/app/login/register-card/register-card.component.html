@@ -12,7 +12,7 @@
       <div class="input-container">
         <div class="span-input">
           <div class="name-input">
-            <img src="./public/images/mail-icon.svg" alt="email icon">
+            <img src="./public/images/person_filled.svg" alt="name icon">
             <input type="name" placeholder="Name und Nachname" formControlName="name">
           </div>
           @if (form.get('name')?.touched && form.get('name')?.invalid) {
@@ -33,7 +33,7 @@
         </div>
         <div class="span-input">
           <div class="email-input">
-            <img src="./public/images/password-icon.svg" alt="password icon">
+            <img src="./public/images/mail.svg" alt="email icon">
             <input type="email" placeholder="beispielname@email.com" formControlName="email">
           </div>
           @if (form.get('email')?.touched && form.get('email')?.invalid) {
@@ -74,17 +74,19 @@
         </div>
       </div>
 
-      <div class="privacy-policy">
-        <div class="checkbox-container">
-          <input type="checkbox" id="terms" name="terms" formControlName="terms">
-          <label for="terms">
-            Ich stimme der <a routerLink="/privacy-policy">Datenschutzerklärung</a> zu.
-          </label>
+      <div class="span-input privacy-span">
+        <div class="privacy-policy">
+          <div class="checkbox-container">
+            <input type="checkbox" id="terms" name="terms" formControlName="terms">
+            <label for="terms">
+              Ich stimme der <a routerLink="/privacy-policy">Datenschutzerklärung</a> zu.
+            </label>
+          </div>
         </div>
+        @if (form.get('terms')?.touched && form.get('terms')?.invalid) {
+        <span class="wrong-password">Du musst der Datenschutzerklärung zustimmen.</span>
+        }
       </div>
-      @if (form.get('terms')?.touched && form.get('terms')?.invalid) {
-      <span class="wrong-password">Du musst der Datenschutzerklärung zustimmen.</span>
-      }
       @if (registrationError()) {
       <span class="wrong-password">{{ registrationError() }}</span>
       }

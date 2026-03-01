@@ -251,6 +251,27 @@ form {
   margin-top: 16px;
 }
 
+.span-input {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.span-input .wrong-password {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0px);
+  margin-top: 0;
+  line-height: 1.2;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 6px 28px 6px 10px;
+  z-index: 2;
+}
+
 .password-icon {
   opacity: 0.7;
 }
@@ -441,9 +462,10 @@ form {
 .wrong-password {
   color: red;
   font-size: 14px;
-  margin-top: 5px;
+  margin-top: 0;
   font-family: 'Nunito', sans-serif;
 }
+
 
 /* Große Laptops und Desktops 1400px+ */
 @media (min-width: 1400px) {
@@ -459,7 +481,7 @@ form {
 
   .input-container {
     width: 90%;
-    gap: 22px;
+    gap: 32px;
     margin-top: 16px;
   }
 

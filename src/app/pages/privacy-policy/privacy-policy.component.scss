@@ -43,9 +43,9 @@
 }
 
 /* Align with centered header-content (max-width: 1440px) */
-@media (min-width: 1440px) {
+@media (min-width: 1472px) {
   .legal-logo {
-    left: calc((100vw - 1440px) / 2 + 16px);
+    left: calc((100vw - 1440px) / 2);
   }
 }
 
@@ -54,8 +54,15 @@
     top: 12px;
     left: 12px;
     gap: 4px;
-    .legal-logo-img { width: 50px; height: 50px; }
-    .legal-logo-name { height: 12px; }
+
+    .legal-logo-img {
+      width: 50px;
+      height: 50px;
+    }
+
+    .legal-logo-name {
+      height: 12px;
+    }
   }
 }
 
@@ -167,9 +174,9 @@
 /* 1330px -> 768px (Tablet/Desktop) */
 @media (max-width: 1330px) and (min-width: 769px) {
   .legal-logo {
-    top: 22px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 16px;
+    left: 16px;
+    transform: none;
     height: 56px;
   }
 
@@ -189,9 +196,9 @@
 /* ===== <= 768 (Mobile) ===== */
 @media (max-width: 768px) {
   .legal-logo {
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 12px;
+    left: 12px;
+    transform: none;
     height: 44px;
   }
 
@@ -289,5 +296,13 @@
     ul li {
       font-size: 16px !important;
     }
+  }
+}
+
+@media (max-width: 500px) {
+  .legal-logo {
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
