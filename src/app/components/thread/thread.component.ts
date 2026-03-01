@@ -71,7 +71,11 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
     this.messagesScrollEl = el?.nativeElement;
     if (this.messagesScrollEl && this.pendingScroll) this.scheduleAutoScroll();
   }
+  @ViewChild('threadComposer') set threadComposer(el: ElementRef<HTMLTextAreaElement> | undefined) {
+    this.threadComposerEl = el?.nativeElement;
+  }
   private messagesScrollEl?: HTMLElement;
+  private threadComposerEl?: HTMLTextAreaElement;
   private shouldAutoScroll = true;
   private pendingScroll = false;
   private lastReplyCount = 0;
@@ -90,6 +94,7 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
 
   ngAfterViewInit(): void {
     this.pendingScroll = true;
+    this.focusComposer();
   }
 
   ngAfterViewChecked(): void {
@@ -101,6 +106,7 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['rootMessage']) {
       this.pendingScroll = true;
+      this.focusComposer();
     }
 
     if (changes['replies']) {
@@ -110,6 +116,12 @@ export class ThreadComponent implements AfterViewInit, AfterViewChecked, OnChang
         this.pendingScroll = true;
       }
     }
+  }
+
+  private focusComposer(): void {
+    setTimeout(() => {
+      this.threadComposerEl?.focus();
+    });
   }
 
   onMessagesScroll(): void {

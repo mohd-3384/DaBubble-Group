@@ -96,7 +96,7 @@
             <img matListItemAvatar [src]="u.avatarUrl || '/public/images/avatars/avatar1.svg'" [alt]="u.name" />
 
             <div matLine>
-              {{ u.name }}
+              {{ truncateName(u.name, 12) }}
               <span class="muted" *ngIf="u.id === meId">(Du)</span>
             </div>
 
@@ -166,6 +166,68 @@
           </div>
         </form>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD MEMBERS MODAL (zweiter Schritt) -->
+  <div class="ui-overlay" *ngIf="addMembersOpen"></div>
+
+  <div class="ui-modal" *ngIf="addMembersOpen" (click)="closeAddMembersModal()">
+    <div class="ui-modal__panel members-modal__panel add-members__panel" (click)="$event.stopPropagation()">
+      <div class="members-modal__header">
+        <h3 class="members-modal__title">Leute hinzufügen</h3>
+        <button type="button" class="ui-modal__close" (click)="closeAddMembersModal()">×</button>
+      </div>
+
+      <div class="add-members__body" *ngIf="users$ | async as users">
+        <label class="add-members__option">
+          <input type="radio" name="addMembersMode" [value]="'all'" [(ngModel)]="addMembersMode" />
+          <span>Alle Mitglieder von Devspace hinzufügen</span>
+        </label>
+
+        <label class="add-members__option">
+          <input type="radio" name="addMembersMode" [value]="'selected'" [(ngModel)]="addMembersMode" />
+          <span>Bestimmte Leute hinzufügen</span>
+        </label>
+
+        <div class="add-members__select" *ngIf="addMembersMode === 'selected'">
+          <div class="add-members__chips" *ngIf="selectedMembers.length">
+            <button type="button" class="add-members__chip" *ngFor="let u of selectedMembers"
+              (click)="removeSelectedMember(u.id)">
+              <img class="add-members__chip-avatar" [src]="u.avatarUrl" [alt]="u.name" />
+              <span class="add-members__chip-name">{{ u.name }}</span>
+              <span class="add-members__chip-close">×</span>
+            </button>
+          </div>
+
+          <div class="add-members__input-wrap" (click)="$event.stopPropagation()">
+            <input type="text" class="add-members__input" placeholder="Name eingeben" [(ngModel)]="addMemberInput"
+              (ngModelChange)="onAddMemberInput($event)" />
+
+            <div class="add-members__suggest" *ngIf="addMemberInput.trim() && showAddMemberSuggest">
+              <button type="button" class="add-members__suggest-item" *ngFor="let u of getAddMemberSuggestions(users)"
+                (click)="selectAddMember(u)">
+                <div class="add-members__suggest-avatar-wrap">
+                  <img class="add-members__suggest-avatar" [src]="u.avatarUrl" [alt]="u.name" />
+                </div>
+                <span class="add-members__suggest-name">{{ u.name }}</span>
+              </button>
+
+              <div *ngIf="getAddMemberSuggestions(users).length === 0" class="add-members__suggest-empty">
+                Keine passenden Personen
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="add-members__footer">
+          <button type="button" class="channel-btn channel-btn--primary"
+            [disabled]="addMembersMode === 'selected' && !selectedMembers.length"
+            (click)="submitCreateChannelFinal(users)">
+            Erstellen
+          </button>
+        </div>
       </div>
     </div>
   </div>

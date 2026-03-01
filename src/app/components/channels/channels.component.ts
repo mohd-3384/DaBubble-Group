@@ -70,6 +70,13 @@ export class ChannelsComponent {
   get newChannelDescription() { return this.modalHelper.newChannelDescription; }
   set newChannelDescription(v: string) { this.modalHelper.newChannelDescription = v; }
   get channelNameError() { return this.modalHelper.channelNameError; }
+  get addMembersOpen() { return this.modalHelper.addMembersOpen; }
+  get addMembersMode() { return this.modalHelper.addMembersMode; }
+  set addMembersMode(v: 'all' | 'selected') { this.modalHelper.addMembersMode = v; }
+  get addMemberInput() { return this.modalHelper.addMemberInput; }
+  set addMemberInput(v: string) { this.modalHelper.addMemberInput = v; }
+  get showAddMemberSuggest() { return this.modalHelper.showAddMemberSuggest; }
+  get selectedMembers() { return this.modalHelper.selectedMembers; }
 
   // Delegierte Properties für Search
   get wsSearchTerm() { return this.searchHelper.wsSearchTerm; }
@@ -128,6 +135,48 @@ export class ChannelsComponent {
    */
   async submitCreateChannel() {
     await this.modalHelper.submitCreateChannel();
+  }
+
+  /**
+   * Closes the add members modal.
+   */
+  closeAddMembersModal() {
+    this.modalHelper.closeAddMembersModal();
+  }
+
+  /**
+   * Finalizes channel creation after member selection.
+   */
+  async submitCreateChannelFinal(users: UserDoc[]) {
+    await this.modalHelper.submitCreateChannelFinal(users, this.meId);
+  }
+
+  /**
+   * Handles add member input.
+   */
+  onAddMemberInput(value: string) {
+    this.modalHelper.onAddMemberInput(value);
+  }
+
+  /**
+   * Selects a member for channel creation.
+   */
+  selectAddMember(user: UserDoc) {
+    this.modalHelper.selectAddMember(user);
+  }
+
+  /**
+   * Removes a selected member.
+   */
+  removeSelectedMember(userId: string | undefined) {
+    this.modalHelper.removeSelectedMember(userId);
+  }
+
+  /**
+   * Gets add member suggestions.
+   */
+  getAddMemberSuggestions(users: UserDoc[]) {
+    return this.modalHelper.getAddMemberSuggestions(users, this.meId);
   }
 
   /**
@@ -213,6 +262,15 @@ export class ChannelsComponent {
    */
   onWsSearchKeydown(ev: KeyboardEvent) {
     this.searchHelper.onWsSearchKeydown(ev);
+  }
+
+  /**
+   * Truncates long names with an ellipsis.
+   */
+  truncateName(name: string | null | undefined, maxLength = 16): string {
+    const value = (name ?? '').toString();
+    if (value.length <= maxLength) return value;
+    return `${value.slice(0, maxLength)}...`;
   }
 
   /**

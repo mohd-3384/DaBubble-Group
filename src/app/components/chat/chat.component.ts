@@ -115,8 +115,13 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
   private pendingScroll = false;
   private messagesSub?: Subscription;
   private joinNoticeSub?: Subscription;
+  private membersSub?: Subscription;
+  private channelDocSub?: Subscription;
   private joinPopupTimer?: ReturnType<typeof setTimeout>;
   private messagesScrollEl?: HTMLElement;
+  private currentMembers: MemberVM[] = [];
+  private currentChannelDoc: ChannelDoc | null = null;
+  private lastKnownChannelId: string | null = null;
 
   constructor() {
     createStateProxies(this.state, this);
@@ -138,6 +143,7 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     this.bindComposerFocusOnChannelSwitch();
     this.bindAutoScroll();
     this.bindJoinNotice();
+    this.bindMemberSnapshots();
   }
 
   ngAfterViewInit(): void {
@@ -153,9 +159,37 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
   ngOnDestroy(): void {
     this.messagesSub?.unsubscribe();
     this.joinNoticeSub?.unsubscribe();
+    this.membersSub?.unsubscribe();
+    this.channelDocSub?.unsubscribe();
     if (this.joinPopupTimer) {
       clearTimeout(this.joinPopupTimer);
     }
+  }
+
+  private bindMemberSnapshots(): void {
+    this.membersSub = this.members$.subscribe((members) => {
+      this.currentMembers = members || [];
+    });
+    this.channelDocSub = this.channelDoc$.subscribe((doc) => {
+      this.currentChannelDoc = doc ?? null;
+      if (doc?.id) {
+        this.lastKnownChannelId = doc.id;
+        return;
+      }
+
+      const routeId = this.route.snapshot.paramMap.get('id');
+      if (routeId && routeId === this.lastKnownChannelId) {
+        this.lastKnownChannelId = null;
+        this.router.navigate(['/new']);
+      }
+    });
+  }
+
+  canAddMembers(): boolean {
+    const uid = this.currentUser?.id;
+    if (!uid) return false;
+    if (this.currentChannelDoc?.createdBy === uid) return true;
+    return this.currentMembers.some((m) => m.uid === uid);
   }
 
   private bindJoinNotice(): void {
@@ -572,6 +606,7 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
    * Opens the add members modal
    */
   openAddMembersModal(): void {
+    if (!this.canAddMembers()) return;
     this.modalCoordinator.openAddMembersModal();
   }
 
@@ -586,6 +621,7 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
    * Submits the add member operation
    */
   async submitAddMember(): Promise<void> {
+    if (!this.canAddMembers()) return;
     const success = await this.modalCoordinator.submitAddMember();
     if (success) this.closeAddMembersModal();
   }

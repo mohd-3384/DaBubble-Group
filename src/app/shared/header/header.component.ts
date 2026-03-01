@@ -236,6 +236,15 @@ export class HeaderComponent {
   }
 
   /**
+   * Truncates long names with an ellipsis.
+   */
+  truncateName(name: string | null | undefined, maxLength = 12): string {
+    const value = (name ?? '').toString();
+    if (value.length <= maxLength) return value;
+    return `${value.slice(0, maxLength)}...`;
+  }
+
+  /**
    * Closes all open dropdowns and modals (profile and search).
    */
   closeAll() {

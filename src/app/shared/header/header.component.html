@@ -54,7 +54,7 @@
   <div class="profile-area" (click)="$event.stopPropagation()">
     <button type="button" class="profile-trigger" (click)="toggleProfile()" [attr.aria-expanded]="profileOpen">
       <ng-container *ngIf="user$ | async as user">
-        <span class="name-text">{{ user.name }}</span>
+        <span class="name-text">{{ truncateName(user.name) }}</span>
 
         <span class="avatar-wrap">
           <img [src]="user.avatarUrl" class="profile-img" alt="Avatar" />

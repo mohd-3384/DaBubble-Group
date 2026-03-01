@@ -439,7 +439,8 @@
                   </div>
                 </div>
               </button>
-              <button type="button" class="members-modal__add-btn" (click)="openAddMembersModal()">
+              <button *ngIf="canAddMembers()" type="button" class="members-modal__add-btn"
+                (click)="openAddMembersModal()">
                 <span class="members-modal__add-icon"></span>
                 <span>Mitglieder hinzufügen</span>
               </button>
@@ -537,7 +538,7 @@
           </button>
         </div>
 
-        <button type="button" class="members-modal__add-btn" (click)="openAddMembersModal()">
+        <button *ngIf="canAddMembers()" type="button" class="members-modal__add-btn" (click)="openAddMembersModal()">
           <span class="members-modal__add-icon"></span>
           <span>Mitglieder hinzufügen</span>
         </button>

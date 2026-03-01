@@ -10,9 +10,12 @@ import {
   addDoc,
   collectionData,
   getDoc,
+  writeBatch,
+  getDocs,
+  deleteDoc,
 } from '@angular/fire/firestore';
 import { Observable, map, firstValueFrom } from 'rxjs';
-import { ChannelDoc } from '../interfaces/allInterfaces.interface';
+import { ChannelDoc, UserDoc } from '../interfaces/allInterfaces.interface';
 import { AuthReadyService } from './auth-ready.service';
 
 /**
@@ -71,6 +74,40 @@ export class ChannelService {
   }
 
   /**
+   * Adds multiple users as members to a channel.
+   * @param channelId - ID of the channel
+   * @param members - Users to add
+   * @param role - Role for added members
+   */
+  async addMembers(channelId: string, members: UserDoc[], role: 'owner' | 'member' = 'member'): Promise<void> {
+    const unique = new Map<string, UserDoc>();
+    for (const m of members) {
+      if (m?.id) unique.set(m.id, m);
+    }
+    const list = Array.from(unique.values());
+    if (!list.length) return;
+
+    const chRef = doc(this.fs, `channels/${channelId}`);
+    const batch = writeBatch(this.fs);
+    for (const u of list) {
+      const memRef = doc(this.fs, `channels/${channelId}/members/${u.id}`);
+      batch.set(
+        memRef,
+        {
+          uid: u.id,
+          displayName: u.name,
+          avatarUrl: u.avatarUrl ?? null,
+          joinedAt: serverTimestamp(),
+          role,
+        },
+        { merge: true }
+      );
+    }
+    batch.update(chRef, { memberCount: increment(list.length) });
+    await batch.commit();
+  }
+
+  /**
    * Posts a welcome message to a channel from the bot
    * @param channelId - ID of the channel to post welcome message
    */
@@ -98,13 +135,68 @@ export class ChannelService {
     const uid = user.uid;
     const chRef = doc(this.fs, `channels/${channelId}`);
     const memRef = doc(this.fs, `channels/${channelId}/members/${uid}`);
+    let shouldDelete = false;
     await runTransaction(this.fs, async (tx) => {
+      const chSnap = await tx.get(chRef);
       const memSnap = await tx.get(memRef);
       if (memSnap.exists()) {
         tx.delete(memRef);
-        tx.update(chRef, { memberCount: increment(-1) });
+        const memberCount = (chSnap.data() as any)?.memberCount ?? 0;
+        if (memberCount <= 1) {
+          tx.delete(chRef);
+          shouldDelete = true;
+        } else {
+          tx.update(chRef, { memberCount: increment(-1) });
+        }
       }
     });
+
+    if (shouldDelete) {
+      await this.deleteChannelData(channelId);
+    }
+  }
+
+  /**
+   * Deletes channel subcollections (members, messages, replies).
+   */
+  private async deleteChannelData(channelId: string): Promise<void> {
+    try {
+      await this.deleteCollection(`channels/${channelId}/members`);
+
+      const messagesRef = collection(this.fs, `channels/${channelId}/messages`);
+      const msgSnap = await getDocs(messagesRef);
+      for (const msg of msgSnap.docs) {
+        await this.deleteCollection(`channels/${channelId}/messages/${msg.id}/replies`);
+        await deleteDoc(doc(this.fs, `channels/${channelId}/messages/${msg.id}`));
+      }
+    } catch (e) {
+      console.error('[ChannelService] Cleanup failed:', e);
+    }
+  }
+
+  /**
+   * Deletes all documents in a collection path in batches.
+   */
+  private async deleteCollection(path: string): Promise<void> {
+    const ref = collection(this.fs, path);
+    const snap = await getDocs(ref);
+    if (snap.empty) return;
+
+    let batch = writeBatch(this.fs);
+    let count = 0;
+    for (const docSnap of snap.docs) {
+      batch.delete(docSnap.ref);
+      count += 1;
+      if (count >= 400) {
+        await batch.commit();
+        batch = writeBatch(this.fs);
+        count = 0;
+      }
+    }
+
+    if (count > 0) {
+      await batch.commit();
+    }
   }
 
   /**
