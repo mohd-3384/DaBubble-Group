@@ -30,21 +30,27 @@
 
     <div class="search-results" *ngIf="searchOpen" (click)="$event.stopPropagation()">
       <ng-container *ngIf="results$ | async as results">
-        <ng-container *ngIf="results.length; else noResults">
-          <button type="button" class="search-item" *ngFor="let r of results; let i = index"
-            [class.active]="i === activeIndex" (click)="onSelectResult(r)">
-            <span class="kind" *ngIf="r.kind === 'channel'">#</span>
-            <span class="kind" *ngIf="r.kind === 'user'">&#64;</span>
-            <span class="kind" *ngIf="r.kind === 'message'">💬</span>
-
-            <span class="label" *ngIf="r.kind === 'channel'">{{ r.name }}</span>
-            <span class="label" *ngIf="r.kind === 'user'">{{ r.name }}</span>
-            <span class="label message" *ngIf="r.kind === 'message'">{{ r.text }}</span>
-          </button>
+        <ng-container *ngIf="isSearching; else resultsOrEmpty">
+          <div class="search-empty">Suche...</div>
         </ng-container>
 
-        <ng-template #noResults>
-          <div class="search-empty">Keine Treffer</div>
+        <ng-template #resultsOrEmpty>
+          <ng-container *ngIf="results.length; else noResults">
+            <button type="button" class="search-item" *ngFor="let r of results; let i = index"
+              [class.active]="i === activeIndex" (click)="onSelectResult(r)">
+              <span class="kind" *ngIf="r.kind === 'channel'">#</span>
+              <span class="kind" *ngIf="r.kind === 'user'">&#64;</span>
+              <span class="kind" *ngIf="r.kind === 'message'">💬</span>
+
+              <span class="label" *ngIf="r.kind === 'channel'">{{ r.name }}</span>
+              <span class="label" *ngIf="r.kind === 'user'">{{ r.name }}</span>
+              <span class="label message" *ngIf="r.kind === 'message'">{{ r.text }}</span>
+            </button>
+          </ng-container>
+
+          <ng-template #noResults>
+            <div class="search-empty">Keine Treffer</div>
+          </ng-template>
         </ng-template>
       </ng-container>
     </div>

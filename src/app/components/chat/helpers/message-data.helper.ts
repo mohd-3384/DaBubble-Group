@@ -1,9 +1,9 @@
 import { Injectable, inject, EnvironmentInjector, PLATFORM_ID, runInInjectionContext } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Firestore, collection, collectionData, query, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, orderBy, doc, getDoc } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Observable, of, combineLatest } from 'rxjs';
+import { Observable, of, combineLatest, from } from 'rxjs';
 import { map, switchMap, startWith, catchError } from 'rxjs/operators';
 import { MessageVm, UserMini } from '../../../interfaces/allInterfaces.interface';
 import { toDateMaybe } from './date.utils';
@@ -44,12 +44,26 @@ export class MessageDataHelper {
         }
 
         if (!isDM) {
-          return this.getChannelMessages$(id, userMap);
+          if (!me) return of([] as MessageVm[]);
+          return this.getChannelMessagesIfMember$(id, me.uid, userMap);
         }
 
         if (!me) return of([] as MessageVm[]);
         return this.getDMMessages$(me.uid, id, userMap);
       })
+    );
+  }
+
+  private getChannelMessagesIfMember$(
+    channelId: string,
+    userId: string,
+    userMap: Map<string, UserMini>
+  ): Observable<MessageVm[]> {
+    const memRef = doc(this.fs, `channels/${channelId}/members/${userId}`);
+    return from(getDoc(memRef)).pipe(
+      map((snap) => snap.exists()),
+      catchError(() => of(false)),
+      switchMap((isMember) => (isMember ? this.getChannelMessages$(channelId, userMap) : of([] as MessageVm[])))
     );
   }
 

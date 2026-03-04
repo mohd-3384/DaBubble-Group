@@ -1,8 +1,9 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { ChannelDoc, DayGroup, MemberVM, MessageVm, SuggestItem, UserDoc, Vm, UserMini, } from '../../interfaces/allInterfaces.interface';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { ChannelService } from '../../services/channel.service';
@@ -110,13 +111,14 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
   addMembersModalPos!: any; addMemberInput!: string; showAddMemberSuggest!: boolean;
   addMemberSelected!: any; userProfileOpen!: boolean; userProfileId!: string | null; userProfile!: any;
   hoveredReaction!: any; showJoinChannelPopup!: boolean;
-  private lastConversationId: string | null = null;
+  private lastConversationKey: string | null = null;
   private shouldAutoScroll = true;
   private pendingScroll = false;
   private messagesSub?: Subscription;
   private joinNoticeSub?: Subscription;
   private membersSub?: Subscription;
   private channelDocSub?: Subscription;
+  private routeFocusSub?: Subscription;
   private joinPopupTimer?: ReturnType<typeof setTimeout>;
   private messagesScrollEl?: HTMLElement;
   private currentMembers: MemberVM[] = [];
@@ -173,6 +175,7 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     this.joinNoticeSub?.unsubscribe();
     this.membersSub?.unsubscribe();
     this.channelDocSub?.unsubscribe();
+    this.routeFocusSub?.unsubscribe();
     if (this.joinPopupTimer) {
       clearTimeout(this.joinPopupTimer);
     }
@@ -226,6 +229,12 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     return this.currentMembers.some((m) => m.uid === uid);
   }
 
+  isCurrentMember(): boolean {
+    const uid = this.currentUser?.id;
+    if (!uid) return false;
+    return this.currentMembers.some((m) => m.uid === uid);
+  }
+
   onComposerInput(value: string): void {
     this.updateComposerSuggest(value);
   }
@@ -253,10 +262,12 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     const startIndex = draft.length - (match[2].length + match[3].length);
 
     if (prefix === '@') {
-      const list = this.currentMembers
-        .filter((m) => m.name.toLowerCase().includes(query))
+      const isDm = this.router.url.includes('/dm/');
+      const source = isDm ? this.currentUsers : this.currentMembers;
+      const list = source
+        .filter((m: any) => m.name.toLowerCase().includes(query))
         .slice(0, 8)
-        .map((m) => ({ id: m.uid, name: m.name, avatarUrl: m.avatarUrl }));
+        .map((m: any) => ({ id: m.id ?? m.uid, name: m.name, avatarUrl: m.avatarUrl }));
       this.setComposerSuggest('user', list, startIndex, prefix);
       return;
     }
@@ -425,12 +436,23 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
       const id = params.get('id');
       if (!id) return;
 
-      if (this.lastConversationId && this.lastConversationId !== id) {
+      const key = this.router.url;
+      if (this.lastConversationKey && this.lastConversationKey !== key) {
+        this.resetComposerState();
         this.focusComposerInput();
       }
 
-      this.lastConversationId = id;
+      this.lastConversationKey = key;
     });
+
+    this.routeFocusSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => {
+        if (this.state.composeMode) return;
+        if (this.router.url.includes('/channel/') || this.router.url.includes('/dm/')) {
+          this.focusComposerInput();
+        }
+      });
   }
 
   /**
@@ -441,6 +463,14 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
     setTimeout(() => {
       this.refs.composerInputEl?.nativeElement.focus();
     });
+  }
+
+  private resetComposerState(): void {
+    if (this.state.composeMode) return;
+    this.state.draft = '';
+    this.state.showEmoji = false;
+    this.state.emojiContext = null;
+    this.closeComposerSuggest();
   }
 
   /**

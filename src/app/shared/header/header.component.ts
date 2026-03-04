@@ -295,6 +295,7 @@ export class HeaderComponent {
   activeIndex = -1;
   private latestResults: SearchResult[] = [];
   searchTerm = '';
+  isSearching = false;
 
   /**
    * Updates the search term and opens the search results dropdown.
@@ -305,6 +306,7 @@ export class HeaderComponent {
     const term = (v || '').trim().toLowerCase();
     this.searchOpen = !!term;
     this.activeIndex = -1;
+    this.isSearching = !!term;
     this.search$.next(term);
   }
 
@@ -341,7 +343,10 @@ export class HeaderComponent {
    */
   results$: Observable<SearchResult[]> = this.searchHelper.createSearchStream(
     this.search$.pipe(debounceTime(120), distinctUntilChanged()),
-    (results) => { this.latestResults = results; }
+    (results) => {
+      this.latestResults = results;
+      this.isSearching = false;
+    }
   );
 
   /**

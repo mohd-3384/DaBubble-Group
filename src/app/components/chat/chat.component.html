@@ -63,8 +63,8 @@
         <span class="count" *ngIf="members.length <= 3">{{ members.length }}</span>
       </div>
 
-      <span #addMembersBtn class="icon-swap add-member" role="button" tabindex="0" aria-label="Mitglieder hinzufügen"
-        title="Mitglieder hinzufügen" (click)="openAddMembersModal()"></span>
+      <span *ngIf="canAddMembers()" #addMembersBtn class="icon-swap add-member" role="button" tabindex="0"
+        aria-label="Mitglieder hinzufügen" title="Mitglieder hinzufügen" (click)="openAddMembersModal()"></span>
     </div>
   </section>
 </ng-template>
@@ -470,9 +470,24 @@
         </div>
 
         <div class="channel-info__footer">
-          <button type="button" class="channel-info__leave-btn" (click)="onLeaveChannel()">
+          <button *ngIf="isCurrentMember()" type="button" class="channel-info__leave-btn" (click)="onLeaveChannel()">
             Channel verlassen
           </button>
+
+          <div *ngIf="!isCurrentMember()" class="channel-info__join-hint">
+            <ng-container *ngIf="channelCreator$ | async as creator; else creatorFallback">
+              <ng-container *ngIf="creator?.id as creatorId; else creatorFallback">
+                Frage
+                <button type="button" class="channel-info__join-link" (click)="onMemberClick(creatorId)">
+                  {{ creator.name }}
+                </button>
+                , um dem Channel beizutreten.
+              </ng-container>
+            </ng-container>
+            <ng-template #creatorFallback>
+              Frage den Channel-Ersteller, um dem Channel beizutreten.
+            </ng-template>
+          </div>
         </div>
 
       </div>
