@@ -13,11 +13,14 @@
       <div class="input-container">
         <!-- E-Mail -->
         <div class="span-input">
-          <div class="mail-input">
+          <div class="mail-input" [class.input-error]="(f.submitted || f.controls['email']?.touched) && f.controls['email']?.invalid">
             <img src="./public/images/mail-icon.svg" alt="email icon">
             <input type="email" name="email" [(ngModel)]="email" required email placeholder="beispielname@email.com" />
           </div>
-          <span class="wrong-password" *ngIf="f.submitted && f.controls['email']?.errors?.['email']">
+          <span class="wrong-password" *ngIf="(f.submitted || f.controls['email']?.touched) && f.controls['email']?.errors?.['required']">
+            *Bitte gib deine E-Mail-Adresse ein.
+          </span>
+          <span class="wrong-password" *ngIf="(f.submitted || f.controls['email']?.touched) && f.controls['email']?.errors?.['email']">
             *Diese E-Mail-Adresse ist leider ungültig.
           </span>
         </div>

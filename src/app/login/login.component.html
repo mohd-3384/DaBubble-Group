@@ -15,10 +15,6 @@
         <img class="logo-img" src="./public/images/dabubble-logo.svg" alt="DA-Bubble Logo">
         <img class="logo-name" src="./public/images/Logo name.svg" alt="DA-Bubble Logo Name">
       </div>
-      <div class="right-header-container" [class.splash-hiding]="showSplash()" *ngIf="showLoginCard()">
-        <span>Neu bei DABubble?</span>
-        <a (click)="openRegisterCard()">Konto erstellen</a>
-      </div>
     </div>
   </header>
 
@@ -37,6 +33,11 @@
     <app-enter-new-password *ngIf="showEnterPassword()" (success)="onEnterPasswordSuccess()"
       (back)="backToLogin()"></app-enter-new-password>
   </main>
+
+  <div class="right-header-container" [class.splash-hiding]="showSplash()" *ngIf="showLoginCard()">
+    <span>Neu bei DABubble?</span>
+    <a (click)="openRegisterCard()">Konto erstellen</a>
+  </div>
 
   <div class="user-successful-container" [class.visible]="successMessage()">
     <p>Benutzer erfolgreich erstellt!</p>

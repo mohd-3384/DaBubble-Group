@@ -31,177 +31,6 @@ mat-card-subtitle {
   line-height: 1.35;
 }
 
-/* Tablets und kleine Laptops 760px - 1024px */
-@media (max-width: 760px) {
-  mat-card {
-    width: 95vw;
-    max-width: 380px;
-    padding: 14px;
-  }
-
-  mat-card-title {
-    font-size: 18px !important;
-  }
-
-  mat-card-subtitle {
-    padding-top: 10px !important;
-    font-size: 16px !important;
-  }
-
-  .input-container {
-    width: 90%;
-    gap: 12px;
-    margin-top: 16px;
-  }
-
-  .google-login,
-  .oder-container {
-    margin-top: 16px;
-  }
-
-  input {
-    font-size: 16px !important;
-  }
-
-  input::placeholder {
-    font-size: 16px !important;
-  }
-
-  .forgot-password {
-    margin-top: 16px;
-    font-size: 16px !important;
-  }
-
-  .oder-container {
-    .oder-text {
-      font-size: 16px !important;
-    }
-  }
-
-  .google-login {
-    font-size: 16px !important;
-  }
-
-  .button-container {
-    margin-top: 10px;
-    margin-bottom: 8px;
-    gap: 10px;
-
-    >.button_1,
-    >.button_2 {
-      width: 105px;
-      height: 32px;
-      font-size: 16px !important;
-    }
-  }
-}
-
-/* Tablets und kleine Laptops (iPad, 11-13 Zoll) */
-@media (max-width: 1024px) {
-  mat-card {
-    max-width: 400px;
-    padding: 14px;
-  }
-
-  mat-card-title {
-    font-size: 20px !important;
-  }
-
-  mat-card-subtitle {
-    padding-top: 12px !important;
-    font-size: 16px !important;
-  }
-
-  .input-container {
-    width: 90%;
-    gap: 16px;
-    margin-top: 16px;
-  }
-
-  .mail-input,
-  .password-input {
-    padding: 8px;
-    min-height: 38px;
-  }
-
-  .google-login,
-  .oder-container {
-    margin-top: 16px;
-  }
-
-  input {
-    font-size: 16px !important;
-  }
-
-  input::placeholder {
-    font-size: 16px !important;
-  }
-
-  .forgot-password {
-    margin-top: 14px;
-    font-size: 16px !important;
-  }
-
-  .oder-container {
-    .oder-text {
-      font-size: 16px !important;
-    }
-  }
-
-  .google-login {
-    font-size: 16px !important;
-    padding: 8px;
-  }
-
-  .button-container {
-    margin-top: 16px;
-    margin-bottom: 10px;
-    gap: 12px;
-
-    >.button_1,
-    >.button_2 {
-      width: 105px;
-      height: 32px;
-      font-size: 16px !important;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  mat-card {
-    width: 95vw;
-    padding: 16px;
-    margin-top: 12px;
-  }
-
-  mat-card-title {
-    font-size: 20px !important;
-  }
-
-  mat-card-subtitle {
-    padding-top: 20px !important;
-    font-size: 16px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  mat-card {
-    width: 95vw;
-    padding: 14px;
-    margin-top: 10px;
-    border-radius: 20px;
-  }
-
-  mat-card-title {
-    font-size: 18px !important;
-  }
-
-  mat-card-subtitle {
-    padding-top: 16px !important;
-    font-size: 16px !important;
-  }
-}
-
 mat-form-field {
   width: 80%;
   margin-top: 40px;
@@ -297,6 +126,10 @@ form {
 
   &:focus-within {
     border: 1px solid rgb(68, 77, 242);
+  }
+
+  &.input-error {
+    border-color: red;
   }
 
   .password-toggle {
@@ -456,122 +289,6 @@ input {
   font-family: 'Nunito', sans-serif;
 }
 
-@media (max-width: 375px) {
-  mat-card {
-    padding: 12px;
-    width: 95vw !important;
-    max-width: 95vw !important;
-  }
-}
-
-mat-card-title {
-  font-size: 16px;
-}
-
-mat-card-subtitle {
-  font-size: 12px;
-  padding-top: 12px !important;
-}
-
-.input-container {
-  width: 90%;
-}
-
-mat-form-field {
-  width: 100%;
-}
-
-.mail-input,
-.password-input {
-  min-height: 40px;
-  padding: 8px;
-}
-
-input {
-  font-size: 16px;
-  min-height: 40px;
-}
-
-.forgot-password {
-  font-size: 16px;
-  margin-top: 20px;
-}
-
-.oder-container {
-  margin-top: 20px;
-
-  .oder-text {
-    font-size: 14px;
-  }
-}
-
-.google-login {
-  width: 90%;
-  font-size: 14px;
-  padding: 8px;
-  min-height: 40px;
-
-  span {
-    display: block;
-    font-size: 16px !important;
-  }
-}
-
-.button-container {
-  margin-top: 20px;
-  margin-bottom: 12px;
-  gap: 10px;
-
-  >.button_1,
-  >.button_2 {
-    width: 120px;
-    height: 40px;
-    font-size: 14px;
-  }
-}
-
-/* Große Bildschirme 1200px+ - Alle Fonts 20px */
-@media (min-width: 1200px) {
-  mat-card-title {
-    font-size: 20px !important;
-  }
-
-  mat-card-subtitle {
-    font-size: 20px !important;
-  }
-
-  input {
-    font-size: 20px !important;
-  }
-
-  input::placeholder {
-    font-size: 20px !important;
-  }
-
-  .forgot-password {
-    font-size: 20px !important;
-  }
-
-  .oder-container .oder-text {
-    font-size: 20px !important;
-  }
-
-  .google-login {
-    font-size: 20px !important;
-
-    span {
-      font-size: 20px !important;
-    }
-  }
-
-  .button-container>.button_1,
-  .button-container>.button_2 {
-    width: 140px;
-    height: 40px;
-    font-size: 20px !important;
-  }
-}
-
 /* Große Laptops und Desktops 1400px+ */
 @media (min-width: 1400px) {
   mat-card {
@@ -633,6 +350,227 @@ input {
   }
 }
 
+/* Große Bildschirme 1200px+ - Alle Fonts 20px */
+@media (min-width: 1200px) {
+  mat-card-title {
+    font-size: 20px !important;
+  }
+
+  mat-card-subtitle {
+    font-size: 20px !important;
+  }
+
+  input {
+    font-size: 20px !important;
+  }
+
+  input::placeholder {
+    font-size: 20px !important;
+  }
+
+  .forgot-password {
+    font-size: 20px !important;
+  }
+
+  .oder-container .oder-text {
+    font-size: 20px !important;
+  }
+
+  .google-login {
+    font-size: 20px !important;
+
+    span {
+      font-size: 20px !important;
+    }
+  }
+
+  .button-container>.button_1,
+  .button-container>.button_2 {
+    width: 140px;
+    height: 40px;
+    font-size: 20px !important;
+  }
+}
+
+/* Tablets und kleine Laptops (iPad, 11-13 Zoll) ≤1024px */
+@media (max-width: 1024px) {
+  mat-card {
+    max-width: 400px;
+    padding: 14px;
+  }
+
+  mat-card-title {
+    font-size: 20px !important;
+  }
+
+  mat-card-subtitle {
+    padding-top: 12px !important;
+    font-size: 16px !important;
+  }
+
+  .input-container {
+    width: 90%;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .mail-input,
+  .password-input {
+    padding: 8px;
+    min-height: 38px;
+  }
+
+  .google-login,
+  .oder-container {
+    margin-top: 16px;
+  }
+
+  input {
+    font-size: 16px !important;
+  }
+
+  input::placeholder {
+    font-size: 16px !important;
+  }
+
+  .forgot-password {
+    margin-top: 14px;
+    font-size: 16px !important;
+  }
+
+  .oder-container {
+    .oder-text {
+      font-size: 16px !important;
+    }
+  }
+
+  .google-login {
+    font-size: 16px !important;
+    padding: 8px;
+  }
+
+  .button-container {
+    margin-top: 16px;
+    margin-bottom: 10px;
+    gap: 12px;
+
+    >.button_1,
+    >.button_2 {
+      width: 105px;
+      height: 32px;
+      font-size: 16px !important;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  mat-card {
+    width: 95vw;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  mat-card-title {
+    font-size: 20px !important;
+  }
+
+  mat-card-subtitle {
+    padding-top: 20px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* Tablets und kleine Laptops ≤760px */
+@media (max-width: 760px) {
+  mat-card {
+    width: 95vw;
+    max-width: 380px;
+    padding: 14px;
+  }
+
+  mat-card-title {
+    font-size: 18px !important;
+  }
+
+  mat-card-subtitle {
+    padding-top: 10px !important;
+    font-size: 16px !important;
+  }
+
+  .input-container {
+    width: 90%;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .google-login,
+  .oder-container {
+    margin-top: 16px;
+  }
+
+  input {
+    font-size: 16px !important;
+  }
+
+  input::placeholder {
+    font-size: 16px !important;
+  }
+
+  .forgot-password {
+    margin-top: 16px;
+    font-size: 16px !important;
+  }
+
+  .oder-container {
+    .oder-text {
+      font-size: 16px !important;
+    }
+  }
+
+  .google-login {
+    font-size: 16px !important;
+  }
+
+  .button-container {
+    margin-top: 10px;
+    margin-bottom: 8px;
+    gap: 10px;
+
+    >.button_1,
+    >.button_2 {
+      width: 105px;
+      height: 32px;
+      font-size: 16px !important;
+    }
+  }
+}
+
+@media (max-width: 500px) {
+  mat-card {
+    width: 95vw;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 20px;
+  }
+
+  mat-card-title {
+    font-size: 18px !important;
+  }
+
+  mat-card-subtitle {
+    padding-top: 16px !important;
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 375px) {
+  mat-card {
+    padding: 12px;
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+}
+
 /* Kleine Bildschirmhöhe */
 @media (max-height: 800px) {
   mat-card {
@@ -658,13 +596,25 @@ input {
     min-height: 35px;
   }
 
+  mat-card-title {
+    font-size: 16px !important;
+  }
+
+  mat-card-subtitle {
+    font-size: 16px !important;
+  }
+
   input {
-    font-size: 14px;
+    font-size: 16px !important;
+  }
+
+  input::placeholder {
+    font-size: 16px !important;
   }
 
   .forgot-password {
     margin-top: 8px;
-    font-size: 16px;
+    font-size: 16px !important;
   }
 
   .oder-container {
@@ -673,7 +623,7 @@ input {
     gap: 8px;
 
     .oder-text {
-      font-size: 12px;
+      font-size: 16px !important;
     }
   }
 
@@ -681,8 +631,12 @@ input {
     width: 90%;
     padding: 6px;
     margin-top: 16px;
-    font-size: 12px;
+    font-size: 16px !important;
     min-height: 35px;
+
+    span {
+      font-size: 16px !important;
+    }
   }
 
   .button-container {
@@ -692,9 +646,9 @@ input {
 
     >.button_1,
     >.button_2 {
-      width: 105px;
+      width: 130px;
       height: 32px;
-      font-size: 11px;
+      font-size: 16px !important;
     }
   }
 }
