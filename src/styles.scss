@@ -5,3 +5,20 @@
 @use 'styles/responsive' as *;
 @use 'styles/emoji' as *;
 @use 'styles/ui-components' as *;
+
+/* Route transition animation */
+@keyframes routeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.imprint-page,
+.privacypolicy-page {
+  animation: routeFadeIn 0.35s ease;
+}
