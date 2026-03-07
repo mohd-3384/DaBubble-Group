@@ -65,7 +65,11 @@ export class RegisterCardComponent implements OnDestroy {
   constructor() {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.pattern('^[a-zA-Z -]+$')]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [
+        Validators.required,
+        Validators.email,
+        Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$'),
+      ]],
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern('^(?=.*[A-Z])(?=.*[!@#$&*]).{6,}$')]],
       terms: [false, [Validators.requiredTrue]],
     });

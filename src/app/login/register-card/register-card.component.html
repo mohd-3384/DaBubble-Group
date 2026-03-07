@@ -41,7 +41,7 @@
             @if (form.get('email')?.errors?.['required']) {
             Bitte gib deine E-Mail-Adresse ein.
             }
-            @else if (form.get('email')?.errors?.['email']) {
+            @else if (form.get('email')?.errors?.['email'] || form.get('email')?.errors?.['pattern']) {
             Deine E-Mail-Adresse ist ungültig.
             }
           </span>}
