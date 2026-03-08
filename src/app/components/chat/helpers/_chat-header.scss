@@ -171,3 +171,11 @@
         transform: scale(1.05);
     }
 }
+
+.add-member--placeholder {
+    background: transparent;
+    box-shadow: none;
+    cursor: default;
+    pointer-events: none;
+    visibility: hidden;
+}

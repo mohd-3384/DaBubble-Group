@@ -63,3 +63,4 @@ chat.component.old.ts
 .env
 .env.local
 .env.*.local
+src/environments/environment.local.ts

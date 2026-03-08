@@ -35,6 +35,9 @@ app-header {
   padding: 16px;
   height: calc(100vh - 90px);
   min-height: 0;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
 }
 
 /* Spalten */
@@ -169,6 +172,12 @@ app-header {
 
   &:hover {
     color: var(--primary-color);
+  }
+}
+
+@media (min-width: 1952px) {
+  .workspace-toggle {
+    left: calc((100vw - 1920px) / 2);
   }
 }
 

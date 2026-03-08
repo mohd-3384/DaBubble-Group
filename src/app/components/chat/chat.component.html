@@ -65,6 +65,7 @@
 
       <span *ngIf="canAddMembers()" #addMembersBtn class="icon-swap add-member" role="button" tabindex="0"
         aria-label="Mitglieder hinzufügen" title="Mitglieder hinzufügen" (click)="openAddMembersModal()"></span>
+      <span *ngIf="!canAddMembers()" class="icon-swap add-member add-member--placeholder" aria-hidden="true"></span>
     </div>
   </section>
 </ng-template>
