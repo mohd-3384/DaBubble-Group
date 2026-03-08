@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   doc,
-  docData,
   setDoc,
   serverTimestamp,
   runTransaction,
@@ -19,7 +18,7 @@ import {
   limit,
 } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
-import { Observable, combineLatest, map, firstValueFrom, of, switchMap, catchError, startWith } from 'rxjs';
+import { Observable, map, firstValueFrom, of, switchMap, catchError, startWith } from 'rxjs';
 import { ChannelDoc, UserDoc } from '../interfaces/allInterfaces.interface';
 import { AuthReadyService } from './auth-ready.service';
 
@@ -244,40 +243,15 @@ export class ChannelService {
       switchMap((user) => {
         if (!user) return of([] as ChannelDoc[]);
         return (collectionData(ref, { idField: 'id' }) as Observable<ChannelDoc[]>).pipe(
-          switchMap((list) => this.filterChannelsByMembership(list, user.uid)),
+          map((list) =>
+            [...list].sort((a: any, b: any) =>
+              String(a.name ?? '').localeCompare(String(b.name ?? ''), 'de', { sensitivity: 'base' })
+            )
+          ),
           catchError(() => of([] as ChannelDoc[]))
         );
       }),
       startWith([] as ChannelDoc[])
-    );
-  }
-
-  /**
-   * Filters channels by checking for a member document per channel.
-   * @param list - Channel list
-   * @param uid - User ID
-   */
-  private filterChannelsByMembership(list: ChannelDoc[], uid: string): Observable<ChannelDoc[]> {
-    if (!list?.length) return of([] as ChannelDoc[]);
-
-    const checks$ = list.map((ch) => {
-      if (!ch?.id) return of({ channel: ch, isMember: false });
-      const memRef = doc(this.fs, `channels/${ch.id}/members/${uid}`);
-      return docData(memRef).pipe(
-        map((data) => ({ channel: ch, isMember: !!data })),
-        catchError(() => of({ channel: ch, isMember: false }))
-      );
-    });
-
-    return combineLatest(checks$).pipe(
-      map((rows) =>
-        rows
-          .filter((r) => r.isMember)
-          .map((r) => r.channel)
-          .sort((a: any, b: any) =>
-            String(a.name ?? '').localeCompare(String(b.name ?? ''), 'de', { sensitivity: 'base' })
-          )
-      )
     );
   }
 

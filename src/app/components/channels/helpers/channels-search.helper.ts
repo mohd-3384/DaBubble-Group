@@ -1,11 +1,10 @@
 import { Injectable, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, combineLatest, firstValueFrom, from, Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, shareReplay, skip, startWith, switchMap, take } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, from, Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
 import { collection, collectionData, Firestore, getDocs, limit, orderBy, query } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { WsChannelResult, WsSearchResult } from '../../../interfaces/allInterfaces.interface';
-import { ChannelService } from '../../../services/channel.service';
 
 /**
  * Helper service for workspace search functionality.
@@ -38,8 +37,7 @@ export class ChannelsSearchHelper {
   constructor(
     private fs: Firestore,
     private auth: Auth,
-    private router: Router,
-    private channelSvc: ChannelService
+    private router: Router
   ) {
     this.wsResults$ = this.initializeSearchResults();
   }
@@ -128,7 +126,7 @@ export class ChannelsSearchHelper {
    * @returns Observable of matching channel results
    */
   private searchChannels(term: string): Observable<WsChannelResult[]> {
-    return this.channelSvc.channels$().pipe(
+    return collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
       map((rows: any[]) =>
         (rows || [])
           .map((c): WsChannelResult => ({
@@ -209,11 +207,8 @@ export class ChannelsSearchHelper {
    * @returns Promise resolving to an array of channel IDs
    */
   private async getChannelIds(): Promise<string[]> {
-    const list = await firstValueFrom(this.channelSvc.channels$().pipe(skip(1), take(1)));
-    return (list || [])
-      .map((c) => String(c?.id ?? ''))
-      .filter((id) => !!id)
-      .slice(0, 20);
+    const chSnap = await getDocs(query(collection(this.fs, 'channels'), limit(20)));
+    return chSnap.docs.map((d) => d.id);
   }
 
   /**
