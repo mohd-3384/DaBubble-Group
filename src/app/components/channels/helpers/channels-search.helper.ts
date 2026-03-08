@@ -1,10 +1,11 @@
 import { Injectable, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, combineLatest, from, Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, firstValueFrom, from, Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, shareReplay, skip, startWith, switchMap, take } from 'rxjs/operators';
 import { collection, collectionData, Firestore, getDocs, limit, orderBy, query } from '@angular/fire/firestore';
 import { Auth, authState } from '@angular/fire/auth';
 import { WsChannelResult, WsSearchResult } from '../../../interfaces/allInterfaces.interface';
+import { ChannelService } from '../../../services/channel.service';
 
 /**
  * Helper service for workspace search functionality.
@@ -37,7 +38,8 @@ export class ChannelsSearchHelper {
   constructor(
     private fs: Firestore,
     private auth: Auth,
-    private router: Router
+    private router: Router,
+    private channelSvc: ChannelService
   ) {
     this.wsResults$ = this.initializeSearchResults();
   }
@@ -126,7 +128,7 @@ export class ChannelsSearchHelper {
    * @returns Observable of matching channel results
    */
   private searchChannels(term: string): Observable<WsChannelResult[]> {
-    return collectionData(collection(this.fs, 'channels'), { idField: 'id' }).pipe(
+    return this.channelSvc.channels$().pipe(
       map((rows: any[]) =>
         (rows || [])
           .map((c): WsChannelResult => ({
@@ -207,8 +209,11 @@ export class ChannelsSearchHelper {
    * @returns Promise resolving to an array of channel IDs
    */
   private async getChannelIds(): Promise<string[]> {
-    const chSnap = await getDocs(query(collection(this.fs, 'channels'), limit(20)));
-    return chSnap.docs.map((d) => d.id);
+    const list = await firstValueFrom(this.channelSvc.channels$().pipe(skip(1), take(1)));
+    return (list || [])
+      .map((c) => String(c?.id ?? ''))
+      .filter((id) => !!id)
+      .slice(0, 20);
   }
 
   /**
