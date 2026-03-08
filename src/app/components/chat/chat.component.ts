@@ -771,6 +771,7 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
    * Toggles channel name edit mode (edit/save)
    */
   async toggleChannelNameEdit(): Promise<void> {
+    if (!this.isCurrentMember()) return;
     await this.modalCoordinator.toggleChannelNameEdit(this.channelDoc$);
   }
 
@@ -787,6 +788,7 @@ export class ChatComponent implements AfterViewInit, AfterViewChecked, OnDestroy
    * Toggles channel description edit mode (edit/save)
    */
   async toggleChannelDescEdit(): Promise<void> {
+    if (!this.isCurrentMember()) return;
     await this.modalCoordinator.toggleChannelDescEdit(this.channelDoc$);
   }
 

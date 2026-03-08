@@ -378,7 +378,7 @@
             <div class="channel-info__card-header">
               <span class="channel-info__label">Channel-Name</span>
 
-              <button type="button" class="channel-info__edit-btn"
+              <button *ngIf="isCurrentMember()" type="button" class="channel-info__edit-btn"
                 [attr.data-action]="channelNameEdit ? 'save' : 'edit'" (click)="toggleChannelNameEdit()">
                 {{ channelNameEdit ? 'Speichern' : 'Bearbeiten' }}
               </button>
@@ -386,6 +386,10 @@
 
             <div *ngIf="!channelNameEdit" class="channel-info__field-pill">
               <span class="channel-info__field-text">{{ vm.title }}</span>
+            </div>
+
+            <div *ngIf="!isCurrentMember()" class="channel-info__edit-hint">
+              Nur Mitglieder koennen den Channel-Namen bearbeiten.
             </div>
 
             <div *ngIf="channelNameEdit" class="channel-info__field-pill channel-info__field-pill--edit">
@@ -403,7 +407,7 @@
             <div class="channel-info__card-header">
               <span class="channel-info__label">Beschreibung</span>
 
-              <button type="button" class="channel-info__edit-btn"
+              <button *ngIf="isCurrentMember()" type="button" class="channel-info__edit-btn"
                 [attr.data-action]="channelDescEdit ? 'save' : 'edit'" (click)="toggleChannelDescEdit()">
                 {{ channelDescEdit ? 'Speichern' : 'Bearbeiten' }}
               </button>
@@ -421,6 +425,10 @@
                   </p>
                 </ng-template>
               </ng-container>
+
+              <div *ngIf="!isCurrentMember()" class="channel-info__edit-hint">
+                Nur Mitglieder koennen die Beschreibung bearbeiten.
+              </div>
 
               <ng-template #descEditTpl>
                 <div class="channel-input-wrap channel-input-wrap--info channel-input-wrap--textarea">
