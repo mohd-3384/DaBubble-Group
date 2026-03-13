@@ -14,6 +14,13 @@ a.mat-mdc-list-item .mdc-list-item__primary-text,
 a.mat-mdc-list-item div[matLine],
 a.mat-mdc-list-item span {
   transition: color var(--transition15);
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+a.mat-mdc-list-item .mdc-list-item__content {
+  overflow: visible !important;
 }
 
 a.mat-mdc-list-item:not(.active):hover {

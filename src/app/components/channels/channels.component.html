@@ -96,7 +96,7 @@
             <img matListItemAvatar [src]="u.avatarUrl || '/public/images/avatars/avatar1.svg'" [alt]="u.name" />
 
             <div matLine>
-              {{ truncateName(u.name, 12) }}
+              {{ truncateName(u.name, 16) }}
               <span class="muted" *ngIf="u.id === meId">(Du)</span>
             </div>
 

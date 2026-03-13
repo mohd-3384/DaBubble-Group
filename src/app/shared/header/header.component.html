@@ -136,6 +136,12 @@
               <span class="mail-link">{{ user.email }}</span>
             </div>
           </div>
+
+          <div class="profile-edit__actions" *ngIf="user.role !== 'guest'">
+            <button type="button" class="profile-edit__btn primary" (click)="openDeleteProfileModal(user)">
+              Profil löschen
+            </button>
+          </div>
         </div>
 
         <!-- AVATAR: Avatar auswählen -->
@@ -195,6 +201,50 @@
         </div>
 
       </ng-container>
+    </div>
+  </div>
+
+  <!-- PROFILE DELETE MODAL -->
+  <div class="ui-modal ui-modal--right" *ngIf="deleteModalOpen" (click)="closeDeleteProfileModal()">
+    <div class="ui-modal__panel profile-modal__panel" (click)="$event.stopPropagation()">
+      <div class="ui-modal__header profile-modal__header">
+        <h3>Profil löschen</h3>
+        <button type="button" class="ui-modal__close profile-modal__close"
+          (click)="closeDeleteProfileModal()">×</button>
+      </div>
+
+      <div class="ui-modal__body profile-edit__content">
+        <p class="profile-delete__note">
+          Dein Profil wird dauerhaft gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.
+        </p>
+
+        <ng-container *ngIf="deleteRequiresPassword">
+          <label class="profile-edit__label">
+            <span class="profile-edit__label-row">
+              <span class="profile-edit__icon">
+                <img src="/public/images/account-circle.svg" alt="" aria-hidden="true" />
+              </span>
+              <span>Passwort bestätigen</span>
+            </span>
+            <input class="profile-edit__input" type="password" [value]="deletePassword"
+              (input)="onDeletePasswordInput($any($event.target).value)" placeholder=" " />
+          </label>
+        </ng-container>
+
+        <div class="profile-delete__error" *ngIf="deleteError">{{ deleteError }}</div>
+
+        <div class="profile-edit__actions">
+          <button type="button" class="profile-edit__btn outline" (click)="closeDeleteProfileModal()">
+            Abbrechen
+          </button>
+          <button type="button" class="profile-edit__btn primary" (click)="confirmDeleteProfile()"
+            [disabled]="deleteBusy || (deleteRequiresPassword && !deletePassword.trim())"
+            [class.is-disabled]="deleteBusy || (deleteRequiresPassword && !deletePassword.trim())"
+            [attr.aria-disabled]="deleteBusy || (deleteRequiresPassword && !deletePassword.trim())">
+            Profil löschen
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

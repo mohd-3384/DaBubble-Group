@@ -289,6 +289,8 @@ export type HeaderUser = {
   name: string;
   /** User email */
   email: string;
+  /** User role */
+  role?: 'member' | 'guest';
   /** User status */
   status: 'active' | 'away';
   /** Avatar URL */

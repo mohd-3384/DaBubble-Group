@@ -267,7 +267,7 @@ export class ChannelsComponent {
   /**
    * Truncates long names with an ellipsis.
    */
-  truncateName(name: string | null | undefined, maxLength = 16): string {
+  truncateName(name: string | null | undefined, maxLength = 20): string {
     const value = (name ?? '').toString();
     if (value.length <= maxLength) return value;
     return `${value.slice(0, maxLength)}...`;

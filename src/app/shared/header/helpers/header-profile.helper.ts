@@ -1,6 +1,14 @@
 import { inject, Injectable } from '@angular/core';
-import { Firestore, doc, updateDoc, serverTimestamp } from '@angular/fire/firestore';
-import { Auth, signOut } from '@angular/fire/auth';
+import { Firestore, doc, updateDoc, serverTimestamp, deleteDoc } from '@angular/fire/firestore';
+import {
+  Auth,
+  signOut,
+  deleteUser,
+  reauthenticateWithCredential,
+  reauthenticateWithRedirect,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+} from '@angular/fire/auth';
 import { Router } from '@angular/router';
 
 /**
@@ -74,6 +82,43 @@ export class HeaderProfileHelper {
 
     await signOut(this.auth);
     this.router.navigate(['/login']);
+  }
+
+  /**
+   * Deletes the current user from Firestore and Firebase Authentication.
+   * @param uid - User ID to delete
+   */
+  async deleteUserAccount(uid: string): Promise<void> {
+    const u = this.auth.currentUser;
+    if (!u) return;
+
+    try {
+      await this.setUserOffline(uid);
+      await deleteDoc(doc(this.fs, `users/${uid}`));
+      await deleteUser(u);
+    } finally {
+      await signOut(this.auth);
+      this.router.navigate(['/login']);
+    }
+  }
+
+  /**
+   * Reauthenticates the current user using email/password.
+   */
+  async reauthWithPassword(email: string, password: string): Promise<void> {
+    const u = this.auth.currentUser;
+    if (!u) return;
+    const cred = EmailAuthProvider.credential(email, password);
+    await reauthenticateWithCredential(u, cred);
+  }
+
+  /**
+   * Reauthenticates the current user using Google redirect flow.
+   */
+  async reauthWithGoogleRedirect(): Promise<void> {
+    const u = this.auth.currentUser;
+    if (!u) return;
+    await reauthenticateWithRedirect(u, new GoogleAuthProvider());
   }
 
   /**

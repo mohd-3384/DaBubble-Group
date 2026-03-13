@@ -85,17 +85,20 @@ export class MemberDataHelper {
   private mapMembers(members: MemberDenorm[], users: UserMini[]): MemberVM[] {
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    return members.map((m: any) => {
-      const uid = m.uid || m.id;
-      const u = userMap.get(uid);
+    return members
+      .map((m: any) => {
+        const uid = m.uid || m.id;
+        const u = userMap.get(uid);
+        if (!u) return null;
 
-      return {
-        uid,
-        name: m.displayName ?? u?.name ?? 'Member',
-        avatarUrl: fixAvatar(m.avatarUrl ?? u?.avatarUrl),
-        online: u?.online ?? false,
-      } as MemberVM;
-    });
+        return {
+          uid,
+          name: m.displayName ?? u?.name ?? 'Member',
+          avatarUrl: fixAvatar(m.avatarUrl ?? u?.avatarUrl),
+          online: u?.online ?? false,
+        } as MemberVM;
+      })
+      .filter((m): m is MemberVM => !!m);
   }
 
   /**

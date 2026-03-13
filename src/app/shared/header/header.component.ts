@@ -50,12 +50,18 @@ export class HeaderComponent {
 
   /** ---------- USER (Firestore users/{uid}) ---------- */
   user$: Observable<HeaderUser> = this.userHelper.getUserStream();
+  private currentHeaderUser: HeaderUser | null = null;
 
   /**
    * Initializes the header component.
    * Subscribes to router events to track chat state and channel navigation.
    */
   constructor() {
+    this.user$.subscribe((u) => {
+      this.currentHeaderUser = u;
+      this.handlePendingDelete();
+    });
+
     this.router.events
       .pipe()
       .subscribe((event) => {
@@ -99,8 +105,15 @@ export class HeaderComponent {
   editName = '';
   profileNameError = '';
   selectedAvatar = '';
+  deleteModalOpen = false;
+  deletePassword = '';
+  deleteError = '';
+  deleteBusy = false;
+  deleteRequiresPassword = false;
+  private deletePending = false;
 
   availableAvatars = [
+    '/public/images/avatars/avatar-default.svg',
     '/public/images/avatars/avatar1.svg',
     '/public/images/avatars/avatar2.svg',
     '/public/images/avatars/avatar3.svg',
@@ -214,6 +227,124 @@ export class HeaderComponent {
       this.profileNameError = '';
     } catch (e) {
       // Error already logged in helper
+    }
+  }
+
+  /**
+   * Opens the delete profile confirmation modal.
+   */
+  openDeleteProfileModal(user: HeaderUser) {
+    if (user?.role === 'guest') return;
+    this.deleteModalOpen = true;
+    this.deletePassword = '';
+    this.deleteError = '';
+    this.deleteBusy = false;
+    this.deleteRequiresPassword = this.isPasswordUser();
+  }
+
+  /**
+   * Closes the delete profile modal and resets state.
+   */
+  closeDeleteProfileModal() {
+    this.deleteModalOpen = false;
+    this.deletePassword = '';
+    this.deleteError = '';
+    this.deleteBusy = false;
+  }
+
+  onDeletePasswordInput(value: string) {
+    this.deletePassword = value;
+    this.deleteError = '';
+  }
+
+  /**
+   * Confirms deletion with reauth when needed.
+   */
+  async confirmDeleteProfile(): Promise<void> {
+    const authUser = this.auth.currentUser;
+    if (!authUser) return;
+    if (this.currentHeaderUser?.role === 'guest' || authUser.isAnonymous) return;
+
+    this.deleteBusy = true;
+    this.deleteError = '';
+
+    try {
+      if (this.isPasswordUser()) {
+        if (!this.deletePassword.trim()) {
+          this.deleteError = 'Bitte Passwort eingeben.';
+          return;
+        }
+        await this.profileHelper.reauthWithPassword(authUser.email ?? '', this.deletePassword.trim());
+        await this.profileHelper.deleteUserAccount(authUser.uid);
+      } else if (this.isGoogleUser()) {
+        localStorage.setItem('pendingDeleteAccount', '1');
+        this.deletePending = true;
+        await this.profileHelper.reauthWithGoogleRedirect();
+        return;
+      } else {
+        await this.profileHelper.deleteUserAccount(authUser.uid);
+      }
+
+      this.closeDeleteProfileModal();
+      this.closeAll();
+    } catch (e: any) {
+      if (e?.message === 'cancelled') return;
+      if (e?.code === 'auth/wrong-password') {
+        this.deleteError = 'Passwort ist falsch.';
+        return;
+      }
+      if (e?.code === 'auth/requires-recent-login') {
+        this.deleteError = 'Bitte erneut anmelden und dann löschen.';
+        return;
+      }
+      this.deleteError = 'Profil konnte nicht gelöscht werden.';
+      console.error('[Header] Failed to delete profile:', e);
+    } finally {
+      this.deleteBusy = false;
+    }
+  }
+
+  private isPasswordUser(): boolean {
+    const providers = (this.auth.currentUser?.providerData || []).map((p: any) => p?.providerId).filter(Boolean);
+    return providers.includes('password');
+  }
+
+  private isGoogleUser(): boolean {
+    const providers = (this.auth.currentUser?.providerData || []).map((p: any) => p?.providerId).filter(Boolean);
+    return providers.includes('google.com');
+  }
+
+  private async handlePendingDelete(): Promise<void> {
+    if (this.deletePending) return;
+    if (localStorage.getItem('pendingDeleteAccount') !== '1') return;
+
+    const authUser = this.auth.currentUser;
+    if (!authUser) return;
+
+    this.deletePending = true;
+    localStorage.removeItem('pendingDeleteAccount');
+    try {
+      await this.profileHelper.deleteUserAccount(authUser.uid);
+    } catch (e) {
+      console.error('[Header] Failed to delete profile after reauth:', e);
+    }
+  }
+
+  /**
+   * Deletes the current user profile and account.
+   */
+  async deleteProfile(): Promise<void> {
+    const authUser = this.auth.currentUser;
+    if (!authUser) return;
+
+    if (this.currentHeaderUser?.role === 'guest' || authUser.isAnonymous) return;
+
+    try {
+      await this.profileHelper.deleteUserAccount(authUser.uid);
+      this.closeAll();
+    } catch (e) {
+      if ((e as any)?.message === 'cancelled') return;
+      console.error('[Header] Failed to delete profile:', e);
     }
   }
 
